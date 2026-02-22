@@ -24,7 +24,7 @@ public class KopisSyncService {
     private final ShowRepository showRepository;
     private final TheaterRepository theaterRepository;
 
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy.MM.dd");
     private static final String[] GENRES = { "GGGA", "AAAA" }; // 뮤지컬, 연극
 
     @Scheduled(cron = "0 0 2 * * *") // 매일 새벽 2시
