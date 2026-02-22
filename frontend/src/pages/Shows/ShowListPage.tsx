@@ -94,10 +94,9 @@ export default function ShowListPage() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
       <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">공연 탐색</h1>
-      <p className="text-sm text-gray-500 mb-8">관심 장르와 상태를 선택해 현재 공연 중인 작품을 확인하세요.</p>
+      <p className="text-sm text-gray-400 mb-8">관심 장르와 상태를 선택해 공연을 찾아보세요.</p>
 
-      <div className="sticky top-16 z-30 bg-white/95 backdrop-blur -mx-4 px-4 pt-2 pb-3 mb-5 sm:static sm:bg-transparent sm:backdrop-blur-0 sm:mx-0 sm:px-0 sm:pt-0 sm:pb-0">
-        {/* Search */}
+      <div className="sticky top-16 z-30 bg-white/95 backdrop-blur-md -mx-4 px-4 pt-2 pb-3 mb-5 sm:static sm:bg-transparent sm:backdrop-blur-0 sm:mx-0 sm:px-0 sm:pt-0 sm:pb-0">
         <form onSubmit={handleSearch} className="flex gap-3 mb-3 sm:mb-6">
           <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
@@ -112,7 +111,6 @@ export default function ShowListPage() {
           <button type="submit" className="btn-primary px-6">검색</button>
         </form>
 
-        {/* Mobile Filter */}
         <div className="sm:hidden">
           <button
             onClick={() => setShowMobileFilter(true)}
@@ -121,7 +119,7 @@ export default function ShowListPage() {
             <SlidersHorizontal size={16} />
             필터
             {selectedFilterCount > 0 && (
-              <span className="rounded-full bg-gray-900 px-2 py-0.5 text-xs text-white">
+              <span className="rounded-full bg-brand px-2 py-0.5 text-xs text-white">
                 {selectedFilterCount}
               </span>
             )}
@@ -129,7 +127,6 @@ export default function ShowListPage() {
         </div>
       </div>
 
-      {/* Desktop Filters */}
       <div className="hidden sm:flex flex-wrap items-center gap-2 mb-8">
         {GENRES.map(({ value, label }) => (
           <button
@@ -153,7 +150,7 @@ export default function ShowListPage() {
         {hasActiveFilter && (
           <button
             onClick={resetFilters}
-            className="ml-1 text-sm text-gray-500 hover:text-gray-900 underline underline-offset-2"
+            className="ml-1 text-sm text-gray-400 hover:text-brand underline underline-offset-2"
           >
             필터 초기화
           </button>
@@ -224,15 +221,14 @@ export default function ShowListPage() {
         </div>
       )}
 
-      {/* Results */}
       {isLoading ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
           {Array.from({ length: 12 }).map((_, i) => (
             <div key={i} className="animate-pulse">
-              <div className="aspect-[3/4] bg-gray-100 rounded-2xl" />
+              <div className="aspect-[3/4] bg-warm-100 rounded-2xl" />
               <div className="mt-3 space-y-2">
-                <div className="h-4 bg-gray-100 rounded w-3/4" />
-                <div className="h-3 bg-gray-100 rounded w-1/2" />
+                <div className="h-4 bg-warm-100 rounded w-3/4" />
+                <div className="h-3 bg-warm-100 rounded w-1/2" />
               </div>
             </div>
           ))}
@@ -263,7 +259,7 @@ export default function ShowListPage() {
         </>
       ) : (
         <div className="text-center py-20">
-          <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center">
+          <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-warm-100 text-gray-400 flex items-center justify-center">
             <Search size={20} />
           </div>
           <p className="text-lg font-medium text-gray-600">검색 결과가 없습니다</p>

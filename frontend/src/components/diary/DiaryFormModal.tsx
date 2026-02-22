@@ -11,16 +11,17 @@ import StarRating from '../common/StarRating'
 interface Props {
   entry?: DiaryEntry
   initialShowId?: number
+  initialShowTitle?: string
   onClose: () => void
   onSaved: () => void
 }
 
-export default function DiaryFormModal({ entry, initialShowId, onClose, onSaved }: Props) {
+export default function DiaryFormModal({ entry, initialShowId, initialShowTitle, onClose, onSaved }: Props) {
   const queryClient = useQueryClient()
   const [rating, setRating] = useState(entry?.rating ?? 5)
   const [showSearch, setShowSearch] = useState('')
   const [selectedShowId, setSelectedShowId] = useState<number | null>(entry?.showId ?? initialShowId ?? null)
-  const [selectedShowTitle, setSelectedShowTitle] = useState<string>(entry?.showTitle ?? '')
+  const [selectedShowTitle, setSelectedShowTitle] = useState<string>(entry?.showTitle ?? initialShowTitle ?? '')
 
   const { data: searchResults } = useQuery({
     queryKey: ['shows', 'search', showSearch],
@@ -60,28 +61,27 @@ export default function DiaryFormModal({ entry, initialShowId, onClose, onSaved 
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-card-lg"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-bold">{entry ? '기록 수정' : '관극 기록 추가'}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+          <h2 className="text-xl font-bold text-gray-900">{entry ? '기록 수정' : '관극 기록 추가'}</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
             <X size={20} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4">
-          {/* Show Search */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">공연 *</label>
             {selectedShowTitle ? (
-              <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+              <div className="flex items-center justify-between bg-warm-50 border border-gray-100 rounded-lg px-3 py-2">
                 <span className="text-sm font-medium text-gray-800">{selectedShowTitle}</span>
-                <button type="button" onClick={() => { setSelectedShowId(null); setSelectedShowTitle('') }} className="text-xs text-gray-500 hover:text-red-500">변경</button>
+                <button type="button" onClick={() => { setSelectedShowId(null); setSelectedShowTitle('') }} className="text-xs text-gray-400 hover:text-red-500">변경</button>
               </div>
             ) : (
               <div className="relative">
@@ -93,18 +93,18 @@ export default function DiaryFormModal({ entry, initialShowId, onClose, onSaved 
                   className="input-field"
                 />
                 {searchResults && searchResults.content.length > 0 && showSearch.length > 1 && (
-                  <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-10 mt-1">
+                  <div className="absolute top-full left-0 right-0 bg-white border border-gray-100 rounded-lg shadow-card-md z-10 mt-1">
                     {searchResults.content.map((show) => (
                       <button
                         key={show.id}
                         type="button"
                         onClick={() => { setSelectedShowId(show.id); setSelectedShowTitle(show.title); setShowSearch('') }}
-                        className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex gap-2 items-center"
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-warm-50 flex gap-2 items-center transition-colors"
                       >
                         {show.posterUrl && <img src={show.posterUrl} className="w-8 h-10 object-cover rounded" alt="" />}
                         <div>
-                          <p className="font-medium">{show.title}</p>
-                          <p className="text-xs text-gray-500">{show.theaterName}</p>
+                          <p className="font-medium text-gray-900">{show.title}</p>
+                          <p className="text-xs text-gray-400">{show.theaterName}</p>
                         </div>
                       </button>
                     ))}
@@ -146,7 +146,7 @@ export default function DiaryFormModal({ entry, initialShowId, onClose, onSaved 
               <input type="number" {...register('ticketPrice', { valueAsNumber: true })} placeholder="150000" className="input-field" />
             </div>
             <div className="flex items-center gap-2 mt-6">
-              <input type="checkbox" id="isOpen" {...register('isOpen')} className="w-4 h-4 accent-gray-900" />
+              <input type="checkbox" id="isOpen" {...register('isOpen')} className="w-4 h-4 accent-brand" />
               <label htmlFor="isOpen" className="text-sm text-gray-700">공개 기록</label>
             </div>
           </div>

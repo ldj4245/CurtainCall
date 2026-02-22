@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
 import { Calendar, MapPin, Trash2, Edit2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { diaryApi } from '../../api/diary'
 import type { DiaryEntry } from '../../types'
 import StarRating from '../common/StarRating'
+import ConfirmModal from '../common/ConfirmModal'
 import DiaryFormModal from './DiaryFormModal'
 
 interface Props {
@@ -14,6 +16,7 @@ interface Props {
 
 export default function DiaryEntryCard({ entry, onUpdated }: Props) {
   const [editing, setEditing] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const queryClient = useQueryClient()
 
   const deleteMutation = useMutation({
@@ -23,12 +26,14 @@ export default function DiaryEntryCard({ entry, onUpdated }: Props) {
       queryClient.invalidateQueries({ queryKey: ['diary'] })
       onUpdated()
     },
+    onError: () => {
+      toast.error('기록 삭제에 실패했습니다.')
+    },
   })
 
   const handleDelete = () => {
-    if (confirm('정말 삭제하시겠습니까?')) {
-      deleteMutation.mutate()
-    }
+    deleteMutation.mutate()
+    setDeleting(false)
   }
 
   return (
@@ -44,17 +49,20 @@ export default function DiaryEntryCard({ entry, onUpdated }: Props) {
         )}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
-            <h3 className="font-bold text-gray-900 truncate">{entry.showTitle}</h3>
+            <Link to={`/shows/${entry.showId}`} className="font-bold text-gray-900 truncate hover:text-brand transition-colors">
+              {entry.showTitle}
+            </Link>
             <div className="flex gap-1 shrink-0">
               <button
                 onClick={() => setEditing(true)}
-                className="p-1.5 text-gray-400 hover:text-gray-600 transition-colors"
+                className="p-1.5 text-gray-400 hover:text-brand transition-colors"
               >
                 <Edit2 size={14} />
               </button>
               <button
-                onClick={handleDelete}
+                onClick={() => setDeleting(true)}
                 className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"
+                disabled={deleteMutation.isPending}
               >
                 <Trash2 size={14} />
               </button>
@@ -79,7 +87,7 @@ export default function DiaryEntryCard({ entry, onUpdated }: Props) {
           <StarRating value={entry.rating} readonly size="sm" />
 
           {entry.castMemo && (
-            <p className="text-sm text-gray-600 mt-2 bg-gray-50 rounded-lg px-3 py-2">
+            <p className="text-sm text-gray-600 mt-2 bg-warm-50 rounded-lg px-3 py-2">
               캐스트 메모: {entry.castMemo}
             </p>
           )}
@@ -94,6 +102,17 @@ export default function DiaryEntryCard({ entry, onUpdated }: Props) {
           entry={entry}
           onClose={() => setEditing(false)}
           onSaved={() => { setEditing(false); onUpdated() }}
+        />
+      )}
+
+      {deleting && (
+        <ConfirmModal
+          title="관극 기록 삭제"
+          message="정말 이 기록을 삭제하시겠습니까? 한 번 삭제한 기록은 되돌릴 수 없어요."
+          confirmText="삭제하기"
+          cancelText="취소"
+          onConfirm={handleDelete}
+          onCancel={() => setDeleting(false)}
         />
       )}
     </div>

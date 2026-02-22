@@ -29,7 +29,7 @@ export default function MobileTabBar() {
   ]
 
   return (
-    <nav className="sm:hidden fixed bottom-0 inset-x-0 z-50 border-t border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+    <nav className="sm:hidden fixed bottom-0 inset-x-0 z-50 border-t border-gray-100 bg-white/95 backdrop-blur-md supports-[backdrop-filter]:bg-white/85">
       <ul className="grid grid-cols-4">
         {tabs.map(({ to, state, label, icon: Icon, active }) => (
           <li key={label}>
@@ -44,14 +44,12 @@ export default function MobileTabBar() {
                 toast('로그인 후 이용할 수 있어요.')
                 navigate('/login', { state: loginLinkState })
               }}
-              className={`relative flex h-16 flex-col items-center justify-center gap-1 text-xs transition-colors ${
-                active ? 'text-gray-900 font-semibold' : 'text-gray-500'
-              }`}
+              className={`relative flex h-16 flex-col items-center justify-center gap-1 text-xs transition-colors ${active ? 'text-brand font-semibold' : 'text-gray-400'
+                }`}
             >
               <span
-                className={`absolute top-0 h-0.5 w-8 rounded-full transition-opacity ${
-                  active ? 'bg-gray-900 opacity-100' : 'opacity-0'
-                }`}
+                className={`absolute top-0 h-0.5 w-8 rounded-full transition-opacity ${active ? 'bg-brand opacity-100' : 'opacity-0'
+                  }`}
               />
               <Icon size={18} />
               <span>{label}</span>

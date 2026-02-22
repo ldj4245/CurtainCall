@@ -20,21 +20,18 @@ export default function MyPage() {
     const [editingNickname, setEditingNickname] = useState(false)
     const [nickname, setNickname] = useState(user?.nickname || '')
 
-    // 내 찜 목록
     const { data: favorites } = useQuery({
         queryKey: ['my-favorites', favPage],
         queryFn: () => favoritesApi.getMyFavorites(favPage, 8),
         enabled: activeTab === 'favorites',
     })
 
-    // 내 리뷰 (reviews API에 my-reviews 엔드포인트가 없으면 빈 배열)
     const { data: myReviews } = useQuery({
         queryKey: ['my-reviews'],
         queryFn: () => reviewsApi.getMyReviews?.() || Promise.resolve({ content: [], totalPages: 0 }),
         enabled: activeTab === 'reviews',
     })
 
-    // 닉네임 변경
     const updateNickname = useMutation({
         mutationFn: () => authApi.updateNickname(nickname),
         onSuccess: (updatedUser) => {
@@ -59,12 +56,11 @@ export default function MyPage() {
 
     return (
         <div className="max-w-5xl mx-auto px-4 py-8">
-            {/* Header */}
             <div className="flex items-center gap-4 mb-8">
-                <div className="w-16 h-16 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden">
+                <div className="w-16 h-16 rounded-full bg-warm-100 border border-gray-100 flex items-center justify-center overflow-hidden">
                     {user?.profileImage ? (
                         <img src={user.profileImage} alt="" className="w-full h-full object-cover" />
-                    ) : <UserIcon size={24} className="text-gray-500" />}
+                    ) : <UserIcon size={24} className="text-gray-400" />}
                 </div>
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">{user?.nickname || '사용자'}</h1>
@@ -72,14 +68,13 @@ export default function MyPage() {
                 </div>
             </div>
 
-            {/* Tabs */}
-            <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit mb-8">
+            <div className="flex gap-1 bg-warm-100 p-1 rounded-xl w-fit mb-8">
                 {tabs.map(({ key, label, icon }) => (
                     <button
                         key={key}
                         onClick={() => setActiveTab(key)}
                         className={`flex items-center gap-1.5 px-5 py-2.5 rounded-lg text-sm font-medium transition-all ${activeTab === key
-                            ? 'bg-white text-gray-900 shadow-sm'
+                            ? 'bg-white text-brand shadow-sm'
                             : 'text-gray-500 hover:text-gray-700'
                             }`}
                     >
@@ -89,7 +84,6 @@ export default function MyPage() {
                 ))}
             </div>
 
-            {/* Tab Content */}
             {activeTab === 'favorites' && (
                 <div>
                     {favorites && favorites.content.length > 0 ? (
@@ -131,8 +125,8 @@ export default function MyPage() {
                                             <h3 className="font-bold text-gray-900">{review.showTitle || '공연'}</h3>
                                             <p className="text-xs text-gray-400">{review.createdAt?.slice(0, 10)}</p>
                                         </div>
-                                        <div className="flex items-center gap-1 text-amber-600 font-bold text-sm">
-                                            <Star size={13} className="fill-amber-600" />
+                                        <div className="flex items-center gap-1 text-gold font-bold text-sm">
+                                            <Star size={13} className="fill-gold" />
                                             {review.averageScore?.toFixed(1)}
                                         </div>
                                     </div>
@@ -162,7 +156,6 @@ export default function MyPage() {
 
             {activeTab === 'profile' && (
                 <div className="max-w-md space-y-6">
-                    {/* 닉네임 */}
                     <div className="card p-5">
                         <label className="text-sm font-medium text-gray-700 mb-2 block">닉네임</label>
                         {editingNickname ? (
@@ -193,7 +186,7 @@ export default function MyPage() {
                                 <span className="text-gray-900 font-medium">{user?.nickname}</span>
                                 <button
                                     onClick={() => setEditingNickname(true)}
-                                    className="flex items-center gap-1 text-sm text-gray-400 hover:text-gray-600"
+                                    className="flex items-center gap-1 text-sm text-gray-400 hover:text-brand"
                                 >
                                     <Edit2 size={14} />
                                     수정
@@ -202,13 +195,11 @@ export default function MyPage() {
                         )}
                     </div>
 
-                    {/* 이메일 */}
                     <div className="card p-5">
                         <label className="text-sm font-medium text-gray-700 mb-2 block">이메일</label>
                         <span className="text-gray-500">{user?.email}</span>
                     </div>
 
-                    {/* 로그아웃 */}
                     <button
                         onClick={handleLogout}
                         className="flex items-center gap-2 text-red-500 hover:text-red-600 text-sm font-medium transition-colors"

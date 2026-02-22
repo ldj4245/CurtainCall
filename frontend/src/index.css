@@ -13,30 +13,30 @@
 
   body {
     background-color: #ffffff;
-    color: #0f172a;
-    line-height: 1.5;
+    color: #1a1a1a;
+    line-height: 1.6;
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center justify-center bg-gray-900 hover:bg-black text-white font-semibold px-5 py-2.5 rounded-xl border border-gray-900 shadow-sm transition-all duration-200;
+    @apply inline-flex items-center justify-center gap-2 bg-brand text-white font-semibold px-5 py-2.5 rounded-xl shadow-sm transition-all duration-200 hover:bg-brand-700 active:scale-[0.98];
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center bg-white hover:bg-gray-50 text-gray-800 font-medium px-5 py-2.5 rounded-xl border border-gray-300 shadow-sm transition-all duration-200;
+    @apply inline-flex items-center justify-center gap-2 bg-white text-gray-700 font-medium px-5 py-2.5 rounded-xl border border-gray-200 shadow-sm transition-all duration-200 hover:bg-warm-50 hover:border-gray-300 active:scale-[0.98];
   }
 
   .card {
-    @apply bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden transition-all duration-300;
+    @apply bg-white rounded-2xl border border-gray-100 shadow-card-sm overflow-hidden transition-all duration-300;
   }
 
   .card-shadow {
-    @apply card shadow-sm hover:shadow-md hover:border-gray-300;
+    @apply card hover:shadow-card-md hover:border-gray-200 hover:-translate-y-0.5;
   }
 
   .input-field {
-    @apply w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder:text-gray-400 focus:ring-4 focus:ring-gray-900/5 focus:border-gray-500 outline-none transition-all;
+    @apply w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-brand/15 focus:border-brand/40 outline-none transition-all duration-200;
   }
 
   .badge {
@@ -52,11 +52,11 @@
   }
 
   .badge-ended {
-    @apply badge bg-gray-100 text-gray-600 border-gray-200;
+    @apply badge bg-gray-100 text-gray-500 border-gray-200;
   }
 
   .badge-musical {
-    @apply badge bg-violet-50 text-violet-700 border-violet-200;
+    @apply badge bg-brand-50 text-brand border-brand-200;
   }
 
   .badge-play {
@@ -64,41 +64,45 @@
   }
 
   .filter-pill {
-    @apply px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer;
+    @apply px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 cursor-pointer;
   }
 
   .filter-pill-active {
-    @apply filter-pill bg-gray-900 text-white border border-gray-900;
+    @apply filter-pill bg-gray-900 text-white;
   }
 
   .filter-pill-inactive {
-    @apply filter-pill bg-white text-gray-600 border border-gray-300 hover:border-gray-400 hover:text-gray-900;
+    @apply filter-pill bg-white text-gray-500 border border-gray-200 hover:border-gray-400 hover:text-gray-800;
   }
 
   .star-rating {
     @apply flex gap-0.5;
   }
+
+  .section-title {
+    @apply text-xl font-bold text-gray-900 tracking-tight;
+  }
 }
 
 /* Calendar heatmap */
 .react-calendar-heatmap .color-empty {
-  fill: #f3f4f6;
+  fill: #f5f3f0;
 }
 
 .react-calendar-heatmap .color-scale-1 {
-  fill: #e9d5ff;
+  fill: #fce7f1;
 }
 
 .react-calendar-heatmap .color-scale-2 {
-  fill: #c084fc;
+  fill: #f472aa;
 }
 
 .react-calendar-heatmap .color-scale-3 {
-  fill: #9333ea;
+  fill: #8b2252;
 }
 
 .react-calendar-heatmap .color-scale-4 {
-  fill: #7c3aed;
+  fill: #7a1d47;
 }
 
 @keyframes contentFadeIn {
@@ -113,5 +117,23 @@
 }
 
 .content-fade-in {
-  animation: contentFadeIn 0.2s ease-out;
+  animation: contentFadeIn 0.25s ease-out;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
 }

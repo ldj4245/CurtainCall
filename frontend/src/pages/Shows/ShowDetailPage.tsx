@@ -45,6 +45,7 @@ export default function ShowDetailPage() {
     mutationFn: () => favoritesApi.toggle(Number(id)),
     onSuccess: (data) => {
       queryClient.setQueryData(['favorite-status', id], data)
+      queryClient.invalidateQueries({ queryKey: ['my-favorites'] })
       toast.success(data.isFavorited ? '찜 목록에 추가되었습니다.' : '찜 목록에서 제거되었습니다.')
     },
   })
@@ -59,14 +60,14 @@ export default function ShowDetailPage() {
     return (
       <div className="max-w-6xl mx-auto px-4 py-10 animate-pulse">
         <div className="grid grid-cols-1 lg:grid-cols-[340px_minmax(0,1fr)] gap-8">
-          <div className="aspect-[3/4] bg-gray-100 rounded-2xl border border-gray-200" />
+          <div className="aspect-[3/4] bg-warm-100 rounded-2xl" />
           <div className="space-y-4">
-            <div className="h-6 bg-gray-100 rounded w-1/4" />
-            <div className="h-10 bg-gray-100 rounded w-2/3" />
-            <div className="h-5 bg-gray-100 rounded w-1/3" />
+            <div className="h-6 bg-warm-100 rounded w-1/4" />
+            <div className="h-10 bg-warm-100 rounded w-2/3" />
+            <div className="h-5 bg-warm-100 rounded w-1/3" />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
               {Array.from({ length: 4 }).map((_, idx) => (
-                <div key={idx} className="h-16 bg-gray-100 rounded-xl" />
+                <div key={idx} className="h-16 bg-warm-100 rounded-xl" />
               ))}
             </div>
           </div>
@@ -101,11 +102,11 @@ export default function ShowDetailPage() {
       <div className="max-w-6xl mx-auto px-4 py-8 md:py-12">
         <div className="grid grid-cols-1 lg:grid-cols-[340px_minmax(0,1fr)] gap-8">
           <aside className="space-y-4 lg:sticky lg:top-24 h-fit">
-            <div className="card overflow-hidden">
+            <div className="rounded-2xl overflow-hidden shadow-card-md">
               {show.posterUrl ? (
                 <img src={show.posterUrl} alt={show.title} className="w-full aspect-[3/4] object-cover" />
               ) : (
-                <div className="w-full aspect-[3/4] bg-gray-100 flex flex-col items-center justify-center gap-2 text-gray-400">
+                <div className="w-full aspect-[3/4] bg-warm-100 flex flex-col items-center justify-center gap-2 text-gray-400">
                   <ImageOff size={24} />
                   <p className="text-xs font-medium">포스터 준비 중</p>
                 </div>
@@ -113,7 +114,7 @@ export default function ShowDetailPage() {
             </div>
 
             <div className="card p-4">
-              <p className="text-xs font-semibold tracking-wide text-gray-500 mb-3">개인 액션</p>
+              <p className="text-xs font-semibold tracking-wide text-gray-400 mb-3">개인 액션</p>
               <div className="grid gap-2">
                 <button
                   onClick={() => {
@@ -121,15 +122,14 @@ export default function ShowDetailPage() {
                     toggleFav.mutate()
                   }}
                   disabled={isAuthenticated && toggleFav.isPending}
-                  className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold border transition-colors ${
-                    favStatus?.isFavorited
-                      ? 'border-red-200 bg-red-50 text-red-600 hover:bg-red-100'
-                      : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-                  }`}
+                  className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold border transition-all ${favStatus?.isFavorited
+                    ? 'border-brand-200 bg-brand-50 text-brand hover:bg-brand-100'
+                    : 'border-gray-200 bg-white text-gray-700 hover:bg-warm-50'
+                    }`}
                 >
-                  <Heart size={15} className={favStatus?.isFavorited ? 'fill-red-600' : ''} />
+                  <Heart size={15} className={favStatus?.isFavorited ? 'fill-brand' : ''} />
                   {favStatus?.isFavorited ? '찜 해제' : '찜하기'}
-                  {favStatus?.favoriteCount ? <span className="text-xs text-gray-500">({favStatus.favoriteCount})</span> : null}
+                  {favStatus?.favoriteCount ? <span className="text-xs text-gray-400">({favStatus.favoriteCount})</span> : null}
                 </button>
                 <button
                   onClick={() => {
@@ -153,7 +153,7 @@ export default function ShowDetailPage() {
                 </button>
               </div>
               {!isAuthenticated && (
-                <p className="mt-3 text-xs text-gray-500">로그인하면 찜 저장, 관람 기록 작성, 리뷰 작성을 이용할 수 있어요.</p>
+                <p className="mt-3 text-xs text-gray-400">로그인하면 찜 저장, 관람 기록, 리뷰 작성을 이용할 수 있어요.</p>
               )}
             </div>
           </aside>
@@ -170,10 +170,10 @@ export default function ShowDetailPage() {
                   <>
                     <StarRating value={Math.round(show.averageScore)} readonly size="sm" />
                     <span className="text-lg font-semibold text-gray-900">{show.averageScore.toFixed(1)}</span>
-                    <span className="text-sm text-gray-500">({show.reviewCount ?? 0}개 리뷰)</span>
+                    <span className="text-sm text-gray-400">({show.reviewCount ?? 0}개 리뷰)</span>
                   </>
                 ) : (
-                  <span className="text-sm text-gray-500">아직 등록된 평점이 없습니다.</span>
+                  <span className="text-sm text-gray-400">아직 등록된 평점이 없습니다.</span>
                 )}
               </div>
 
@@ -187,12 +187,12 @@ export default function ShowDetailPage() {
               {castList.length > 0 && (
                 <div className="mt-6">
                   <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-700">
-                    <Users size={15} className="text-gray-500" />
+                    <Users size={15} className="text-gray-400" />
                     출연진
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {castList.map((name, idx) => (
-                      <span key={idx} className="inline-flex items-center rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm text-gray-700">
+                      <span key={idx} className="inline-flex items-center rounded-full border border-gray-100 bg-warm-50 px-3 py-1.5 text-sm text-gray-700">
                         {name}
                       </span>
                     ))}
@@ -211,6 +211,7 @@ export default function ShowDetailPage() {
       {showDiaryForm && show && (
         <DiaryFormModal
           initialShowId={show.id}
+          initialShowTitle={show.title}
           onClose={() => setShowDiaryForm(false)}
           onSaved={() => setShowDiaryForm(false)}
         />
@@ -221,10 +222,10 @@ export default function ShowDetailPage() {
 
 function InfoCard({ icon, label, value, multiline }: { icon: ReactNode; label: string; value: string; multiline?: boolean }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
-      <p className="text-xs font-medium text-gray-500 mb-1">{label}</p>
+    <div className="rounded-xl border border-gray-100 bg-warm-50 px-4 py-3">
+      <p className="text-xs font-medium text-gray-400 mb-1">{label}</p>
       <div className={`flex items-start gap-2 ${multiline ? '' : 'items-center'}`}>
-        <span className="mt-0.5 text-gray-500">{icon}</span>
+        <span className="mt-0.5 text-gray-400">{icon}</span>
         <p className={`text-sm text-gray-800 ${multiline ? 'leading-relaxed' : ''}`}>{value}</p>
       </div>
     </div>

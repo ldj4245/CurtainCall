@@ -39,7 +39,7 @@ export default function ReviewForm({ showId, onSubmitted, onCancel }: Props) {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {SCORE_LABELS.map(({ key, label }) => (
             <div key={key} className="text-center">
-              <p className="text-xs text-gray-600 mb-1">{label}</p>
+              <p className="text-xs text-gray-500 mb-1">{label}</p>
               <StarRating value={scores[key]} onChange={(v) => setScores((s) => ({ ...s, [key]: v }))} size="sm" />
             </div>
           ))}
@@ -55,7 +55,7 @@ export default function ReviewForm({ showId, onSubmitted, onCancel }: Props) {
 
         <div className="flex items-center justify-between">
           <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-            <input type="checkbox" {...register('hasSpoiler')} className="accent-gray-900" />
+            <input type="checkbox" {...register('hasSpoiler')} className="accent-brand" />
             스포일러 포함
           </label>
           <div className="flex gap-2">

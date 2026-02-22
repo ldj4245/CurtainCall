@@ -25,11 +25,11 @@ export default function StarRating({ value, onChange, readonly = false, size = '
           type="button"
           onClick={() => !readonly && onChange?.(star)}
           disabled={readonly}
-          className={clsx('transition-colors', !readonly && 'cursor-pointer hover:scale-110')}
+          className={clsx('transition-all duration-150', !readonly && 'cursor-pointer hover:scale-110')}
         >
           <Star
             size={starSize}
-            className={star <= value ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}
+            className={star <= value ? 'text-gold fill-gold' : 'text-gray-200'}
           />
         </button>
       ))}

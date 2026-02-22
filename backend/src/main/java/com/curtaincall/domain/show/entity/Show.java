@@ -95,11 +95,11 @@ public class Show extends BaseTimeEntity {
         public static Genre fromKopis(String kopisGenre) {
             if (kopisGenre == null)
                 return null;
-            return switch (kopisGenre) {
-                case "뮤지컬" -> MUSICAL;
-                case "연극" -> PLAY;
-                default -> null;
-            };
+            if (kopisGenre.contains("뮤지컬"))
+                return MUSICAL;
+            if (kopisGenre.contains("연극"))
+                return PLAY;
+            return null;
         }
     }
 

@@ -6,6 +6,7 @@ import com.curtaincall.domain.theater.entity.Theater;
 import com.curtaincall.domain.theater.repository.TheaterRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,10 +25,11 @@ public class KopisSyncService {
     private final TheaterRepository theaterRepository;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
-    private static final String[] GENRES = {"AAAB", "AAAA"}; // 뮤지컬, 연극
+    private static final String[] GENRES = { "GGGA", "AAAA" }; // 뮤지컬, 연극
 
     @Scheduled(cron = "0 0 2 * * *") // 매일 새벽 2시
     @Transactional
+    @CacheEvict(value = { "showsSearch", "showDetail", "ongoingShows" }, allEntries = true)
     public void syncShows() {
         log.info("KOPIS 공연 동기화 시작");
 
@@ -66,12 +68,19 @@ public class KopisSyncService {
     }
 
     @Transactional
+    @CacheEvict(value = { "showsSearch", "showDetail", "ongoingShows" }, allEntries = true)
     public void manualSyncShows(int months) {
         LocalDate today = LocalDate.now();
         LocalDate endDate = today.plusMonths(months);
 
         for (String genre : GENRES) {
+            log.info("수동 동기화 - genre code: {}, period: {} ~ {}", genre, today.minusMonths(1), endDate);
             List<KopisShowDto> shows = kopisApiClient.fetchShows(today.minusMonths(1), endDate, genre);
+            log.info("수동 동기화 - genre: {}, 조회된 공연 수: {}", genre, shows.size());
+            if (!shows.isEmpty()) {
+                log.info("첫 번째 공연 - kopisId: {}, title: {}, genre: {}",
+                        shows.get(0).getKopisId(), shows.get(0).getTitle(), shows.get(0).getGenre());
+            }
             for (KopisShowDto showDto : shows) {
                 syncShow(showDto);
             }
@@ -81,10 +90,15 @@ public class KopisSyncService {
     private void syncShow(KopisShowDto showDto) {
         try {
             KopisShowDetailDto detail = kopisApiClient.fetchShowDetail(showDto.getKopisId());
-            if (detail == null) return;
+            if (detail == null)
+                return;
 
             Theater theater = findOrCreateTheater(detail);
             Show.Genre genre = Show.Genre.fromKopis(detail.getGenre());
+            if (genre == null) {
+                log.warn("알 수 없는 장르 - kopisId: {}, genrenm: '{}', title: {}",
+                        showDto.getKopisId(), detail.getGenre(), detail.getTitle());
+            }
             Show.Status status = Show.Status.fromKopis(detail.getStatus());
             LocalDate startDate = parseDate(detail.getStartDate());
             LocalDate endDate = parseDate(detail.getEndDate());
@@ -109,15 +123,15 @@ public class KopisSyncService {
                                     .ageLimit(detail.getAgeLimit())
                                     .introImages(detail.getIntroImages())
                                     .status(status)
-                                    .build())
-                    );
+                                    .build()));
         } catch (Exception e) {
             log.error("공연 저장 실패 - kopisId: {}, error: {}", showDto.getKopisId(), e.getMessage());
         }
     }
 
     private Theater findOrCreateTheater(KopisShowDetailDto detail) {
-        if (detail.getTheaterKopisId() == null) return null;
+        if (detail.getTheaterKopisId() == null)
+            return null;
         return theaterRepository.findByKopisId(detail.getTheaterKopisId())
                 .orElseGet(() -> theaterRepository.save(Theater.builder()
                         .kopisId(detail.getTheaterKopisId())
@@ -137,12 +151,12 @@ public class KopisSyncService {
                                 .seatScale(dto.getSeatScale())
                                 .region(dto.getRegion())
                                 .characteristics(dto.getCharacteristics())
-                                .build())
-                );
+                                .build()));
     }
 
     private LocalDate parseDate(String dateStr) {
-        if (dateStr == null || dateStr.isBlank()) return null;
+        if (dateStr == null || dateStr.isBlank())
+            return null;
         try {
             return LocalDate.parse(dateStr, DATE_FORMATTER);
         } catch (Exception e) {

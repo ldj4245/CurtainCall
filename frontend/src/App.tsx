@@ -33,7 +33,7 @@ export default function App() {
     <div className="min-h-screen flex flex-col">
       <Suspense fallback={
         <div className="min-h-screen flex items-center justify-center bg-white">
-          <div className="animate-spin rounded-full h-10 w-10 border-2 border-gray-200 border-t-gray-900"></div>
+          <div className="animate-spin rounded-full h-10 w-10 border-2 border-brand-100 border-t-brand"></div>
         </div>
       }>
         <Routes>
@@ -69,8 +69,8 @@ export default function App() {
                   </Routes>
                 </main>
                 <MobileTabBar />
-                <footer className="border-t border-gray-200 bg-gray-50/60 text-gray-500 py-8 px-4 text-center text-sm">
-                  <p className="font-medium text-gray-700">CurtainCall - 공연 아카이브 플랫폼</p>
+                <footer className="hidden sm:block border-t border-gray-100 bg-warm-50 text-gray-400 py-8 px-4 text-center text-sm">
+                  <p className="font-medium text-gray-600">CurtainCall <span className="text-brand">—</span> 공연 아카이브 플랫폼</p>
                   <p className="mt-1">공연 정보는 KOPIS(공연예술통합전산망)에서 제공됩니다.</p>
                 </footer>
               </>

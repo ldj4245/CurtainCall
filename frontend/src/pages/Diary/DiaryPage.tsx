@@ -38,8 +38,8 @@ export default function DiaryPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">관극 다이어리</h1>
-          <p className="text-gray-500 mt-1">
-            총 <span className="font-semibold text-gray-900">{stats?.totalCount ?? 0}</span>회 관람
+          <p className="text-gray-400 mt-1">
+            총 <span className="font-semibold text-brand">{stats?.totalCount ?? 0}</span>회 관람
           </p>
         </div>
         <button
@@ -51,8 +51,7 @@ export default function DiaryPage() {
         </button>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-lg w-fit mb-6">
+      <div className="flex gap-1 bg-warm-100 p-1 rounded-xl w-fit mb-6">
         {[
           { key: 'calendar', label: '캘린더', icon: <CalendarDays size={14} /> },
           { key: 'list', label: '목록', icon: <List size={14} /> },
@@ -61,7 +60,7 @@ export default function DiaryPage() {
           <button
             key={key}
             onClick={() => setActiveTab(key as 'calendar' | 'list' | 'stats')}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === key ? 'bg-white text-brand shadow-sm' : 'text-gray-500 hover:text-gray-700'
               }`}
           >
             {icon}
@@ -117,7 +116,7 @@ export default function DiaryPage() {
             </div>
           ) : (
             <div className="text-center py-20 text-gray-400">
-              <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center">
+              <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-brand-50 text-brand flex items-center justify-center">
                 <BookOpen size={20} />
               </div>
               <p className="text-lg font-medium">아직 관극 기록이 없어요.</p>

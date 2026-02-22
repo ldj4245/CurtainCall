@@ -27,16 +27,16 @@ export default function ReviewList({ showId, showReviewForm, onCloseForm }: Prop
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-          <MessageCircle size={20} className="text-primary-600" />
-          관객 리뷰 {data && <span className="text-gray-400 text-base">({data.totalElements})</span>}
+        <h2 className="section-title flex items-center gap-2">
+          <MessageCircle size={20} className="text-brand" />
+          관객 리뷰 {data && <span className="text-gray-400 text-base font-normal">({data.totalElements})</span>}
         </h2>
-        <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+        <div className="flex gap-1 bg-warm-100 rounded-lg p-1">
           {(['latest', 'likes'] as const).map((s) => (
             <button
               key={s}
               onClick={() => { setSort(s); setPage(0) }}
-              className={`px-3 py-1 text-sm rounded-md transition-colors ${sort === s ? 'bg-white font-medium shadow-sm' : 'text-gray-600'}`}
+              className={`px-3 py-1 text-sm rounded-md transition-all ${sort === s ? 'bg-white font-medium shadow-sm text-brand' : 'text-gray-500'}`}
             >
               {s === 'latest' ? '최신순' : '인기순'}
             </button>
@@ -61,8 +61,8 @@ export default function ReviewList({ showId, showReviewForm, onCloseForm }: Prop
         <div className="space-y-4">
           {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="card p-5 animate-pulse space-y-3">
-              <div className="h-4 bg-gray-200 rounded w-1/4" />
-              <div className="h-16 bg-gray-200 rounded" />
+              <div className="h-4 bg-warm-100 rounded w-1/4" />
+              <div className="h-16 bg-warm-100 rounded" />
             </div>
           ))}
         </div>
