@@ -1,0 +1,25 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/curtaincall_test?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: curtaincall
+    password: curtaincall123
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+  batch:
+    job:
+      enabled: false
+
+jwt:
+  secret: test-secret-key-for-testing-that-is-long-enough-for-hs256
+  access-expiration: 3600000
+  refresh-expiration: 604800000
+
+kopis:
+  api-key: test-key
+  base-url: http://test.kopis.or.kr
+
+app:
+  frontend-url: http://localhost:3000

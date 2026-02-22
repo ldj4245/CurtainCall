@@ -1,0 +1,117 @@
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Pretendard Variable', 'Pretendard', 'Apple SD Gothic Neo', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background-color: #ffffff;
+    color: #0f172a;
+    line-height: 1.5;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center bg-gray-900 hover:bg-black text-white font-semibold px-5 py-2.5 rounded-xl border border-gray-900 shadow-sm transition-all duration-200;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center bg-white hover:bg-gray-50 text-gray-800 font-medium px-5 py-2.5 rounded-xl border border-gray-300 shadow-sm transition-all duration-200;
+  }
+
+  .card {
+    @apply bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden transition-all duration-300;
+  }
+
+  .card-shadow {
+    @apply card shadow-sm hover:shadow-md hover:border-gray-300;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder:text-gray-400 focus:ring-4 focus:ring-gray-900/5 focus:border-gray-500 outline-none transition-all;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold border;
+  }
+
+  .badge-ongoing {
+    @apply badge bg-emerald-50 text-emerald-700 border-emerald-200;
+  }
+
+  .badge-upcoming {
+    @apply badge bg-blue-50 text-blue-700 border-blue-200;
+  }
+
+  .badge-ended {
+    @apply badge bg-gray-100 text-gray-600 border-gray-200;
+  }
+
+  .badge-musical {
+    @apply badge bg-violet-50 text-violet-700 border-violet-200;
+  }
+
+  .badge-play {
+    @apply badge bg-amber-50 text-amber-700 border-amber-200;
+  }
+
+  .filter-pill {
+    @apply px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer;
+  }
+
+  .filter-pill-active {
+    @apply filter-pill bg-gray-900 text-white border border-gray-900;
+  }
+
+  .filter-pill-inactive {
+    @apply filter-pill bg-white text-gray-600 border border-gray-300 hover:border-gray-400 hover:text-gray-900;
+  }
+
+  .star-rating {
+    @apply flex gap-0.5;
+  }
+}
+
+/* Calendar heatmap */
+.react-calendar-heatmap .color-empty {
+  fill: #f3f4f6;
+}
+
+.react-calendar-heatmap .color-scale-1 {
+  fill: #e9d5ff;
+}
+
+.react-calendar-heatmap .color-scale-2 {
+  fill: #c084fc;
+}
+
+.react-calendar-heatmap .color-scale-3 {
+  fill: #9333ea;
+}
+
+.react-calendar-heatmap .color-scale-4 {
+  fill: #7c3aed;
+}
+
+@keyframes contentFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.content-fade-in {
+  animation: contentFadeIn 0.2s ease-out;
+}

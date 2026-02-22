@@ -1,0 +1,223 @@
+import { useState } from 'react'
+import { useQuery, useMutation } from '@tanstack/react-query'
+import { Heart, Star, Edit2, LogOut, User as UserIcon, MessageCircle } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
+import { useAuthStore } from '../../store/authStore'
+import { authApi } from '../../api/auth'
+import { favoritesApi } from '../../api/favorites'
+import { reviewsApi } from '../../api/reviews'
+import ShowCard from '../../components/show/ShowCard'
+import Pagination from '../../components/common/Pagination'
+
+type Tab = 'favorites' | 'reviews' | 'profile'
+
+export default function MyPage() {
+    const navigate = useNavigate()
+    const { user, setUser, logout: storeLogout } = useAuthStore()
+    const [activeTab, setActiveTab] = useState<Tab>('favorites')
+    const [favPage, setFavPage] = useState(0)
+    const [editingNickname, setEditingNickname] = useState(false)
+    const [nickname, setNickname] = useState(user?.nickname || '')
+
+    // 내 찜 목록
+    const { data: favorites } = useQuery({
+        queryKey: ['my-favorites', favPage],
+        queryFn: () => favoritesApi.getMyFavorites(favPage, 8),
+        enabled: activeTab === 'favorites',
+    })
+
+    // 내 리뷰 (reviews API에 my-reviews 엔드포인트가 없으면 빈 배열)
+    const { data: myReviews } = useQuery({
+        queryKey: ['my-reviews'],
+        queryFn: () => reviewsApi.getMyReviews?.() || Promise.resolve({ content: [], totalPages: 0 }),
+        enabled: activeTab === 'reviews',
+    })
+
+    // 닉네임 변경
+    const updateNickname = useMutation({
+        mutationFn: () => authApi.updateNickname(nickname),
+        onSuccess: (updatedUser) => {
+            setUser(updatedUser)
+            setEditingNickname(false)
+            toast.success('닉네임이 변경되었습니다!')
+        },
+        onError: () => toast.error('닉네임 변경에 실패했습니다'),
+    })
+
+    const handleLogout = () => {
+        storeLogout()
+        toast.success('로그아웃 되었습니다')
+        navigate('/')
+    }
+
+    const tabs = [
+        { key: 'favorites' as Tab, label: '내 찜 목록', icon: <Heart size={16} /> },
+        { key: 'reviews' as Tab, label: '내 리뷰', icon: <Star size={16} /> },
+        { key: 'profile' as Tab, label: '프로필 설정', icon: <UserIcon size={16} /> },
+    ]
+
+    return (
+        <div className="max-w-5xl mx-auto px-4 py-8">
+            {/* Header */}
+            <div className="flex items-center gap-4 mb-8">
+                <div className="w-16 h-16 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden">
+                    {user?.profileImage ? (
+                        <img src={user.profileImage} alt="" className="w-full h-full object-cover" />
+                    ) : <UserIcon size={24} className="text-gray-500" />}
+                </div>
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900">{user?.nickname || '사용자'}</h1>
+                    <p className="text-sm text-gray-400">{user?.email}</p>
+                </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit mb-8">
+                {tabs.map(({ key, label, icon }) => (
+                    <button
+                        key={key}
+                        onClick={() => setActiveTab(key)}
+                        className={`flex items-center gap-1.5 px-5 py-2.5 rounded-lg text-sm font-medium transition-all ${activeTab === key
+                            ? 'bg-white text-gray-900 shadow-sm'
+                            : 'text-gray-500 hover:text-gray-700'
+                            }`}
+                    >
+                        {icon}
+                        {label}
+                    </button>
+                ))}
+            </div>
+
+            {/* Tab Content */}
+            {activeTab === 'favorites' && (
+                <div>
+                    {favorites && favorites.content.length > 0 ? (
+                        <>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
+                                {favorites.content.map((show: any) => (
+                                    <ShowCard key={show.id} show={show} />
+                                ))}
+                            </div>
+                            <div className="mt-6">
+                                <Pagination
+                                    currentPage={favPage}
+                                    totalPages={favorites.totalPages}
+                                    onPageChange={setFavPage}
+                                />
+                            </div>
+                        </>
+                    ) : (
+                        <div className="text-center py-20 text-gray-400">
+                            <Heart size={48} className="mx-auto mb-3 text-gray-200" />
+                            <p className="font-medium">찜한 공연이 없어요.</p>
+                            <p className="text-sm mt-1">마음에 드는 공연을 저장해 나만의 목록을 만들어보세요.</p>
+                            <button onClick={() => navigate('/shows')} className="btn-primary mt-4">
+                                공연 둘러보기
+                            </button>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {activeTab === 'reviews' && (
+                <div>
+                    {myReviews && myReviews.content?.length > 0 ? (
+                        <div className="space-y-4">
+                            {myReviews.content.map((review: any) => (
+                                <div key={review.id} className="card p-5">
+                                    <div className="flex items-start justify-between mb-2">
+                                        <div>
+                                            <h3 className="font-bold text-gray-900">{review.showTitle || '공연'}</h3>
+                                            <p className="text-xs text-gray-400">{review.createdAt?.slice(0, 10)}</p>
+                                        </div>
+                                        <div className="flex items-center gap-1 text-amber-600 font-bold text-sm">
+                                            <Star size={13} className="fill-amber-600" />
+                                            {review.averageScore?.toFixed(1)}
+                                        </div>
+                                    </div>
+                                    <p className="text-sm text-gray-700 line-clamp-2">{review.content}</p>
+                                    <div className="flex gap-3 mt-2 text-xs text-gray-400">
+                                        <span className="inline-flex items-center gap-1">
+                                            <Heart size={12} />
+                                            {review.likeCount}
+                                        </span>
+                                        <span className="inline-flex items-center gap-1">
+                                            <MessageCircle size={12} />
+                                            {review.commentCount}
+                                        </span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-20 text-gray-400">
+                            <Star size={48} className="mx-auto mb-3 text-gray-200" />
+                            <p className="font-medium">작성한 리뷰가 없어요.</p>
+                            <p className="text-sm mt-1">공연을 보고 솔직한 리뷰를 남겨보세요!</p>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {activeTab === 'profile' && (
+                <div className="max-w-md space-y-6">
+                    {/* 닉네임 */}
+                    <div className="card p-5">
+                        <label className="text-sm font-medium text-gray-700 mb-2 block">닉네임</label>
+                        {editingNickname ? (
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    value={nickname}
+                                    onChange={(e) => setNickname(e.target.value)}
+                                    className="input-field flex-1"
+                                    maxLength={20}
+                                />
+                                <button
+                                    onClick={() => updateNickname.mutate()}
+                                    disabled={updateNickname.isPending || !nickname.trim()}
+                                    className="btn-primary text-sm px-4"
+                                >
+                                    저장
+                                </button>
+                                <button
+                                    onClick={() => { setEditingNickname(false); setNickname(user?.nickname || '') }}
+                                    className="btn-secondary text-sm px-4"
+                                >
+                                    취소
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="flex items-center justify-between">
+                                <span className="text-gray-900 font-medium">{user?.nickname}</span>
+                                <button
+                                    onClick={() => setEditingNickname(true)}
+                                    className="flex items-center gap-1 text-sm text-gray-400 hover:text-gray-600"
+                                >
+                                    <Edit2 size={14} />
+                                    수정
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* 이메일 */}
+                    <div className="card p-5">
+                        <label className="text-sm font-medium text-gray-700 mb-2 block">이메일</label>
+                        <span className="text-gray-500">{user?.email}</span>
+                    </div>
+
+                    {/* 로그아웃 */}
+                    <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-2 text-red-500 hover:text-red-600 text-sm font-medium transition-colors"
+                    >
+                        <LogOut size={16} />
+                        로그아웃
+                    </button>
+                </div>
+            )}
+        </div>
+    )
+}
