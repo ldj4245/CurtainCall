@@ -164,11 +164,25 @@ public class KopisSyncService {
         }
     }
 
+    private final org.springframework.cache.CacheManager cacheManager;
+
     @org.springframework.context.event.EventListener(org.springframework.boot.context.event.ApplicationReadyEvent.class)
     public void initSyncIfEmpty() {
         if (showRepository.count() == 0) {
             log.info("DB가 비어있습니다. 초기 데이터를 동기화합니다 (약 3~5분 소요)...");
             syncShows();
+
+            // 캐시 명시적 초기화 (내부 호출로 인한 @CacheEvict 무시 우회)
+            if (cacheManager != null) {
+                log.info("초기 동기화 완료 후 캐시를 비웁니다...");
+                String[] cacheNames = { "showsSearch", "showDetail", "ongoingShows" };
+                for (String cacheName : cacheNames) {
+                    org.springframework.cache.Cache cache = cacheManager.getCache(cacheName);
+                    if (cache != null) {
+                        cache.clear();
+                    }
+                }
+            }
         }
     }
 }
