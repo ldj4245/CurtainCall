@@ -163,4 +163,12 @@ public class KopisSyncService {
             return null;
         }
     }
+
+    @org.springframework.context.event.EventListener(org.springframework.boot.context.event.ApplicationReadyEvent.class)
+    public void initSyncIfEmpty() {
+        if (showRepository.count() == 0) {
+            log.info("DB가 비어있습니다. 초기 데이터를 동기화합니다 (약 3~5분 소요)...");
+            syncShows();
+        }
+    }
 }
