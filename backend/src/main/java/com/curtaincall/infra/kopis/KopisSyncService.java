@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -28,7 +29,6 @@ public class KopisSyncService {
     private static final String[] GENRES = { "GGGA", "AAAA" }; // 뮤지컬, 연극
 
     @Scheduled(cron = "0 0 2 * * *") // 매일 새벽 2시
-    @Transactional
     @CacheEvict(value = { "showsSearch", "showDetail", "ongoingShows" }, allEntries = true)
     public void syncShows() {
         log.info("KOPIS 공연 동기화 시작");
@@ -67,7 +67,6 @@ public class KopisSyncService {
         log.info("KOPIS 극장 동기화 완료");
     }
 
-    @Transactional
     @CacheEvict(value = { "showsSearch", "showDetail", "ongoingShows" }, allEntries = true)
     public void manualSyncShows(int months) {
         LocalDate today = LocalDate.now();
@@ -87,7 +86,8 @@ public class KopisSyncService {
         }
     }
 
-    private void syncShow(KopisShowDto showDto) {
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void syncShow(KopisShowDto showDto) {
         try {
             KopisShowDetailDto detail = kopisApiClient.fetchShowDetail(showDto.getKopisId());
             if (detail == null)
