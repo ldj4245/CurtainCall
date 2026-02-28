@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { useQuery, useMutation } from '@tanstack/react-query'
-import { Heart, Star, Edit2, LogOut, User as UserIcon, MessageCircle } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Heart, Star, Edit2, LogOut, User as UserIcon, MessageCircle, Trash2, Pencil } from 'lucide-react'
+import { useNavigate, Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '../../store/authStore'
 import { authApi } from '../../api/auth'
@@ -9,16 +9,19 @@ import { favoritesApi } from '../../api/favorites'
 import { reviewsApi } from '../../api/reviews'
 import ShowCard from '../../components/show/ShowCard'
 import Pagination from '../../components/common/Pagination'
+import ConfirmModal from '../../components/common/ConfirmModal'
 
 type Tab = 'favorites' | 'reviews' | 'profile'
 
 export default function MyPage() {
     const navigate = useNavigate()
+    const queryClient = useQueryClient()
     const { user, setUser, logout: storeLogout } = useAuthStore()
     const [activeTab, setActiveTab] = useState<Tab>('favorites')
     const [favPage, setFavPage] = useState(0)
     const [editingNickname, setEditingNickname] = useState(false)
     const [nickname, setNickname] = useState(user?.nickname || '')
+    const [deletingReviewId, setDeletingReviewId] = useState<number | null>(null)
 
     const { data: favorites } = useQuery({
         queryKey: ['my-favorites', favPage],
@@ -47,6 +50,16 @@ export default function MyPage() {
         toast.success('로그아웃 되었습니다')
         navigate('/')
     }
+
+    const deleteReviewMutation = useMutation({
+        mutationFn: (reviewId: number) => reviewsApi.delete(reviewId),
+        onSuccess: () => {
+            toast.success('리뷰가 삭제되었습니다.')
+            setDeletingReviewId(null)
+            queryClient.invalidateQueries({ queryKey: ['my-reviews'] })
+        },
+        onError: () => toast.error('리뷰 삭제에 실패했습니다.'),
+    })
 
     const tabs = [
         { key: 'favorites' as Tab, label: '내 찜 목록', icon: <Heart size={16} /> },
@@ -122,12 +135,32 @@ export default function MyPage() {
                                 <div key={review.id} className="card p-5">
                                     <div className="flex items-start justify-between mb-2">
                                         <div>
-                                            <h3 className="font-bold text-gray-900">{review.showTitle || '공연'}</h3>
+                                            <Link
+                                                to={`/shows/${review.showId}`}
+                                                className="font-bold text-gray-900 hover:text-brand transition-colors"
+                                            >
+                                                {review.showTitle || '공연'}
+                                            </Link>
                                             <p className="text-xs text-gray-400">{review.createdAt?.slice(0, 10)}</p>
                                         </div>
-                                        <div className="flex items-center gap-1 text-gold font-bold text-sm">
-                                            <Star size={13} className="fill-gold" />
-                                            {review.averageScore?.toFixed(1)}
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex items-center gap-1 text-gold font-bold text-sm">
+                                                <Star size={13} className="fill-gold" />
+                                                {review.averageScore?.toFixed(1)}
+                                            </div>
+                                            <button
+                                                onClick={() => navigate(`/shows/${review.showId}`)}
+                                                className="text-gray-300 hover:text-brand transition-colors"
+                                                title="공연 상세에서 수정"
+                                            >
+                                                <Pencil size={14} />
+                                            </button>
+                                            <button
+                                                onClick={() => setDeletingReviewId(review.id)}
+                                                className="text-gray-300 hover:text-red-500 transition-colors"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
                                         </div>
                                     </div>
                                     <p className="text-sm text-gray-700 line-clamp-2">{review.content}</p>
@@ -143,6 +176,16 @@ export default function MyPage() {
                                     </div>
                                 </div>
                             ))}
+                            {deletingReviewId !== null && (
+                                <ConfirmModal
+                                    title="리뷰 삭제"
+                                    message="정말 이 리뷰를 삭제하시겠습니까?"
+                                    confirmText="삭제하기"
+                                    cancelText="취소"
+                                    onConfirm={() => deleteReviewMutation.mutate(deletingReviewId)}
+                                    onCancel={() => setDeletingReviewId(null)}
+                                />
+                            )}
                         </div>
                     ) : (
                         <div className="text-center py-20 text-gray-400">
