@@ -162,18 +162,23 @@ public class KopisSyncService {
     private void enrichTheater(Theater theater) {
         try {
             KopisTheaterDto detail = kopisApiClient.fetchTheaterDetail(theater.getKopisId());
-            if (detail != null && detail.getRegion() != null) {
+            if (detail != null && detail.getAddress() != null) {
+                String region = detail.getRegion();
+                if (region == null || region.isBlank()) {
+                    region = detail.getAddress().split(" ")[0]; // 도로명 주소의 첫 번째 단어 (예: 서울특별시)
+                }
+
                 theater.update(
                         detail.getName() != null ? detail.getName() : theater.getName(),
                         detail.getAddress(),
                         detail.getSeatScale(),
-                        detail.getRegion(),
+                        region,
                         detail.getCharacteristics());
                 theaterRepository.save(theater);
                 log.info("극장 지역 정보 업데이트 - {} → region: {}, address: {}",
-                        theater.getName(), detail.getRegion(), detail.getAddress());
+                        theater.getName(), region, detail.getAddress());
             } else {
-                log.warn("극장 상세 정보 없음 - kopisId: {}, name: {}", theater.getKopisId(), theater.getName());
+                log.warn("극장 상세 정보 없음 또는 주소 누락 - kopisId: {}, name: {}", theater.getKopisId(), theater.getName());
             }
         } catch (Exception e) {
             log.warn("극장 상세 조회 실패 - kopisId: {}, error: {}", theater.getKopisId(), e.getMessage());
