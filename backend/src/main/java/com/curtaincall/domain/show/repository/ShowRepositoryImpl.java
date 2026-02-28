@@ -38,7 +38,10 @@ public class ShowRepositoryImpl implements ShowRepositoryCustom {
             builder.and(show.status.eq(status));
         }
         if (region != null && !region.isBlank()) {
-            builder.and(theater.region.eq(region));
+            builder.and(
+                    theater.region.containsIgnoreCase(region)
+                            .or(theater.address.containsIgnoreCase(region))
+                            .or(show.title.containsIgnoreCase(region)));
         }
 
         NumberExpression<Integer> statusOrder = new CaseBuilder()

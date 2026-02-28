@@ -133,10 +133,74 @@ public class KopisSyncService {
         if (detail.getTheaterKopisId() == null)
             return null;
         return theaterRepository.findByKopisId(detail.getTheaterKopisId())
-                .orElseGet(() -> theaterRepository.save(Theater.builder()
-                        .kopisId(detail.getTheaterKopisId())
-                        .name(detail.getTheaterName() != null ? detail.getTheaterName() : "미상")
-                        .build()));
+                .map(existing -> {
+                    if (existing.getRegion() == null || existing.getRegion().isBlank()) {
+                        enrichTheater(existing);
+                    }
+                    return existing;
+                })
+                .orElseGet(() -> {
+                    KopisTheaterDto theaterDetail = kopisApiClient.fetchTheaterDetail(detail.getTheaterKopisId());
+                    if (theaterDetail != null) {
+                        return theaterRepository.save(Theater.builder()
+                                .kopisId(detail.getTheaterKopisId())
+                                .name(theaterDetail.getName() != null ? theaterDetail.getName()
+                                        : detail.getTheaterName())
+                                .address(theaterDetail.getAddress())
+                                .region(theaterDetail.getRegion())
+                                .seatScale(theaterDetail.getSeatScale())
+                                .characteristics(theaterDetail.getCharacteristics())
+                                .build());
+                    }
+                    return theaterRepository.save(Theater.builder()
+                            .kopisId(detail.getTheaterKopisId())
+                            .name(detail.getTheaterName() != null ? detail.getTheaterName() : "미상")
+                            .build());
+                });
+    }
+
+    private void enrichTheater(Theater theater) {
+        try {
+            KopisTheaterDto detail = kopisApiClient.fetchTheaterDetail(theater.getKopisId());
+            if (detail != null && detail.getRegion() != null) {
+                theater.update(
+                        detail.getName() != null ? detail.getName() : theater.getName(),
+                        detail.getAddress(),
+                        detail.getSeatScale(),
+                        detail.getRegion(),
+                        detail.getCharacteristics());
+                theaterRepository.save(theater);
+                log.info("극장 지역 정보 업데이트 - {} → region: {}, address: {}",
+                        theater.getName(), detail.getRegion(), detail.getAddress());
+            } else {
+                log.warn("극장 상세 정보 없음 - kopisId: {}, name: {}", theater.getKopisId(), theater.getName());
+            }
+        } catch (Exception e) {
+            log.warn("극장 상세 조회 실패 - kopisId: {}, error: {}", theater.getKopisId(), e.getMessage());
+        }
+    }
+
+    @Transactional
+    public void enrichAllTheaterRegions() {
+        List<Theater> theatersWithoutRegion = theaterRepository.findAll()
+                .stream()
+                .filter(t -> t.getRegion() == null || t.getRegion().isBlank())
+                .toList();
+
+        log.info("지역 정보 없는 극장 {} 건 보강 시작", theatersWithoutRegion.size());
+        int updated = 0;
+        for (Theater theater : theatersWithoutRegion) {
+            enrichTheater(theater);
+            updated++;
+            if (updated % 50 == 0) {
+                log.info("극장 보강 진행 중 - {}/{}", updated, theatersWithoutRegion.size());
+            }
+            try {
+                Thread.sleep(300);
+            } catch (InterruptedException ignored) {
+            }
+        }
+        log.info("극장 지역 정보 보강 완료 - {} 건", updated);
     }
 
     private void syncTheater(KopisTheaterDto dto) {

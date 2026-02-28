@@ -42,14 +42,15 @@ public class KopisApiClient {
                     baseUrl, apiKey,
                     startDate.format(DATE_FORMATTER),
                     endDate.format(DATE_FORMATTER),
-                    page, PAGE_SIZE, genre
-            );
+                    page, PAGE_SIZE, genre);
 
             try {
                 List<KopisShowDto> pageResult = parseShowList(urlStr);
-                if (pageResult.isEmpty()) break;
+                if (pageResult.isEmpty())
+                    break;
                 result.addAll(pageResult);
-                if (pageResult.size() < PAGE_SIZE) break;
+                if (pageResult.size() < PAGE_SIZE)
+                    break;
                 page++;
                 Thread.sleep(300);
             } catch (Exception e) {
@@ -66,7 +67,8 @@ public class KopisApiClient {
         try {
             Document doc = fetchXml(urlStr);
             NodeList dbList = doc.getElementsByTagName("db");
-            if (dbList.getLength() == 0) return null;
+            if (dbList.getLength() == 0)
+                return null;
 
             Element el = (Element) dbList.item(0);
             return KopisShowDetailDto.builder()
@@ -100,9 +102,11 @@ public class KopisApiClient {
             String urlStr = String.format("%s/prfplc?service=%s&cpage=%d&rows=%d", baseUrl, apiKey, page, PAGE_SIZE);
             try {
                 List<KopisTheaterDto> pageResult = parseTheaterList(urlStr);
-                if (pageResult.isEmpty()) break;
+                if (pageResult.isEmpty())
+                    break;
                 result.addAll(pageResult);
-                if (pageResult.size() < PAGE_SIZE) break;
+                if (pageResult.size() < PAGE_SIZE)
+                    break;
                 page++;
                 Thread.sleep(300);
             } catch (Exception e) {
@@ -112,6 +116,29 @@ public class KopisApiClient {
         }
 
         return result;
+    }
+
+    public KopisTheaterDto fetchTheaterDetail(String theaterKopisId) {
+        String urlStr = String.format("%s/prfplc/%s?service=%s", baseUrl, theaterKopisId, apiKey);
+        try {
+            Document doc = fetchXml(urlStr);
+            NodeList dbList = doc.getElementsByTagName("db");
+            if (dbList.getLength() == 0)
+                return null;
+
+            Element el = (Element) dbList.item(0);
+            return KopisTheaterDto.builder()
+                    .kopisId(getText(el, "mt10id"))
+                    .name(getText(el, "fcltynm"))
+                    .region(getText(el, "sidonm"))
+                    .address(getText(el, "adres"))
+                    .seatScale(parseInteger(getText(el, "seatscale")))
+                    .characteristics(getText(el, "fcltychartr"))
+                    .build();
+        } catch (Exception e) {
+            log.error("KOPIS 극장 상세 조회 실패 - kopisId: {}, error: {}", theaterKopisId, e.getMessage());
+            return null;
+        }
     }
 
     private List<KopisShowDto> parseShowList(String urlStr) throws Exception {
@@ -170,12 +197,14 @@ public class KopisApiClient {
 
     private String getText(Element el, String tagName) {
         NodeList nodes = el.getElementsByTagName(tagName);
-        if (nodes.getLength() == 0 || nodes.item(0) == null) return null;
+        if (nodes.getLength() == 0 || nodes.item(0) == null)
+            return null;
         return nodes.item(0).getTextContent();
     }
 
     private Integer parseInteger(String value) {
-        if (value == null || value.isBlank()) return null;
+        if (value == null || value.isBlank())
+            return null;
         try {
             return Integer.parseInt(value.replaceAll("[^0-9]", ""));
         } catch (NumberFormatException e) {
@@ -185,7 +214,8 @@ public class KopisApiClient {
 
     private String extractIntroImages(Element el) {
         NodeList styurls = el.getElementsByTagName("styurls");
-        if (styurls.getLength() == 0) return null;
+        if (styurls.getLength() == 0)
+            return null;
         Element styurlsEl = (Element) styurls.item(0);
         NodeList styurl = styurlsEl.getElementsByTagName("styurl");
         List<String> urls = new ArrayList<>();
