@@ -51,6 +51,7 @@ export default function ReviewList({ showId, showReviewForm, onCloseForm }: Prop
             onSubmitted={() => {
               onCloseForm()
               queryClient.invalidateQueries({ queryKey: ['reviews', showId] })
+              queryClient.invalidateQueries({ queryKey: ['show', showId] })
             }}
             onCancel={onCloseForm}
           />
@@ -73,7 +74,10 @@ export default function ReviewList({ showId, showReviewForm, onCloseForm }: Prop
               <ReviewCard
                 key={review.id}
                 review={review}
-                onUpdated={() => queryClient.invalidateQueries({ queryKey: ['reviews', showId] })}
+                onUpdated={() => {
+                  queryClient.invalidateQueries({ queryKey: ['reviews', showId] })
+                  queryClient.invalidateQueries({ queryKey: ['show', showId] })
+                }}
               />
             ))}
           </div>

@@ -13,6 +13,7 @@ import com.curtaincall.domain.user.entity.User;
 import com.curtaincall.domain.user.repository.UserRepository;
 import com.curtaincall.global.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,14 @@ public class ReviewService {
         private final ReviewLikeRepository likeRepository;
         private final ShowRepository showRepository;
         private final UserRepository userRepository;
+        private final CacheManager cacheManager;
+
+        private void evictShowDetailCache(Long showId) {
+                var cache = cacheManager.getCache("showDetail");
+                if (cache != null) {
+                        cache.evict(showId);
+                }
+        }
 
         public Page<ReviewResponse> getReviewsByShow(Long showId, String sort, int page, int size, Long currentUserId) {
                 PageRequest pageable = PageRequest.of(page, size);
@@ -64,6 +73,7 @@ public class ReviewService {
                                 .hasSpoiler(request.getHasSpoiler() != null ? request.getHasSpoiler() : false)
                                 .build());
 
+                evictShowDetailCache(showId);
                 return ReviewResponse.from(review, false, 0L);
         }
 
@@ -77,6 +87,7 @@ public class ReviewService {
                                 request.getContent(),
                                 request.getHasSpoiler() != null ? request.getHasSpoiler() : false);
 
+                evictShowDetailCache(review.getShow().getId());
                 long commentCount = commentRepository.countByReviewId(reviewId);
                 boolean isLiked = likeRepository.existsByReviewIdAndUserId(reviewId, userId);
                 return ReviewResponse.from(review, isLiked, commentCount);
@@ -86,7 +97,9 @@ public class ReviewService {
         public void deleteReview(Long userId, Long reviewId) {
                 Review review = reviewRepository.findByIdAndUserId(reviewId, userId)
                                 .orElseThrow(() -> BusinessException.notFound("리뷰를 찾을 수 없습니다."));
+                Long showId = review.getShow().getId();
                 reviewRepository.delete(review);
+                evictShowDetailCache(showId);
         }
 
         @Transactional
