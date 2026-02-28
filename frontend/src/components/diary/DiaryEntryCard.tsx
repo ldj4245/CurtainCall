@@ -97,6 +97,20 @@ export default function DiaryEntryCard({ entry, onUpdated }: Props) {
         </div>
       </div>
 
+      {entry.photoUrls?.length > 0 && (
+        <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
+          {entry.photoUrls.map((url, i) => (
+            <img
+              key={url}
+              src={url}
+              alt={`사진 ${i + 1}`}
+              className="w-16 h-16 object-cover rounded-lg shrink-0 border border-gray-100"
+              loading="lazy"
+            />
+          ))}
+        </div>
+      )}
+
       {editing && (
         <DiaryFormModal
           entry={entry}

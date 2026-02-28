@@ -6,6 +6,9 @@ import lombok.Getter;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 @Getter
 @Builder
@@ -22,9 +25,16 @@ public class DiaryResponse {
     private String comment;
     private Integer ticketPrice;
     private Boolean isOpen;
+    private List<String> photoUrls;
+    private String representativeImageUrl;
     private LocalDateTime createdAt;
 
     public static DiaryResponse from(DiaryEntry entry) {
+        List<String> photos = parsePhotoUrls(entry.getPhotoUrls());
+        String representativeImage = photos.isEmpty()
+                ? entry.getShow().getPosterUrl()
+                : photos.get(0);
+
         return DiaryResponse.builder()
                 .id(entry.getId())
                 .showId(entry.getShow().getId())
@@ -38,7 +48,19 @@ public class DiaryResponse {
                 .comment(entry.getComment())
                 .ticketPrice(entry.getTicketPrice())
                 .isOpen(entry.getIsOpen())
+                .photoUrls(photos)
+                .representativeImageUrl(representativeImage)
                 .createdAt(entry.getCreatedAt())
                 .build();
+    }
+
+    private static List<String> parsePhotoUrls(String photoUrls) {
+        if (photoUrls == null || photoUrls.isBlank()) {
+            return Collections.emptyList();
+        }
+        return Arrays.stream(photoUrls.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toList();
     }
 }

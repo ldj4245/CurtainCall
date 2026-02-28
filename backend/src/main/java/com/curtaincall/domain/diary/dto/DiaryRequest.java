@@ -4,6 +4,7 @@ import jakarta.validation.constraints.*;
 import lombok.Getter;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Getter
 public class DiaryRequest {
@@ -32,4 +33,7 @@ public class DiaryRequest {
     private Integer ticketPrice;
 
     private Boolean isOpen = false;
+
+    @Size(max = 5, message = "사진은 최대 5장까지 첨부할 수 있습니다.")
+    private List<String> photoUrls;
 }

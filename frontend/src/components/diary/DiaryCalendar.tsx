@@ -102,10 +102,26 @@ export default function DiaryCalendar() {
                     e.stopPropagation()
                     navigate(`/shows/${entry.showId}`)
                   }}
-                  className="w-full text-left text-xs truncate px-1.5 py-0.5 rounded bg-brand-50 text-brand-700 hover:bg-brand-100 transition-colors cursor-pointer"
+                  className="w-full text-left rounded overflow-hidden hover:opacity-80 transition-opacity cursor-pointer"
                   title={entry.showTitle}
                 >
-                  {entry.showTitle}
+                  {entry.representativeImageUrl ? (
+                    <div className="relative w-full">
+                      <img
+                        src={entry.representativeImageUrl}
+                        alt={entry.showTitle}
+                        className="w-full h-12 object-cover rounded"
+                        loading="lazy"
+                      />
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-1 py-0.5 rounded-b">
+                        <span className="text-white text-[10px] truncate block">{entry.showTitle}</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <span className="text-xs truncate px-1.5 py-0.5 rounded bg-brand-50 text-brand-700 block">
+                      {entry.showTitle}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>

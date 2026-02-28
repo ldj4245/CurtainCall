@@ -40,6 +40,12 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       KOPIS_API_KEY: ${KOPIS_API_KEY}
       FRONTEND_URL: http://localhost:3000
+      DO_SPACES_ENDPOINT: ${DO_SPACES_ENDPOINT:-https://sgp1.digitaloceanspaces.com}
+      DO_SPACES_REGION: ${DO_SPACES_REGION:-sgp1}
+      DO_SPACES_ACCESS_KEY: ${DO_SPACES_ACCESS_KEY:-}
+      DO_SPACES_SECRET_KEY: ${DO_SPACES_SECRET_KEY:-}
+      DO_SPACES_BUCKET: ${DO_SPACES_BUCKET:-curtaincall}
+      DO_SPACES_CDN_URL: ${DO_SPACES_CDN_URL:-https://curtaincall.sgp1.cdn.digitaloceanspaces.com}
     depends_on:
       mysql:
         condition: service_healthy

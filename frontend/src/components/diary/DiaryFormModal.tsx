@@ -1,12 +1,14 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query'
-import { X } from 'lucide-react'
+import { X, ImagePlus, Trash2, Loader2 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { diaryApi, type DiaryCreateRequest } from '../../api/diary'
 import { showsApi } from '../../api/shows'
 import type { DiaryEntry } from '../../types'
 import StarRating from '../common/StarRating'
+
+const MAX_PHOTOS = 5
 
 interface Props {
   entry?: DiaryEntry
@@ -22,6 +24,9 @@ export default function DiaryFormModal({ entry, initialShowId, initialShowTitle,
   const [showSearch, setShowSearch] = useState('')
   const [selectedShowId, setSelectedShowId] = useState<number | null>(entry?.showId ?? initialShowId ?? null)
   const [selectedShowTitle, setSelectedShowTitle] = useState<string>(entry?.showTitle ?? initialShowTitle ?? '')
+  const [photoUrls, setPhotoUrls] = useState<string[]>(entry?.photoUrls ?? [])
+  const [isUploading, setIsUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const { data: searchResults } = useQuery({
     queryKey: ['shows', 'search', showSearch],
@@ -41,9 +46,31 @@ export default function DiaryFormModal({ entry, initialShowId, initialShowTitle,
     },
   })
 
+  const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? [])
+    if (photoUrls.length + files.length > MAX_PHOTOS) {
+      toast.error(`사진은 최대 ${MAX_PHOTOS}장까지 첨부할 수 있습니다.`)
+      return
+    }
+    setIsUploading(true)
+    try {
+      const urls = await Promise.all(files.map((file) => diaryApi.uploadImage(file)))
+      setPhotoUrls((prev) => [...prev, ...urls])
+    } catch {
+      toast.error('사진 업로드에 실패했습니다.')
+    } finally {
+      setIsUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
+  const removePhoto = (index: number) => {
+    setPhotoUrls((prev) => prev.filter((_, i) => i !== index))
+  }
+
   const mutation = useMutation({
     mutationFn: (data: DiaryCreateRequest) => {
-      const payload = { ...data, showId: selectedShowId!, rating }
+      const payload = { ...data, showId: selectedShowId!, rating, photoUrls }
       return entry ? diaryApi.update(entry.id, payload) : diaryApi.create(payload)
     },
     onSuccess: () => {
@@ -151,9 +178,48 @@ export default function DiaryFormModal({ entry, initialShowId, initialShowTitle,
             </div>
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              사진 첨부 <span className="text-gray-400 font-normal">({photoUrls.length}/{MAX_PHOTOS})</span>
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {photoUrls.map((url, i) => (
+                <div key={url} className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 group">
+                  <img src={url} alt={`첨부사진 ${i + 1}`} className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => removePhoto(i)}
+                    className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+                  >
+                    <Trash2 size={16} className="text-white" />
+                  </button>
+                </div>
+              ))}
+              {photoUrls.length < MAX_PHOTOS && (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                  className="w-20 h-20 rounded-lg border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-400 hover:border-brand hover:text-brand transition-colors disabled:opacity-50"
+                >
+                  {isUploading ? <Loader2 size={20} className="animate-spin" /> : <ImagePlus size={20} />}
+                  <span className="text-xs mt-1">{isUploading ? '업로드 중' : '추가'}</span>
+                </button>
+              )}
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              multiple
+              className="hidden"
+              onChange={handlePhotoSelect}
+            />
+          </div>
+
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={onClose} className="flex-1 btn-secondary">취소</button>
-            <button type="submit" disabled={mutation.isPending} className="flex-1 btn-primary">
+            <button type="submit" disabled={mutation.isPending || isUploading} className="flex-1 btn-primary">
               {mutation.isPending ? '저장 중...' : '저장'}
             </button>
           </div>

@@ -73,6 +73,15 @@ kopis:
 app:
   frontend-url: ${FRONTEND_URL:http://localhost:3000}
 
+storage:
+  do-spaces:
+    endpoint: ${DO_SPACES_ENDPOINT:https://sgp1.digitaloceanspaces.com}
+    region: ${DO_SPACES_REGION:sgp1}
+    access-key: ${DO_SPACES_ACCESS_KEY:}
+    secret-key: ${DO_SPACES_SECRET_KEY:}
+    bucket: ${DO_SPACES_BUCKET:curtaincall}
+    cdn-url: ${DO_SPACES_CDN_URL:https://curtaincall.sgp1.cdn.digitaloceanspaces.com}
+
 springdoc:
   api-docs:
     path: /api-docs

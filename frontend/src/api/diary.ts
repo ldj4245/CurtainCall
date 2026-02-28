@@ -10,6 +10,7 @@ export interface DiaryCreateRequest {
   comment?: string
   ticketPrice?: number
   isOpen?: boolean
+  photoUrls?: string[]
 }
 
 export const diaryApi = {
@@ -30,4 +31,12 @@ export const diaryApi = {
 
   delete: (id: number) =>
     api.delete(`/diary/${id}`).then((r) => r.data),
+
+  uploadImage: (file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return api.post<{ url: string }>('/diary/images', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then((r) => r.data.url)
+  },
 }

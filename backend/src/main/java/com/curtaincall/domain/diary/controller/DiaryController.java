@@ -4,6 +4,7 @@ import com.curtaincall.domain.diary.dto.DiaryRequest;
 import com.curtaincall.domain.diary.dto.DiaryResponse;
 import com.curtaincall.domain.diary.dto.DiaryStatsDto;
 import com.curtaincall.domain.diary.service.DiaryService;
+import com.curtaincall.global.infra.storage.ImageUploadService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -11,9 +12,13 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Map;
 
 @Tag(name = "관극 다이어리", description = "관극 기록 API")
 @RestController
@@ -23,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 public class DiaryController {
 
     private final DiaryService diaryService;
+    private final ImageUploadService imageUploadService;
 
     @Operation(summary = "내 관극 기록 목록 조회")
     @GetMapping("/me")
@@ -63,6 +69,15 @@ public class DiaryController {
             @PathVariable Long id) {
         diaryService.deleteDiary(userId, id);
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "다이어리 이미지 업로드")
+    @PostMapping(value = "/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Map<String, String>> uploadImage(
+            @AuthenticationPrincipal Long userId,
+            @RequestParam("file") MultipartFile file) {
+        String url = imageUploadService.uploadImage(file, "diary/" + userId);
+        return ResponseEntity.ok(Map.of("url", url));
     }
 
     @Operation(summary = "월별 캘린더 관극 기록 조회")

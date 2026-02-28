@@ -53,6 +53,8 @@ export interface DiaryEntry {
   comment?: string
   ticketPrice?: number
   isOpen: boolean
+  photoUrls: string[]
+  representativeImageUrl?: string
   createdAt: string
 }
 

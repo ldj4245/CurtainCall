@@ -55,8 +55,11 @@ public class DiaryEntry extends com.curtaincall.global.common.SoftDeleteEntity {
     @Builder.Default
     private Boolean isOpen = false;
 
+    @Column(name = "photo_urls", columnDefinition = "TEXT")
+    private String photoUrls; // 쉼표로 구분된 이미지 URL 목록 (최대 5장)
+
     public void update(LocalDate watchedDate, String seatInfo, String castMemo,
-            Integer rating, String comment, Integer ticketPrice, Boolean isOpen) {
+            Integer rating, String comment, Integer ticketPrice, Boolean isOpen, String photoUrls) {
         this.watchedDate = watchedDate;
         this.seatInfo = seatInfo;
         this.castMemo = castMemo;
@@ -64,5 +67,6 @@ public class DiaryEntry extends com.curtaincall.global.common.SoftDeleteEntity {
         this.comment = comment;
         this.ticketPrice = ticketPrice;
         this.isOpen = isOpen;
+        this.photoUrls = photoUrls;
     }
 }

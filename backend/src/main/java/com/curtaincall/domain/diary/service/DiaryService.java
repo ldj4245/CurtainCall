@@ -54,6 +54,7 @@ public class DiaryService {
                                 .comment(request.getComment())
                                 .ticketPrice(request.getTicketPrice())
                                 .isOpen(request.getIsOpen() != null ? request.getIsOpen() : false)
+                                .photoUrls(joinPhotoUrls(request.getPhotoUrls()))
                                 .build());
 
                 return DiaryResponse.from(entry);
@@ -66,7 +67,8 @@ public class DiaryService {
 
                 entry.update(request.getWatchedDate(), request.getSeatInfo(), request.getCastMemo(),
                                 request.getRating(), request.getComment(), request.getTicketPrice(),
-                                request.getIsOpen() != null ? request.getIsOpen() : false);
+                                request.getIsOpen() != null ? request.getIsOpen() : false,
+                                joinPhotoUrls(request.getPhotoUrls()));
 
                 return DiaryResponse.from(entry);
         }
@@ -83,6 +85,11 @@ public class DiaryService {
                                 .filter(DiaryEntry::getIsOpen)
                                 .map(DiaryResponse::from)
                                 .toList();
+        }
+
+        private String joinPhotoUrls(java.util.List<String> photoUrls) {
+                if (photoUrls == null || photoUrls.isEmpty()) return null;
+                return String.join(",", photoUrls);
         }
 
         public List<DiaryResponse> getCalendarDiary(Long userId, int year, int month) {
