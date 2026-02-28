@@ -9,4 +9,4 @@ FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 COPY --from=builder /app/build/libs/*.jar app.jar
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "-Dspring.profiles.active=prod", "app.jar"]
+ENTRYPOINT ["java", "-Dfile.encoding=UTF-8", "-jar", "-Dspring.profiles.active=prod", "app.jar"]
