@@ -206,13 +206,14 @@ export default function ShowDetailPage() {
                     <ImageOff size={15} className="text-gray-400" />
                     공연 소개 이미지
                   </div>
-                  <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1">
+                  <div className="space-y-3">
                     {show.introImages.map((url, idx) => (
                       <img
                         key={idx}
                         src={url}
                         alt={`${show.title} 소개 이미지 ${idx + 1}`}
-                        className="h-48 rounded-xl object-cover border border-gray-100 shrink-0"
+                        className="w-full rounded-xl border border-gray-100"
+                        loading="lazy"
                       />
                     ))}
                   </div>
