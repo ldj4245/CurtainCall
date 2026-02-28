@@ -4,6 +4,8 @@ import com.curtaincall.domain.show.entity.QShow;
 import com.curtaincall.domain.show.entity.Show;
 import com.curtaincall.domain.theater.entity.QTheater;
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.dsl.CaseBuilder;
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -18,7 +20,8 @@ public class ShowRepositoryImpl implements ShowRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Page<Show> searchShows(String keyword, Show.Genre genre, Show.Status status, String region, Pageable pageable) {
+    public Page<Show> searchShows(String keyword, Show.Genre genre, Show.Status status, String region,
+            Pageable pageable) {
         QShow show = QShow.show;
         QTheater theater = QTheater.theater;
 
@@ -38,11 +41,16 @@ public class ShowRepositoryImpl implements ShowRepositoryCustom {
             builder.and(theater.region.eq(region));
         }
 
+        NumberExpression<Integer> statusOrder = new CaseBuilder()
+                .when(show.status.eq(Show.Status.ONGOING)).then(0)
+                .when(show.status.eq(Show.Status.UPCOMING)).then(1)
+                .otherwise(2);
+
         List<Show> content = queryFactory
                 .selectFrom(show)
                 .leftJoin(show.theater, theater).fetchJoin()
                 .where(builder)
-                .orderBy(show.startDate.desc())
+                .orderBy(statusOrder.asc(), show.startDate.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
