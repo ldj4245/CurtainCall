@@ -24,6 +24,8 @@ export interface Show {
   status: 'ONGOING' | 'ENDED' | 'UPCOMING'
   statusDisplayName: string
   ageLimit?: string
+  castList?: string[]
+  introImages?: string[]
   averageScore?: number
   reviewCount?: number
 }

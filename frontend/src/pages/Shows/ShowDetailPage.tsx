@@ -199,6 +199,25 @@ export default function ShowDetailPage() {
                   </div>
                 </div>
               )}
+
+              {show.introImages && show.introImages.length > 0 && (
+                <div className="mt-6">
+                  <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-700">
+                    <ImageOff size={15} className="text-gray-400" />
+                    공연 소개 이미지
+                  </div>
+                  <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1">
+                    {show.introImages.map((url, idx) => (
+                      <img
+                        key={idx}
+                        src={url}
+                        alt={`${show.title} 소개 이미지 ${idx + 1}`}
+                        className="h-48 rounded-xl object-cover border border-gray-100 shrink-0"
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="mt-8">

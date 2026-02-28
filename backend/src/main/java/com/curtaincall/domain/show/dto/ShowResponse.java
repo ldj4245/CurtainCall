@@ -31,6 +31,7 @@ public class ShowResponse {
     private String status;
     private String statusDisplayName;
     private String ageLimit;
+    private List<String> introImages;
     private Double averageScore;
     private Long reviewCount;
 
@@ -54,6 +55,7 @@ public class ShowResponse {
                 .status(show.getStatus().name())
                 .statusDisplayName(show.getStatus().getDisplayName())
                 .ageLimit(show.getAgeLimit())
+                .introImages(parseIntroImages(show.getIntroImages()))
                 .build();
     }
 
@@ -78,6 +80,7 @@ public class ShowResponse {
                 .status(response.status)
                 .statusDisplayName(response.statusDisplayName)
                 .ageLimit(response.ageLimit)
+                .introImages(response.introImages)
                 .averageScore(averageScore)
                 .reviewCount(reviewCount)
                 .build();
@@ -87,6 +90,15 @@ public class ShowResponse {
         if (castInfo == null || castInfo.isBlank())
             return Collections.emptyList();
         return Arrays.stream(castInfo.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toList();
+    }
+
+    private static List<String> parseIntroImages(String introImages) {
+        if (introImages == null || introImages.isBlank())
+            return Collections.emptyList();
+        return Arrays.stream(introImages.split(","))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
                 .toList();
