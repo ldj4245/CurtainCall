@@ -17,7 +17,6 @@
     "html-to-image": "^1.11.13",
     "lucide-react": "^0.365.0",
     "react": "^18.2.0",
-    "react-calendar": "^6.0.0",
     "react-calendar-heatmap": "^1.9.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.51.0",
@@ -28,7 +27,6 @@
   },
   "devDependencies": {
     "@types/react": "^18.2.66",
-    "@types/react-calendar": "^3.9.0",
     "@types/react-calendar-heatmap": "^1.6.7",
     "@types/react-dom": "^18.2.22",
     "@typescript-eslint/eslint-plugin": "^7.2.0",
