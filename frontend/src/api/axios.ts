@@ -17,9 +17,10 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const url = error.config?.url || ''
+    if (error.response?.status === 401 && !url.startsWith('/auth/')) {
       useAuthStore.getState().logout()
-      window.location.href = '/'
+      window.location.href = '/login'
     }
     return Promise.reject(error)
   }
