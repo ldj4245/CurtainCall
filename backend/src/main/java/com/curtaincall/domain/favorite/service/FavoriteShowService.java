@@ -7,8 +7,7 @@ import com.curtaincall.domain.show.entity.Show;
 import com.curtaincall.domain.show.repository.ShowRepository;
 import com.curtaincall.domain.user.entity.User;
 import com.curtaincall.domain.user.repository.UserRepository;
-import com.curtaincall.global.exception.CustomException;
-import com.curtaincall.global.exception.ErrorCode;
+import com.curtaincall.global.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -29,9 +28,9 @@ public class FavoriteShowService {
     @Transactional
     public Map<String, Object> toggleFavorite(Long userId, Long showId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> BusinessException.notFound("사용자를 찾을 수 없습니다"));
         Show show = showRepository.findById(showId)
-                .orElseThrow(() -> new CustomException(ErrorCode.SHOW_NOT_FOUND));
+                .orElseThrow(() -> BusinessException.notFound("공연을 찾을 수 없습니다"));
 
         boolean isFavorited;
         if (favoriteShowRepository.existsByUserAndShow(user, show)) {
@@ -61,13 +60,13 @@ public class FavoriteShowService {
 
     public long getFavoriteCount(Long showId) {
         Show show = showRepository.findById(showId)
-                .orElseThrow(() -> new CustomException(ErrorCode.SHOW_NOT_FOUND));
+                .orElseThrow(() -> BusinessException.notFound("공연을 찾을 수 없습니다"));
         return favoriteShowRepository.countByShow(show);
     }
 
     public Page<ShowResponse> getMyFavorites(Long userId, int page, int size) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> BusinessException.notFound("사용자를 찾을 수 없습니다"));
         return favoriteShowRepository.findShowsByUser(user, PageRequest.of(page, size))
                 .map(ShowResponse::from);
     }

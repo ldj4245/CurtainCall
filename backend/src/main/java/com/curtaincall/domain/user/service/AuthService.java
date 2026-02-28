@@ -5,8 +5,7 @@ import com.curtaincall.domain.user.dto.SignUpRequest;
 import com.curtaincall.domain.user.dto.TokenResponse;
 import com.curtaincall.domain.user.entity.User;
 import com.curtaincall.domain.user.repository.UserRepository;
-import com.curtaincall.global.exception.CustomException;
-import com.curtaincall.global.exception.ErrorCode;
+import com.curtaincall.global.exception.BusinessException;
 import com.curtaincall.global.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,7 +25,7 @@ public class AuthService {
     public TokenResponse signUp(SignUpRequest request) {
         // 이메일 중복 확인
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new CustomException(ErrorCode.DUPLICATE_EMAIL);
+            throw BusinessException.conflict("이미 사용 중인 이메일입니다");
         }
 
         // 사용자 생성
@@ -49,16 +48,16 @@ public class AuthService {
     public TokenResponse login(LoginRequest request) {
         // 사용자 조회
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> BusinessException.notFound("사용자를 찾을 수 없습니다"));
 
         // 자체 로그인 사용자인지 확인
         if (!user.isLocalUser()) {
-            throw new CustomException(ErrorCode.SOCIAL_LOGIN_USER);
+            throw BusinessException.badRequest("소셜 로그인 사용자입니다. 소셜 로그인을 이용해주세요");
         }
 
         // 비밀번호 확인
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new CustomException(ErrorCode.INVALID_PASSWORD);
+            throw BusinessException.unauthorized("비밀번호가 일치하지 않습니다");
         }
 
         // 토큰 생성
@@ -70,7 +69,7 @@ public class AuthService {
 
     public TokenResponse refreshToken(String refreshToken) {
         if (!jwtTokenProvider.validateToken(refreshToken)) {
-            throw new CustomException(ErrorCode.INVALID_TOKEN);
+            throw BusinessException.unauthorized("유효하지 않은 토큰입니다");
         }
 
         Long userId = jwtTokenProvider.getUserId(refreshToken);
@@ -86,4 +85,3 @@ public class AuthService {
         return userRepository.findByEmail(email).isPresent();
     }
 }
-
