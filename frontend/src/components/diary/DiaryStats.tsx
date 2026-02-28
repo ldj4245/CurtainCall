@@ -93,6 +93,28 @@ export default function DiaryStats({ stats }: Props) {
             </div>
           )}
         </div>
+
+        {stats.topCasts && stats.topCasts.length > 0 && (
+          <div className="rounded-2xl border border-gray-100 bg-warm-50 p-5 mt-6">
+            <h3 className="text-sm font-semibold text-gray-700 mb-4">가장 많이 본 배우</h3>
+            <div className="space-y-3">
+              {stats.topCasts.slice(0, 5).map((cast, i) => (
+                <div key={cast.castName} className="flex items-center gap-3 rounded-xl border border-gray-100 bg-white p-3">
+                  <div
+                    className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs ${i === 0 ? 'bg-gold-100 text-gold-700' : i === 1 ? 'bg-gray-100 text-gray-700' : 'bg-orange-100 text-orange-700'
+                      }`}
+                  >
+                    {i + 1}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold truncate text-gray-900 text-sm">{cast.castName}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{cast.count}회 관람</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
