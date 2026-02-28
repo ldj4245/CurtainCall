@@ -13,6 +13,7 @@ const MyPage = lazy(() => import('./pages/MyPage/MyPage'))
 const LoginPage = lazy(() => import('./pages/Auth/LoginPage'))
 const SignUpPage = lazy(() => import('./pages/Auth/SignUpPage'))
 const OAuth2Callback = lazy(() => import('./pages/Auth/OAuth2Callback'))
+const NotFoundPage = lazy(() => import('./pages/NotFound/NotFoundPage'))
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore()
@@ -66,6 +67,7 @@ export default function App() {
                         </ProtectedRoute>
                       }
                     />
+                    <Route path="*" element={<NotFoundPage />} />
                   </Routes>
                 </main>
                 <MobileTabBar />
