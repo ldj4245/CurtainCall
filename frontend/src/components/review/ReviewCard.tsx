@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Heart, MessageCircle, Trash2, ChevronDown, ChevronUp, AlertTriangle, CornerDownRight, Star } from 'lucide-react'
+import { Heart, MessageCircle, Trash2, ChevronDown, ChevronUp, AlertTriangle, CornerDownRight, Star, Pencil } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { reviewsApi } from '../../api/reviews'
@@ -165,6 +165,15 @@ export default function ReviewCard({ review, onUpdated }: Props) {
   const [commentText, setCommentText] = useState('')
   const [showSpoiler, setShowSpoiler] = useState(false)
   const [isDeletingReview, setIsDeletingReview] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editScores, setEditScores] = useState({
+    storyScore: review.storyScore,
+    castScore: review.castScore,
+    directionScore: review.directionScore,
+    soundScore: review.soundScore,
+  })
+  const [editContent, setEditContent] = useState(review.content)
+  const [editHasSpoiler, setEditHasSpoiler] = useState(review.hasSpoiler)
 
   const requireLogin = () => {
     sessionStorage.setItem('postLoginRedirect', `${location.pathname}${location.search}`)
@@ -189,6 +198,20 @@ export default function ReviewCard({ review, onUpdated }: Props) {
       toast.error('리뷰 삭제에 실패했습니다.')
       setIsDeletingReview(false)
     }
+  })
+
+  const editMutation = useMutation({
+    mutationFn: () => reviewsApi.update(review.id, {
+      ...editScores,
+      content: editContent,
+      hasSpoiler: editHasSpoiler,
+    }),
+    onSuccess: () => {
+      toast.success('리뷰가 수정되었습니다.')
+      setIsEditing(false)
+      onUpdated()
+    },
+    onError: () => toast.error('리뷰 수정에 실패했습니다.'),
   })
 
   const { data: comments } = useQuery({
@@ -274,15 +297,82 @@ export default function ReviewCard({ review, onUpdated }: Props) {
           </button>
         </div>
         {user?.id === review.userId && (
-          <button
-            onClick={() => setIsDeletingReview(true)}
-            className="text-gray-300 hover:text-red-500 transition-colors"
-            disabled={deleteMutation.isPending}
-          >
-            <Trash2 size={14} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                setIsEditing(!isEditing)
+                setEditScores({
+                  storyScore: review.storyScore,
+                  castScore: review.castScore,
+                  directionScore: review.directionScore,
+                  soundScore: review.soundScore,
+                })
+                setEditContent(review.content)
+                setEditHasSpoiler(review.hasSpoiler)
+              }}
+              className="text-gray-300 hover:text-brand transition-colors"
+            >
+              <Pencil size={14} />
+            </button>
+            <button
+              onClick={() => setIsDeletingReview(true)}
+              className="text-gray-300 hover:text-red-500 transition-colors"
+              disabled={deleteMutation.isPending}
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>
         )}
       </div>
+
+      {isEditing && (
+        <div className="mt-4 pt-4 border-t border-gray-100">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+            {[
+              { key: 'storyScore' as const, label: '스토리' },
+              { key: 'castScore' as const, label: '캐스팅' },
+              { key: 'directionScore' as const, label: '연출' },
+              { key: 'soundScore' as const, label: '음향' },
+            ].map(({ key, label }) => (
+              <div key={key} className="text-center">
+                <p className="text-xs text-gray-500 mb-1">{label}</p>
+                <StarRating
+                  value={editScores[key]}
+                  onChange={(v) => setEditScores((s) => ({ ...s, [key]: v }))}
+                  size="sm"
+                />
+              </div>
+            ))}
+          </div>
+          <textarea
+            value={editContent}
+            onChange={(e) => setEditContent(e.target.value)}
+            rows={3}
+            className="input-field resize-none w-full mb-3"
+          />
+          <div className="flex items-center justify-between">
+            <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={editHasSpoiler}
+                onChange={(e) => setEditHasSpoiler(e.target.checked)}
+                className="accent-brand"
+              />
+              스포일러 포함
+            </label>
+            <div className="flex gap-2">
+              <button onClick={() => setIsEditing(false)} className="btn-secondary text-sm px-3 py-1.5">취소</button>
+              <button
+                onClick={() => editMutation.mutate()}
+                disabled={editMutation.isPending || editContent.trim().length < 10}
+                className="btn-primary text-sm px-3 py-1.5"
+              >
+                {editMutation.isPending ? '수정 중...' : '수정 완료'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showComments && (
         <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">
