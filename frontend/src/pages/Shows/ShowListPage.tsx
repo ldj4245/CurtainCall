@@ -19,24 +19,37 @@ const STATUSES = [
   { value: 'ENDED', label: '공연 종료' },
 ]
 
+const REGIONS = [
+  { value: '', label: '전체' },
+  { value: '서울', label: '서울' },
+  { value: '경기', label: '경기' },
+  { value: '부산', label: '부산' },
+  { value: '대구', label: '대구' },
+  { value: '인천', label: '인천' },
+  { value: '대전', label: '대전' },
+  { value: '광주', label: '광주' },
+]
+
 export default function ShowListPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const initialKeyword = searchParams.get('keyword') ?? ''
   const initialGenre = searchParams.get('genre') ?? ''
   const initialStatus = searchParams.get('status') ?? ''
+  const initialRegion = searchParams.get('region') ?? ''
   const initialPage = Number(searchParams.get('page') ?? '0')
 
   const [keyword, setKeyword] = useState(initialKeyword)
   const [inputVal, setInputVal] = useState(initialKeyword)
   const [genre, setGenre] = useState(initialGenre)
   const [status, setStatus] = useState(initialStatus)
+  const [region, setRegion] = useState(initialRegion)
   const [page, setPage] = useState(Number.isNaN(initialPage) ? 0 : initialPage)
   const [showMobileFilter, setShowMobileFilter] = useState(false)
   const scrollYRef = useRef(0)
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['shows', keyword, genre, status, page],
-    queryFn: () => showsApi.search({ keyword, genre, status, page, size: 12 }),
+    queryKey: ['shows', keyword, genre, status, region, page],
+    queryFn: () => showsApi.search({ keyword, genre, status, region, page, size: 12 }),
   })
 
   useEffect(() => {
@@ -44,9 +57,10 @@ export default function ShowListPage() {
     if (keyword) next.set('keyword', keyword)
     if (genre) next.set('genre', genre)
     if (status) next.set('status', status)
+    if (region) next.set('region', region)
     if (page > 0) next.set('page', String(page))
     setSearchParams(next, { replace: true })
-  }, [keyword, genre, status, page, setSearchParams])
+  }, [keyword, genre, status, region, page, setSearchParams])
 
   useEffect(() => {
     if (!showMobileFilter) return
@@ -74,22 +88,24 @@ export default function ShowListPage() {
     setPage(0)
   }
 
-  const handleFilter = (key: 'genre' | 'status', value: string) => {
+  const handleFilter = (key: 'genre' | 'status' | 'region', value: string) => {
     if (key === 'genre') setGenre(value)
-    else setStatus(value)
+    else if (key === 'status') setStatus(value)
+    else setRegion(value)
     setPage(0)
   }
 
-  const hasActiveFilter = Boolean(keyword || genre || status)
+  const hasActiveFilter = Boolean(keyword || genre || status || region)
   const resetFilters = () => {
     setKeyword('')
     setInputVal('')
     setGenre('')
     setStatus('')
+    setRegion('')
     setPage(0)
   }
 
-  const selectedFilterCount = Number(Boolean(genre)) + Number(Boolean(status))
+  const selectedFilterCount = Number(Boolean(genre)) + Number(Boolean(status)) + Number(Boolean(region))
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
@@ -147,6 +163,16 @@ export default function ShowListPage() {
             {label}
           </button>
         ))}
+        <span className="w-px h-5 bg-gray-200 mx-1" />
+        {REGIONS.slice(0, 5).map(({ value, label }) => (
+          <button
+            key={`r-${value}`}
+            onClick={() => handleFilter('region', value)}
+            className={region === value ? 'filter-pill-active' : 'filter-pill-inactive'}
+          >
+            {label}
+          </button>
+        ))}
         {hasActiveFilter && (
           <button
             onClick={resetFilters}
@@ -196,6 +222,21 @@ export default function ShowListPage() {
                     key={`ms-${value}`}
                     onClick={() => handleFilter('status', value)}
                     className={status === value ? 'filter-pill-active' : 'filter-pill-inactive'}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <p className="text-sm font-semibold text-gray-700 mb-2">지역</p>
+              <div className="flex flex-wrap gap-2">
+                {REGIONS.map(({ value, label }) => (
+                  <button
+                    key={`mr-${value}`}
+                    onClick={() => handleFilter('region', value)}
+                    className={region === value ? 'filter-pill-active' : 'filter-pill-inactive'}
                   >
                     {label}
                   </button>
