@@ -99,3 +99,6 @@ logging:
   level:
     com.curtaincall: DEBUG
     org.hibernate.SQL: WARN
+
+server:
+  forward-headers-strategy: native
