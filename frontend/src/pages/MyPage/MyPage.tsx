@@ -62,9 +62,9 @@ export default function MyPage() {
     })
 
     const tabs = [
-        { key: 'favorites' as Tab, label: '내 찜 목록', icon: <Heart size={16} /> },
-        { key: 'reviews' as Tab, label: '내 리뷰', icon: <Star size={16} /> },
-        { key: 'profile' as Tab, label: '프로필 설정', icon: <UserIcon size={16} /> },
+        { key: 'favorites' as Tab, label: '찜 목록', icon: <Heart size={15} /> },
+        { key: 'reviews' as Tab, label: '내 리뷰', icon: <Star size={15} /> },
+        { key: 'profile' as Tab, label: '프로필', icon: <UserIcon size={15} /> },
     ]
 
     return (
@@ -81,15 +81,16 @@ export default function MyPage() {
                 </div>
             </div>
 
-            <div className="flex gap-1 bg-warm-100 p-1 rounded-xl w-fit mb-8">
+            <div className="flex gap-0.5 bg-warm-100 p-1 rounded-xl w-full mb-6">
                 {tabs.map(({ key, label, icon }) => (
                     <button
                         key={key}
                         onClick={() => setActiveTab(key)}
-                        className={`flex items-center gap-1.5 px-5 py-2.5 rounded-lg text-sm font-medium transition-all ${activeTab === key
+                        className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+                            activeTab === key
                             ? 'bg-white text-brand shadow-sm'
                             : 'text-gray-500 hover:text-gray-700'
-                            }`}
+                        }`}
                     >
                         {icon}
                         {label}

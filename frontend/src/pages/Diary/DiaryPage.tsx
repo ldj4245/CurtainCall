@@ -40,33 +40,34 @@ export default function DiaryPage() {
   })
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="max-w-5xl mx-auto px-4 py-6">
+      <div className="flex items-center justify-between mb-5">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">관극 다이어리</h1>
-          <p className="text-gray-400 mt-1">
+          <h1 className="text-xl font-bold text-gray-900">관극 다이어리</h1>
+          <p className="text-gray-400 text-sm mt-0.5">
             총 <span className="font-semibold text-brand">{stats?.totalCount ?? 0}</span>회 관람
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <button
             onClick={() => setShowShareCard(true)}
-            className="flex items-center gap-2 btn-secondary"
+            className="flex items-center justify-center w-9 h-9 rounded-xl border border-gray-200 bg-white text-gray-500 hover:text-brand hover:border-brand/30 transition-colors shadow-card-sm sm:w-auto sm:px-3 sm:gap-1.5"
+            title="공유 카드"
           >
             <Share2 size={16} />
-            공유 카드
+            <span className="hidden sm:inline text-sm font-medium">공유</span>
           </button>
           <button
             onClick={() => { setEditEntry(undefined); setShowForm(true) }}
-            className="flex items-center gap-2 btn-primary"
+            className="flex items-center gap-1.5 btn-primary px-3 py-2 text-sm"
           >
-            <PlusCircle size={18} />
-            기록 추가
+            <PlusCircle size={16} />
+            <span>기록 추가</span>
           </button>
         </div>
       </div>
 
-      <div className="flex gap-1 bg-warm-100 p-1 rounded-xl w-fit mb-6">
+      <div className="flex gap-0.5 bg-warm-100 p-1 rounded-xl w-full mb-5">
         {[
           { key: 'calendar', label: '캘린더', icon: <CalendarDays size={14} /> },
           { key: 'list', label: '목록', icon: <List size={14} /> },
@@ -76,11 +77,12 @@ export default function DiaryPage() {
           <button
             key={key}
             onClick={() => setActiveTab(key as 'calendar' | 'list' | 'gallery' | 'stats')}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === key ? 'bg-white text-brand shadow-sm' : 'text-gray-500 hover:text-gray-700'
-              }`}
+            className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+              activeTab === key ? 'bg-white text-brand shadow-sm' : 'text-gray-500 hover:text-gray-700'
+            }`}
           >
             {icon}
-            {label}
+            <span>{label}</span>
           </button>
         ))}
       </div>
