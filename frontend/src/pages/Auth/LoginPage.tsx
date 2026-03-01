@@ -140,20 +140,6 @@ export default function LoginPage() {
             >
               카카오로 시작하기
             </button>
-            <button
-              type="button"
-              onClick={() => startSocialLogin('/oauth2/authorization/naver')}
-              className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-[#03C75A] text-white font-semibold text-sm hover:brightness-95 transition"
-            >
-              네이버로 시작하기
-            </button>
-            <button
-              type="button"
-              onClick={() => startSocialLogin('/oauth2/authorization/google')}
-              className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-white border border-gray-200 text-gray-700 font-semibold text-sm hover:bg-gray-50 transition"
-            >
-              Google로 시작하기
-            </button>
           </div>
 
           <p className="text-center text-xs text-gray-400 mt-6">
