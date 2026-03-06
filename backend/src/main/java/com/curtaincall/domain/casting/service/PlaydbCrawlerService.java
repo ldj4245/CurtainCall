@@ -186,7 +186,12 @@ public class PlaydbCrawlerService {
                 }
             } else if (node instanceof Element) {
                 Element el = (Element) node;
-                if ("a".equals(el.tagName()) && el.attr("href").contains("artistdb")) {
+                if ("img".equals(el.tagName())) {
+                    String alt = el.attr("alt").trim();
+                    if (!alt.isEmpty()) {
+                        result.add(alt);
+                    }
+                } else if ("a".equals(el.tagName()) && el.attr("href").contains("artistdb")) {
                     Element img = el.selectFirst("img");
                     if (img != null) {
                         // 이미지 링크 → 다음 이름 링크를 위해 URL 저장
@@ -215,10 +220,16 @@ public class PlaydbCrawlerService {
     }
 
     private void collectHelper(Node node, List<Node> result) {
-        if (node instanceof Element && "a".equals(((Element) node).tagName())) {
-            // a 태그는 통째로 처리 (자식 재귀 안 함)
-            result.add(node);
-            return;
+        if (node instanceof Element) {
+            Element el = (Element) node;
+            if ("a".equals(el.tagName()) || "img".equals(el.tagName())) {
+                // a와 img 태그는 통째로 추가하고, a의 경우 자식 재귀 안 함
+                result.add(node);
+                if ("img".equals(el.tagName()))
+                    return; // img는 자식 없음
+                if ("a".equals(el.tagName()))
+                    return;
+            }
         }
         for (Node child : node.childNodes()) {
             if (child instanceof TextNode) {
