@@ -56,6 +56,9 @@ dependencies {
     // AWS S3 SDK (DigitalOcean Spaces 호환)
     implementation 'software.amazon.awssdk:s3:2.25.27'
 
+    // Jsoup (HTML 크롤링/파싱)
+    implementation 'org.jsoup:jsoup:1.17.2'
+
     // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'

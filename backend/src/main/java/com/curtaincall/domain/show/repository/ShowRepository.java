@@ -25,4 +25,6 @@ public interface ShowRepository extends JpaRepository<Show, Long>, ShowRepositor
 
     @Query("SELECT s FROM Show s WHERE s.status = 'ONGOING' ORDER BY s.id DESC")
     List<Show> findTop10ByStatusOngoing(Pageable pageable);
+
+    List<Show> findByStatus(Show.Status status);
 }

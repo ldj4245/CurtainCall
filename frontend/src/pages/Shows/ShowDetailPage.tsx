@@ -9,6 +9,7 @@ import { useAuthStore } from '../../store/authStore'
 import StarRating from '../../components/common/StarRating'
 import ReviewList from '../../components/review/ReviewList'
 import DiaryFormModal from '../../components/diary/DiaryFormModal'
+import CastingBoard from '../../components/casting/CastingBoard'
 
 const STATUS_BADGE_CLASS: Record<string, string> = {
   ONGOING: 'badge-ongoing',
@@ -229,6 +230,10 @@ export default function ShowDetailPage() {
                   </div>
                 </div>
               )}
+            </div>
+
+            <div className="mt-8">
+              <CastingBoard showId={Number(id)} />
             </div>
 
             <div className="mt-8" ref={reviewSectionRef}>
