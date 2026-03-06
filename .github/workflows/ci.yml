@@ -43,9 +43,6 @@ jobs:
         run: ./gradlew build
         working-directory: backend
         env:
-          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/curtaincall_test?serverTimezone=Asia/Seoul
-          SPRING_DATASOURCE_USERNAME: curtaincall
-          SPRING_DATASOURCE_PASSWORD: curtaincall123
           JWT_SECRET: test-secret-key-for-ci-must-be-long-enough-for-hs256
           KOPIS_API_KEY: test-key
 
