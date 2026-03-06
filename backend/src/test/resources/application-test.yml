@@ -1,0 +1,45 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=MySQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.H2Dialect
+
+  batch:
+    jdbc:
+      initialize-schema: always
+    job:
+      enabled: false
+
+jwt:
+  secret: curtaincall-test-secret-key-for-hs-256-algorithm-that-is-long-enough
+  access-expiration: 3600000
+  refresh-expiration: 604800000
+
+kopis:
+  api-key: test-key
+  base-url: http://test-url.com
+
+app:
+  frontend-url: http://localhost:3000
+
+storage:
+  do-spaces:
+    endpoint: https://sgp1.digitaloceanspaces.com
+    region: sgp1
+    access-key: dummy
+    secret-key: dummy
+    bucket: dummy
+    cdn-url: https://dummy.cdn.digitaloceanspaces.com
+
+server:
+  forward-headers-strategy: native
