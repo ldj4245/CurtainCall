@@ -62,11 +62,16 @@ public class PlaydbCrawlerService {
         // 특수문자/부제 제거 (예: '데스노트(The Musical Death Note)' → '데스노트')
         cleanTitle = cleanTitle.replaceAll("\\(.*\\)", "").replaceAll("\\[.*\\]", "").trim();
 
-        Document doc = Jsoup.connect(PLAYDB_SEARCH_URL
-                + "?sReqMainCategory=000001&sReqTextType=0&sReqText="
-                + URLEncoder.encode(cleanTitle, StandardCharsets.UTF_8))
+        String searchUrl = PLAYDB_SEARCH_URL + "?sReqMainCategory=000001&sReqTextType=0&sReqText="
+                + URLEncoder.encode(cleanTitle, "EUC-KR");
+
+        org.jsoup.Connection.Response res = Jsoup.connect(searchUrl)
                 .userAgent(USER_AGENT).timeout(TIMEOUT_MS)
-                .header("Accept-Encoding", "identity").get();
+                .header("Accept-Encoding", "identity")
+                .method(org.jsoup.Connection.Method.GET)
+                .execute();
+        res.charset("EUC-KR");
+        Document doc = res.parse();
 
         // 검색 결과 컨테이너 내부의 결과만 취급 (좌측/상단 검색 랭킹 제외)
         // PlayDB 검색 결과 목록은 보통 id="contents" 내부에 있음
@@ -76,17 +81,33 @@ public class PlaydbCrawlerService {
         }
 
         // goDetail('221340') 패턴에서 ID 추출
+        String cleanTitleNoSpace = cleanTitle.replaceAll("\\s+", "").toLowerCase();
+
         for (Element link : contentArea.select("a[href*=goDetail], a[onclick*=goDetail]")) {
-            Matcher m = GO_DETAIL_PATTERN.matcher(link.attr("href") + link.attr("onclick"));
-            if (m.find())
-                return m.group(1);
+            String linkText = link.text().replaceAll("\\s+", "").toLowerCase();
+            if (linkText.contains(cleanTitleNoSpace)) {
+                Matcher m = GO_DETAIL_PATTERN.matcher(link.attr("href") + link.attr("onclick"));
+                if (m.find())
+                    return m.group(1);
+            }
         }
         // PlaydbDetail URL에서 ID 추출
         for (Element link : contentArea.select("a[href*=PlaydbDetail]")) {
-            Matcher m = PLAY_NO_PATTERN.matcher(link.attr("href"));
-            if (m.find())
+            String linkText = link.text().replaceAll("\\s+", "").toLowerCase();
+            if (linkText.contains(cleanTitleNoSpace)) {
+                Matcher m = PLAY_NO_PATTERN.matcher(link.attr("href"));
+                if (m.find())
+                    return m.group(1);
+            }
+        }
+
+        // 이름 매칭에 실패했지만 첫 번째 결과라도 가져오기 위한 폴백 (최소한의 방어)
+        for (Element link : contentArea.select("a[href*=goDetail], a[onclick*=goDetail]")) {
+            Matcher m = GO_DETAIL_PATTERN.matcher(link.attr("href") + link.attr("onclick"));
+            if (m.find() && !link.text().trim().isEmpty())
                 return m.group(1);
         }
+
         return null;
     }
 
@@ -101,9 +122,14 @@ public class PlaydbCrawlerService {
      * 5. "제작진" 텍스트를 만나면 파싱 종료
      */
     private List<CastMember> parseCastTab(String playdbId, Show show) throws IOException {
-        Document doc = Jsoup.connect(PLAYDB_DETAIL_URL + "?sReqPlayno=" + playdbId + "&sReqTab=3")
+        String detailUrl = PLAYDB_DETAIL_URL + "?sReqPlayno=" + playdbId + "&sReqTab=3";
+        org.jsoup.Connection.Response res = Jsoup.connect(detailUrl)
                 .userAgent(USER_AGENT).timeout(TIMEOUT_MS)
-                .header("Accept-Encoding", "identity").get();
+                .header("Accept-Encoding", "identity")
+                .method(org.jsoup.Connection.Method.GET)
+                .execute();
+        res.charset("EUC-KR");
+        Document doc = res.parse();
 
         // 전략: 전체 body의 단순 텍스트+링크 순서를 이용
         // body에서 모든 텍스트노드와 a 태그를 순서대로 추출
