@@ -5,10 +5,10 @@ import com.curtaincall.domain.casting.entity.CastMember;
 import com.curtaincall.domain.casting.repository.CastMemberRepository;
 import com.curtaincall.domain.show.entity.Show;
 import com.curtaincall.domain.show.repository.ShowRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -21,22 +21,9 @@ public class CastingService {
     private final ShowRepository showRepository;
     private final PlaydbCrawlerService playdbCrawlerService;
 
+    @Transactional(readOnly = true)
     public List<CastingResponse> getCastingByShow(Long showId) {
         List<CastMember> members = castMemberRepository.findByShowIdOrderByIdAsc(showId);
-
-        // DB에 캐스팅 정보가 없으면 PlayDB에서 크롤링 시도
-        if (members.isEmpty()) {
-            Show show = showRepository.findById(showId).orElse(null);
-            if (show != null) {
-                try {
-                    refreshCastingForShow(show);
-                    members = castMemberRepository.findByShowIdOrderByIdAsc(showId);
-                } catch (Exception e) {
-                    log.warn("캐스팅 크롤링 실패 (showId={}): {}", showId, e.getMessage());
-                }
-            }
-        }
-
         return CastingResponse.from(members);
     }
 
@@ -49,11 +36,36 @@ public class CastingService {
 
     @Transactional
     public void refreshCastingForShow(Show show) {
+        // 1. 기존 데이터 삭제
+        castMemberRepository.deleteByShowId(show.getId());
+        castMemberRepository.flush(); // 삭제 즉시 반영
+
+        // 2. 크롤링
         List<CastMember> crawled = playdbCrawlerService.crawlCasting(show);
+
+        // 3. 저장
         if (!crawled.isEmpty()) {
-            castMemberRepository.deleteByShowId(show.getId());
             castMemberRepository.saveAll(crawled);
             log.info("캐스팅 정보 갱신 완료: {} ({}명)", show.getTitle(), crawled.size());
+        } else {
+            log.warn("캐스팅 크롤링 결과 없음: {}", show.getTitle());
+        }
+    }
+
+    /**
+     * 캐스팅 정보가 없는 공연의 초기 크롤링 (GET 요청 시 자동 호출)
+     */
+    @Transactional
+    public void initCastingIfEmpty(Long showId) {
+        if (!castMemberRepository.existsByShowId(showId)) {
+            Show show = showRepository.findById(showId).orElse(null);
+            if (show != null) {
+                try {
+                    refreshCastingForShow(show);
+                } catch (Exception e) {
+                    log.warn("초기 캐스팅 크롤링 실패 (showId={}): {}", showId, e.getMessage());
+                }
+            }
         }
     }
 }

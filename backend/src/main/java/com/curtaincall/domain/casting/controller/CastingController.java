@@ -21,6 +21,7 @@ public class CastingController {
     @Operation(summary = "배역별 출연진 조회", description = "해당 공연의 배역별 출연진 정보를 반환합니다.")
     @GetMapping
     public ResponseEntity<List<CastingResponse>> getCasting(@PathVariable Long showId) {
+        castingService.initCastingIfEmpty(showId);
         return ResponseEntity.ok(castingService.getCastingByShow(showId));
     }
 

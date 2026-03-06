@@ -59,11 +59,14 @@ public class PlaydbCrawlerService {
 
     private String searchShow(String title) throws IOException {
         String cleanTitle = title.replaceAll("^(뮤지컬|연극)\\s*", "").trim();
+        // 특수문자/부제 제거 (예: '데스노트(The Musical Death Note)' → '데스노트')
+        cleanTitle = cleanTitle.replaceAll("\\(.*\\)", "").replaceAll("\\[.*\\]", "").trim();
 
         Document doc = Jsoup.connect(PLAYDB_SEARCH_URL
                 + "?sReqMainCategory=000001&sReqTextType=0&sReqText="
                 + URLEncoder.encode(cleanTitle, StandardCharsets.UTF_8))
-                .userAgent(USER_AGENT).timeout(TIMEOUT_MS).get();
+                .userAgent(USER_AGENT).timeout(TIMEOUT_MS)
+                .header("Accept-Encoding", "identity").get();
 
         // goDetail('221340') 패턴에서 ID 추출
         for (Element link : doc.select("a[href*=goDetail], a[onclick*=goDetail]")) {
@@ -92,7 +95,8 @@ public class PlaydbCrawlerService {
      */
     private List<CastMember> parseCastTab(String playdbId, Show show) throws IOException {
         Document doc = Jsoup.connect(PLAYDB_DETAIL_URL + "?sReqPlayno=" + playdbId + "&sReqTab=3")
-                .userAgent(USER_AGENT).timeout(TIMEOUT_MS).get();
+                .userAgent(USER_AGENT).timeout(TIMEOUT_MS)
+                .header("Accept-Encoding", "identity").get();
 
         // 전략: 전체 body의 단순 텍스트+링크 순서를 이용
         // body에서 모든 텍스트노드와 a 태그를 순서대로 추출
@@ -104,10 +108,11 @@ public class PlaydbCrawlerService {
 
         for (int i = 0; i < sequence.size(); i++) {
             if (sequence.get(i) instanceof String) {
-                String text = ((String) sequence.get(i)).trim();
-                if (castStart == -1 && text.equals("출연진")) {
+                String text = ((String) sequence.get(i)).trim()
+                        .replaceAll("\\s+", ""); // 공백/특수 공백 제거
+                if (castStart == -1 && text.contains("출연진")) {
                     castStart = i;
-                } else if (castStart >= 0 && text.equals("제작진")) {
+                } else if (castStart >= 0 && text.contains("제작진")) {
                     castEnd = i;
                     break;
                 }
