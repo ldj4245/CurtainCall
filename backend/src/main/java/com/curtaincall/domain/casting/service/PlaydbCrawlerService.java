@@ -74,16 +74,13 @@ public class PlaydbCrawlerService {
         Document doc = res.parse();
 
         // 검색 결과 컨테이너 내부의 결과만 취급 (좌측/상단 검색 랭킹 제외)
-        // PlayDB 검색 결과 목록은 보통 id="contents" 내부에 있음
-        Element contentArea = doc.getElementById("contents");
-        if (contentArea == null) {
-            contentArea = doc.body();
-        }
+        // PlayDB 검색 결과 목록은 실제 검색결과를 width=480 테이블 내에 표시함
+        Elements resultLinks = doc.select("table[width=480] a[href*=goDetail], table[width=480] a[onclick*=goDetail]");
 
         // goDetail('221340') 패턴에서 ID 추출
         String cleanTitleNoSpace = cleanTitle.replaceAll("\\s+", "").toLowerCase();
 
-        for (Element link : contentArea.select("a[href*=goDetail], a[onclick*=goDetail]")) {
+        for (Element link : resultLinks) {
             String linkText = link.text().replaceAll("\\s+", "").toLowerCase();
             if (linkText.contains(cleanTitleNoSpace)) {
                 Matcher m = GO_DETAIL_PATTERN.matcher(link.attr("href") + link.attr("onclick"));
@@ -91,8 +88,10 @@ public class PlaydbCrawlerService {
                     return m.group(1);
             }
         }
+
+        Elements detailLinks = doc.select("table[width=480] a[href*=PlaydbDetail]");
         // PlaydbDetail URL에서 ID 추출
-        for (Element link : contentArea.select("a[href*=PlaydbDetail]")) {
+        for (Element link : detailLinks) {
             String linkText = link.text().replaceAll("\\s+", "").toLowerCase();
             if (linkText.contains(cleanTitleNoSpace)) {
                 Matcher m = PLAY_NO_PATTERN.matcher(link.attr("href"));
@@ -102,7 +101,8 @@ public class PlaydbCrawlerService {
         }
 
         // 이름 매칭에 실패했지만 첫 번째 결과라도 가져오기 위한 폴백 (최소한의 방어)
-        for (Element link : contentArea.select("a[href*=goDetail], a[onclick*=goDetail]")) {
+        // table[width=480] 내부이므로 랭킹 스폰서는 제외됨
+        for (Element link : resultLinks) {
             Matcher m = GO_DETAIL_PATTERN.matcher(link.attr("href") + link.attr("onclick"));
             if (m.find() && !link.text().trim().isEmpty())
                 return m.group(1);
