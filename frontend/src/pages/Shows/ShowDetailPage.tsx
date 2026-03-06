@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useState, useRef, type ReactNode } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { BookOpen, CalendarDays, Clock3, DollarSign, Heart, ImageOff, MapPin, Star, Users } from 'lucide-react'
@@ -28,6 +28,7 @@ export default function ShowDetailPage() {
   const { isAuthenticated } = useAuthStore()
   const [showReviewForm, setShowReviewForm] = useState(false)
   const [showDiaryForm, setShowDiaryForm] = useState(false)
+  const reviewSectionRef = useRef<HTMLDivElement>(null)
 
   const { data: show, isLoading, isError, refetch } = useQuery({
     queryKey: ['show', id],
@@ -145,6 +146,15 @@ export default function ShowDetailPage() {
                   onClick={() => {
                     if (!isAuthenticated) return requireLogin('리뷰 작성은 로그인 후 이용할 수 있어요.')
                     setShowReviewForm(true)
+                    // 모바일 등 헤더 영역을 고려한 정밀 스크롤
+                    setTimeout(() => {
+                      if (reviewSectionRef.current) {
+                        const yOffset = -80 // 네비게이션 헤더 높이 여백
+                        const element = reviewSectionRef.current
+                        const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset
+                        window.scrollTo({ top: y, behavior: 'smooth' })
+                      }
+                    }, 50)
                   }}
                   className="btn-secondary text-sm px-4 py-2.5"
                 >
@@ -221,7 +231,7 @@ export default function ShowDetailPage() {
               )}
             </div>
 
-            <div className="mt-8">
+            <div className="mt-8" ref={reviewSectionRef}>
               <ReviewList showId={Number(id)} showReviewForm={showReviewForm} onCloseForm={() => setShowReviewForm(false)} />
             </div>
           </section>
