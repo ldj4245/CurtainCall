@@ -68,14 +68,21 @@ public class PlaydbCrawlerService {
                 .userAgent(USER_AGENT).timeout(TIMEOUT_MS)
                 .header("Accept-Encoding", "identity").get();
 
+        // 검색 결과 컨테이너 내부의 결과만 취급 (좌측/상단 검색 랭킹 제외)
+        // PlayDB 검색 결과 목록은 보통 id="contents" 내부에 있음
+        Element contentArea = doc.getElementById("contents");
+        if (contentArea == null) {
+            contentArea = doc.body();
+        }
+
         // goDetail('221340') 패턴에서 ID 추출
-        for (Element link : doc.select("a[href*=goDetail], a[onclick*=goDetail]")) {
+        for (Element link : contentArea.select("a[href*=goDetail], a[onclick*=goDetail]")) {
             Matcher m = GO_DETAIL_PATTERN.matcher(link.attr("href") + link.attr("onclick"));
             if (m.find())
                 return m.group(1);
         }
         // PlaydbDetail URL에서 ID 추출
-        for (Element link : doc.select("a[href*=PlaydbDetail]")) {
+        for (Element link : contentArea.select("a[href*=PlaydbDetail]")) {
             Matcher m = PLAY_NO_PATTERN.matcher(link.attr("href"));
             if (m.find())
                 return m.group(1);
@@ -194,14 +201,17 @@ public class PlaydbCrawlerService {
                 } else if ("a".equals(el.tagName()) && el.attr("href").contains("artistdb")) {
                     Element img = el.selectFirst("img");
                     if (img != null) {
-                        // 이미지 링크 → 다음 이름 링크를 위해 URL 저장
+                        // 이미지 링크: URL만 저장하고 이름은 처리 안함 (중복 방지)
                         pendingImageUrl = resolveImageUrl(img);
                     } else {
-                        // 이름 링크
+                        // 텍스트(이름) 링크: 저장된 이미지 URL과 결합
                         String name = el.ownText().trim();
+                        if (name.isEmpty()) {
+                            name = el.text().trim();
+                        }
                         if (!name.isEmpty() && name.length() <= 20) {
                             result.add(new ActorLink(name, pendingImageUrl));
-                            pendingImageUrl = null;
+                            pendingImageUrl = null; // 사용 후 초기화
                         }
                     }
                 }
