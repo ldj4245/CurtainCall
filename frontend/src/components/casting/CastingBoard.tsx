@@ -1,5 +1,6 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Users, User, RefreshCw } from 'lucide-react'
+import { useState } from 'react'
 import { castingApi, type CastingRole } from '../../api/casting'
 
 interface Props {
@@ -7,10 +8,24 @@ interface Props {
 }
 
 export default function CastingBoard({ showId }: Props) {
-    const { data: casting, isLoading, refetch, isFetching } = useQuery({
+    const queryClient = useQueryClient()
+    const [isRefreshing, setIsRefreshing] = useState(false)
+    const { data: casting, isLoading } = useQuery({
         queryKey: ['casting', showId],
         queryFn: () => castingApi.getByShow(showId),
     })
+
+    const handleRefresh = async () => {
+        setIsRefreshing(true)
+        try {
+            await castingApi.refresh(showId)
+            await queryClient.invalidateQueries({ queryKey: ['casting', showId] })
+        } catch (e) {
+            console.error('캐스팅 새로고침 실패', e)
+        } finally {
+            setIsRefreshing(false)
+        }
+    }
 
     if (isLoading) {
         return (
@@ -38,12 +53,12 @@ export default function CastingBoard({ showId }: Props) {
                     </span>
                 </h2>
                 <button
-                    onClick={() => refetch()}
-                    disabled={isFetching}
+                    onClick={handleRefresh}
+                    disabled={isRefreshing}
                     className="text-xs text-gray-400 hover:text-brand transition-colors flex items-center gap-1"
                     title="캐스팅 정보 새로고침"
                 >
-                    <RefreshCw size={12} className={isFetching ? 'animate-spin' : ''} />
+                    <RefreshCw size={12} className={isRefreshing ? 'animate-spin' : ''} />
                     새로고침
                 </button>
             </div>
