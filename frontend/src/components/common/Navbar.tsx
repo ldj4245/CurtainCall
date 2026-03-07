@@ -37,6 +37,7 @@ export default function Navbar() {
           <div className="hidden sm:flex items-center gap-1">
             {navLink('/shows', '공연')}
             {isAuthenticated && navLink('/diary', '다이어리')}
+            {isAuthenticated && navLink('/chat', '동행 채팅')}
           </div>
         </div>
 

@@ -1,4 +1,4 @@
-import { BookOpen, Home, Search, User } from 'lucide-react'
+import { BookOpen, Home, MessageSquare, Search, User } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
 import toast from 'react-hot-toast'
@@ -20,6 +20,13 @@ export default function MobileTabBar() {
       active: isAuthenticated && location.pathname.startsWith('/diary'),
     },
     {
+      to: isAuthenticated ? '/chat' : '/login',
+      state: isAuthenticated ? undefined : loginLinkState,
+      label: '채팅',
+      icon: MessageSquare,
+      active: isAuthenticated && location.pathname.startsWith('/chat'),
+    },
+    {
       to: isAuthenticated ? '/my' : '/login',
       state: isAuthenticated ? undefined : loginLinkState,
       label: '마이',
@@ -30,14 +37,14 @@ export default function MobileTabBar() {
 
   return (
     <nav className="sm:hidden fixed bottom-0 inset-x-0 z-50 border-t border-gray-100 bg-white/95 backdrop-blur-md supports-[backdrop-filter]:bg-white/85">
-      <ul className="grid grid-cols-4">
+      <ul className="grid grid-cols-5">
         {tabs.map(({ to, state, label, icon: Icon, active }) => (
           <li key={label}>
             <Link
               to={to}
               state={state}
               onClick={(e) => {
-                const requiresAuthTab = (label === '다이어리' || label === '마이') && !isAuthenticated
+                const requiresAuthTab = (label === '다이어리' || label === '채팅' || label === '마이') && !isAuthenticated
                 if (!requiresAuthTab) return
                 e.preventDefault()
                 sessionStorage.setItem('postLoginRedirect', `${location.pathname}${location.search}`)

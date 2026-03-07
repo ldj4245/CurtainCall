@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Users, Clock, MapPin, Calendar, HeartHandshake, Loader2 } from 'lucide-react';
+import { Users, Clock, MapPin, Calendar, HeartHandshake, Loader2, MessageSquare } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 import { companionApi, CompanionPost } from '../../api/companion';
 import { useAuthStore } from '../../store/authStore';
 import CompanionForm from './CompanionForm';
@@ -181,9 +182,11 @@ function CompanionCard({
     onDelete: () => void;
     isLoading: boolean;
 }) {
+    const navigate = useNavigate();
     const isAuthor = currentUserId === post.authorId;
     const isParticipant = post.participants.some(p => p.userId === currentUserId);
     const isOpen = post.status === 'OPEN';
+    const canAccessChat = (isAuthor || isParticipant) && post.chatRoomId != null;
 
     const formattedDate = format(parseISO(post.performanceDate), 'yyyy년 M월 d일(E)', { locale: ko });
 
@@ -259,28 +262,39 @@ function CompanionCard({
                     <span className="text-xs font-medium text-gray-700">{post.authorNickname}</span>
                 </div>
 
-                {!isAuthor && (
-                    isParticipant ? (
+                <div className="flex items-center gap-2">
+                    {canAccessChat && (
                         <button
-                            onClick={onCancel}
-                            disabled={isLoading}
-                            className="text-xs font-semibold px-4 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+                            onClick={() => navigate(`/chat/${post.chatRoomId}`)}
+                            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-50 text-brand border border-brand-100 hover:bg-brand-100 transition-colors"
                         >
-                            참여 취소
+                            <MessageSquare className="w-3.5 h-3.5" />
+                            채팅
                         </button>
-                    ) : (
-                        <button
-                            onClick={onJoin}
-                            disabled={!isOpen || isLoading}
-                            className={`text-xs font-semibold px-4 py-1.5 rounded-lg transition-colors ${isOpen
-                                ? 'bg-brand text-white hover:bg-brand-600'
-                                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                }`}
-                        >
-                            {isOpen ? '동행 참여' : '마감됨'}
-                        </button>
-                    )
-                )}
+                    )}
+                    {!isAuthor && (
+                        isParticipant ? (
+                            <button
+                                onClick={onCancel}
+                                disabled={isLoading}
+                                className="text-xs font-semibold px-4 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+                            >
+                                참여 취소
+                            </button>
+                        ) : (
+                            <button
+                                onClick={onJoin}
+                                disabled={!isOpen || isLoading}
+                                className={`text-xs font-semibold px-4 py-1.5 rounded-lg transition-colors ${isOpen
+                                    ? 'bg-brand text-white hover:bg-brand-600'
+                                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                    }`}
+                            >
+                                {isOpen ? '동행 참여' : '마감됨'}
+                            </button>
+                        )
+                    )}
+                </div>
             </div>
         </div>
     );

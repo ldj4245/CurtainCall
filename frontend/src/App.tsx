@@ -10,6 +10,8 @@ const ShowListPage = lazy(() => import('./pages/Shows/ShowListPage'))
 const ShowDetailPage = lazy(() => import('./pages/Shows/ShowDetailPage'))
 const DiaryPage = lazy(() => import('./pages/Diary/DiaryPage'))
 const MyPage = lazy(() => import('./pages/MyPage/MyPage'))
+const ChatListPage = lazy(() => import('./pages/Chat/ChatListPage'))
+const ChatRoomPage = lazy(() => import('./pages/Chat/ChatRoomPage'))
 const LoginPage = lazy(() => import('./pages/Auth/LoginPage'))
 const SignUpPage = lazy(() => import('./pages/Auth/SignUpPage'))
 const OAuth2Callback = lazy(() => import('./pages/Auth/OAuth2Callback'))
@@ -64,6 +66,22 @@ export default function App() {
                       element={
                         <ProtectedRoute>
                           <MyPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/chat"
+                      element={
+                        <ProtectedRoute>
+                          <ChatListPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/chat/:roomId"
+                      element={
+                        <ProtectedRoute>
+                          <ChatRoomPage />
                         </ProtectedRoute>
                       }
                     />

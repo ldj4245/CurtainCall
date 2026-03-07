@@ -25,6 +25,7 @@ export interface CompanionPost {
     status: 'OPEN' | 'CLOSED' | 'EXPIRED';
     createdAt: string;
     participants: CompanionParticipant[];
+    chatRoomId: number | null;
 }
 
 export interface PageResponse<T> {

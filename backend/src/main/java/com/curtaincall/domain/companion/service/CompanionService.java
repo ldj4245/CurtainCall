@@ -1,5 +1,7 @@
 package com.curtaincall.domain.companion.service;
 
+import com.curtaincall.domain.chat.repository.ChatRoomRepository;
+import com.curtaincall.domain.chat.service.ChatService;
 import com.curtaincall.domain.companion.dto.CompanionParticipantResponse;
 import com.curtaincall.domain.companion.dto.CompanionPostRequest;
 import com.curtaincall.domain.companion.dto.CompanionPostResponse;
@@ -29,6 +31,8 @@ public class CompanionService {
     private final CompanionParticipantRepository companionParticipantRepository;
     private final ShowRepository showRepository;
     private final UserRepository userRepository;
+    private final ChatService chatService;
+    private final ChatRoomRepository chatRoomRepository;
 
     public Page<CompanionPostResponse> getCompanions(Long showId, boolean onlyOpen, Pageable pageable) {
         Page<CompanionPost> posts;
@@ -44,7 +48,10 @@ public class CompanionService {
                     .stream()
                     .map(CompanionParticipantResponse::from)
                     .collect(Collectors.toList());
-            return CompanionPostResponse.from(post, participants);
+            Long chatRoomId = chatRoomRepository.findByCompanionPostId(post.getId())
+                    .map(room -> room.getId())
+                    .orElse(null);
+            return CompanionPostResponse.from(post, participants, chatRoomId);
         });
     }
 
@@ -56,7 +63,10 @@ public class CompanionService {
                             .stream()
                             .map(CompanionParticipantResponse::from)
                             .collect(Collectors.toList());
-                    return CompanionPostResponse.from(post, participants);
+                    Long chatRoomId = chatRoomRepository.findByCompanionPostId(post.getId())
+                            .map(room -> room.getId())
+                            .orElse(null);
+                    return CompanionPostResponse.from(post, participants, chatRoomId);
                 });
     }
 
@@ -112,6 +122,8 @@ public class CompanionService {
         companionParticipantRepository.save(participant);
 
         post.incrementMembers();
+
+        chatService.createRoomForCompanionPost(post);
     }
 
     @Transactional
