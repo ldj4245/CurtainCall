@@ -12,4 +12,7 @@ public interface CompanionPostRepository extends JpaRepository<CompanionPost, Lo
 
     // 열려있는 모집글만 조회 (마감 제외)
     Page<CompanionPost> findByShowIdAndStatus(Long showId, CompanionPost.Status status, Pageable pageable);
+
+    // 전체 공연 대상 열려있는 모집글 최신순 조회용
+    Page<CompanionPost> findByStatus(CompanionPost.Status status, Pageable pageable);
 }

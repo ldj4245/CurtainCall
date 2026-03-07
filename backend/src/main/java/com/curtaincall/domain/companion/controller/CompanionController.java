@@ -29,6 +29,12 @@ public class CompanionController {
         return ResponseEntity.ok(companionService.getCompanions(showId, onlyOpen, pageable));
     }
 
+    @GetMapping("/companions/recent")
+    public ResponseEntity<Page<CompanionPostResponse>> getRecentCompanions(
+            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC, size = 4) Pageable pageable) {
+        return ResponseEntity.ok(companionService.getRecentCompanions(pageable));
+    }
+
     @PostMapping("/shows/{showId}/companions")
     public ResponseEntity<Long> createCompanionPost(
             @PathVariable Long showId,

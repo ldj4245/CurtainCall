@@ -4,6 +4,7 @@ import { BookOpenText, ChevronRight, Search, Star } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { showsApi } from '../../api/shows'
 import ShowCard from '../../components/show/ShowCard'
+import RecentCompanions from '../../components/companion/RecentCompanions'
 import { useAuthStore } from '../../store/authStore'
 
 export default function HomePage() {
@@ -97,6 +98,13 @@ export default function HomePage() {
               ))}
             </div>
           )}
+        </div>
+      </section>
+
+      {/* 동행 위젯 */}
+      <section className="py-12 px-4 bg-warm-50">
+        <div className="max-w-6xl mx-auto">
+          <RecentCompanions />
         </div>
       </section>
     </div>

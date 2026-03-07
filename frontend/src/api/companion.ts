@@ -56,6 +56,11 @@ export const companionApi = {
         return data;
     },
 
+    getRecentCompanions: async (): Promise<PageResponse<CompanionPost>> => {
+        const { data } = await api.get<PageResponse<CompanionPost>>(`/companions/recent`);
+        return data;
+    },
+
     createCompanion: async (showId: number, request: CompanionPostRequest): Promise<number> => {
         const { data } = await api.post<number>(`/shows/${showId}/companions`, request);
         return data;

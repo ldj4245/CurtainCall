@@ -48,6 +48,18 @@ public class CompanionService {
         });
     }
 
+    public Page<CompanionPostResponse> getRecentCompanions(Pageable pageable) {
+        return companionPostRepository.findByStatus(CompanionPost.Status.OPEN, pageable)
+                .map(post -> {
+                    List<CompanionParticipantResponse> participants = companionParticipantRepository
+                            .findByCompanionPostId(post.getId())
+                            .stream()
+                            .map(CompanionParticipantResponse::from)
+                            .collect(Collectors.toList());
+                    return CompanionPostResponse.from(post, participants);
+                });
+    }
+
     @Transactional
     public Long createCompanionPost(Long showId, Long userId, CompanionPostRequest request) {
         Show show = showRepository.findById(showId)
