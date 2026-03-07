@@ -3,10 +3,12 @@ package com.curtaincall.domain.casting;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
+@Disabled("외부 PlayDB 서버에 의존하는 테스트 - CI 환경에서 실행 불가")
 public class PlayDBTest {
 
     @Test
