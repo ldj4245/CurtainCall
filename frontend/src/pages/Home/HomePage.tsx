@@ -14,27 +14,81 @@ export default function HomePage() {
     queryFn: () => showsApi.getOngoing(8),
   })
 
+  const featuredShow = ongoingShows?.find((s) => s.posterUrl)
+
   return (
     <div className="min-h-screen bg-white">
       {/* 히어로 */}
-      <section className="px-4 pt-16 pb-12 md:pt-24 md:pb-16 bg-warm-50">
-        <div className="max-w-6xl mx-auto text-center">
-          <p className="inline-flex items-center rounded-full bg-brand-50 px-3.5 py-1.5 text-xs font-semibold tracking-wide text-brand">
-            CURTAINCALL
-          </p>
-          <h1 className="mt-6 text-3xl md:text-5xl font-bold text-gray-900 tracking-tight leading-tight">
-            공연 찾고, 기록하고,
-            <br />
-            같이 보러 가자.
-          </h1>
-          <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-            <Link to="/shows" className="btn-primary text-base px-7 py-3">
-              공연 둘러보기
-            </Link>
-            {!isAuthenticated && (
-              <Link to="/signup" className="btn-secondary text-base px-7 py-3">
-                무료로 시작하기
-              </Link>
+      <section className="border-b border-gray-100">
+        <div className="max-w-6xl mx-auto px-4 py-14 md:py-20">
+          <div className="flex flex-col md:flex-row md:items-center gap-10 md:gap-16">
+
+            {/* 텍스트 */}
+            <div className="flex-1 min-w-0">
+              <h1 className="text-5xl md:text-7xl font-black text-gray-900 leading-[0.92] tracking-tighter">
+                공연을
+                <br />
+                <span className="text-brand">기록하는</span>
+                <br />
+                공간
+              </h1>
+              <p className="mt-6 text-base text-gray-500 leading-relaxed max-w-xs">
+                관극 다이어리, 공연 검색, 동행 찾기.
+                <br />
+                당신의 모든 공연 경험을 여기에.
+              </p>
+              <div className="mt-8 flex gap-3">
+                <Link
+                  to="/shows"
+                  className="px-6 py-3 bg-gray-900 text-white text-sm font-semibold rounded-xl hover:bg-gray-700 transition-colors"
+                >
+                  공연 찾기
+                </Link>
+                {!isAuthenticated && (
+                  <Link
+                    to="/signup"
+                    className="px-6 py-3 border border-gray-200 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-50 transition-colors"
+                  >
+                    시작하기
+                  </Link>
+                )}
+              </div>
+            </div>
+
+            {/* 피처드 포스터 */}
+            {featuredShow && (
+              <div className="flex-shrink-0 flex gap-4 items-end">
+                <Link
+                  to={`/shows/${featuredShow.id}`}
+                  className="group block w-44 md:w-52"
+                >
+                  <div className="rounded-2xl overflow-hidden shadow-2xl ring-1 ring-black/10 group-hover:scale-[1.02] transition-transform duration-300">
+                    <img
+                      src={featuredShow.posterUrl!}
+                      alt={featuredShow.title}
+                      className="w-full aspect-[3/4] object-cover"
+                    />
+                  </div>
+                  <p className="mt-3 text-xs text-gray-400 text-center truncate px-1">
+                    {featuredShow.title}
+                  </p>
+                </Link>
+                {ongoingShows?.filter(s => s.posterUrl && s.id !== featuredShow.id).slice(0, 1).map(s => (
+                  <Link
+                    key={s.id}
+                    to={`/shows/${s.id}`}
+                    className="group block w-32 md:w-36 mb-6"
+                  >
+                    <div className="rounded-2xl overflow-hidden shadow-xl ring-1 ring-black/10 group-hover:scale-[1.02] transition-transform duration-300">
+                      <img
+                        src={s.posterUrl!}
+                        alt={s.title}
+                        className="w-full aspect-[3/4] object-cover"
+                      />
+                    </div>
+                  </Link>
+                ))}
+              </div>
             )}
           </div>
         </div>
