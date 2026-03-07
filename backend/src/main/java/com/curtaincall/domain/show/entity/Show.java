@@ -62,6 +62,10 @@ public class Show extends BaseTimeEntity {
     @Column(name = "intro_images", columnDefinition = "TEXT")
     private String introImages;
 
+    @Column(name = "popularity_rank")
+    @Builder.Default
+    private Integer popularityRank = 999;
+
     public void update(String title, Genre genre, LocalDate startDate, LocalDate endDate,
             Theater theater, String posterUrl, String castInfo, String priceInfo,
             String runtime, Status status, String ageLimit, String introImages) {
@@ -77,6 +81,10 @@ public class Show extends BaseTimeEntity {
         this.status = status;
         this.ageLimit = ageLimit;
         this.introImages = introImages;
+    }
+
+    public void updatePopularityRank(int rank) {
+        this.popularityRank = rank;
     }
 
     public enum Genre {

@@ -54,6 +54,13 @@ public class ShowService {
                 .stream().map(ShowResponse::from).toList();
     }
 
+    @Cacheable(value = "popularShows", key = "#limit")
+    public List<ShowResponse> getPopularShows(int limit) {
+        Pageable pageable = PageRequest.of(0, limit);
+        return showRepository.findPopularOngoing(pageable)
+                .stream().map(ShowResponse::from).toList();
+    }
+
     private <T extends Enum<T>> T parseEnum(Class<T> enumClass, String value) {
         if (value == null || value.isBlank())
             return null;

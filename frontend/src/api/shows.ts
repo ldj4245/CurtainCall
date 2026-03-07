@@ -19,4 +19,7 @@ export const showsApi = {
 
   getOngoing: (limit = 8) =>
     api.get<Show[]>('/shows/ongoing', { params: { limit } }).then((r) => r.data),
+
+  getPopular: (limit = 8) =>
+    api.get<Show[]>('/shows/popular', { params: { limit } }).then((r) => r.data),
 }

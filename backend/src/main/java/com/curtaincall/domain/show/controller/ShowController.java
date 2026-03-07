@@ -43,4 +43,11 @@ public class ShowController {
             @RequestParam(defaultValue = "8") int limit) {
         return ResponseEntity.ok(showService.getOngoingShows(limit));
     }
+
+    @Operation(summary = "인기 공연 목록 (KOPIS 박스오피스 기반)")
+    @GetMapping("/popular")
+    public ResponseEntity<List<ShowResponse>> getPopularShows(
+            @RequestParam(defaultValue = "8") int limit) {
+        return ResponseEntity.ok(showService.getPopularShows(limit));
+    }
 }

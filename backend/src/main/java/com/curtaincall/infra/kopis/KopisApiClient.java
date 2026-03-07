@@ -94,6 +94,39 @@ public class KopisApiClient {
         }
     }
 
+    /**
+     * KOPIS 박스오피스(예매율 기반 인기 순위) 조회
+     * 
+     * @param catecode 장르코드 (GGGA=뮤지컬, AAAA=연극)
+     * @param area     지역코드 (11=서울, 빈값=전국)
+     * @return kopisId 리스트 (1위부터 순서대로)
+     */
+    public List<String> fetchBoxOffice(String catecode, String area) {
+        String dateStr = LocalDate.now().format(DATE_FORMATTER);
+        String urlStr = String.format(
+                "%s/boxoffice?service=%s&ststype=week&date=%s&catecode=%s&area=%s",
+                baseUrl, apiKey, dateStr, catecode, area != null ? area : "");
+
+        try {
+            Document doc = fetchXml(urlStr);
+            NodeList dbList = doc.getElementsByTagName("db");
+            List<String> kopisIds = new ArrayList<>();
+
+            for (int i = 0; i < dbList.getLength(); i++) {
+                Element el = (Element) dbList.item(i);
+                String kopisId = getText(el, "mt20id");
+                if (kopisId != null) {
+                    kopisIds.add(kopisId);
+                }
+            }
+            log.info("KOPIS 박스오피스 조회 완료: {}건 (장르: {})", kopisIds.size(), catecode);
+            return kopisIds;
+        } catch (Exception e) {
+            log.error("KOPIS 박스오피스 조회 실패: {}", e.getMessage());
+            return List.of();
+        }
+    }
+
     public List<KopisTheaterDto> fetchTheaters() {
         List<KopisTheaterDto> result = new ArrayList<>();
         int page = 1;
