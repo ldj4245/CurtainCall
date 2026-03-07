@@ -5,10 +5,19 @@ import { showsApi } from '../../api/shows'
 import type { Show } from '../../types'
 
 export default function PopularShows() {
-    const { data: shows, isLoading } = useQuery({
+    const { data: popularShows, isLoading: loadingPopular } = useQuery({
         queryKey: ['shows', 'popular'],
         queryFn: () => showsApi.getPopular(8),
     })
+
+    const { data: ongoingShows, isLoading: loadingOngoing } = useQuery({
+        queryKey: ['shows', 'ongoing-fallback'],
+        queryFn: () => showsApi.getOngoing(8),
+        enabled: !loadingPopular && (!popularShows || popularShows.length === 0),
+    })
+
+    const isLoading = loadingPopular || ((!popularShows || popularShows.length === 0) && loadingOngoing)
+    const shows = (popularShows && popularShows.length > 0) ? popularShows : ongoingShows
 
     if (isLoading) {
         return (
@@ -30,6 +39,8 @@ export default function PopularShows() {
     }
 
     if (!shows || shows.length === 0) return null
+
+    const isRanked = popularShows && popularShows.length > 0
 
     return (
         <section className="mb-14">
@@ -64,9 +75,11 @@ export default function PopularShows() {
                                 </div>
                             )}
                             {/* 순위 뱃지 */}
-                            <div className="absolute top-3 left-3 bg-brand text-white text-xs font-extrabold w-7 h-7 rounded-lg flex items-center justify-center shadow-md">
-                                {index + 1}
-                            </div>
+                            {isRanked && (
+                                <div className="absolute top-3 left-3 bg-brand text-white text-xs font-extrabold w-7 h-7 rounded-lg flex items-center justify-center shadow-md">
+                                    {index + 1}
+                                </div>
+                            )}
                         </div>
                         <div className="pt-3 px-0.5">
                             <h3 className="font-semibold text-sm text-gray-900 line-clamp-2 leading-snug group-hover:text-brand transition-colors">

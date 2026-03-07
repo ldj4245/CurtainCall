@@ -5,6 +5,8 @@ import com.curtaincall.domain.show.repository.ShowRepository;
 import com.curtaincall.infra.kopis.KopisApiClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +21,19 @@ public class BoxOfficeScheduler {
 
     private final KopisApiClient kopisApiClient;
     private final ShowRepository showRepository;
+
+    /**
+     * 서버 완전히 뜬 후 최초 1회 박스오피스 갱신
+     */
+    @EventListener(ApplicationReadyEvent.class)
+    @Transactional
+    public void init() {
+        try {
+            refreshBoxOffice();
+        } catch (Exception e) {
+            log.warn("서버 시작 시 박스오피스 갱신 실패 (무시): {}", e.getMessage());
+        }
+    }
 
     /**
      * 매일 오전 6시에 KOPIS 박스오피스를 가져와 인기 순위를 갱신합니다.
