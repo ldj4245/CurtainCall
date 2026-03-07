@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
-import { Search, User } from 'lucide-react'
+import { Search, User, Ticket } from 'lucide-react'
 
 export default function Navbar() {
   const { isAuthenticated, user } = useAuthStore()
@@ -29,8 +29,8 @@ export default function Navbar() {
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center gap-8">
           <Link to="/" className="flex items-center gap-2.5">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-brand text-white text-sm font-bold">
-              C
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-brand text-white">
+              <Ticket size={16} />
             </span>
             <span className="text-lg font-bold tracking-tight text-gray-900">CurtainCall</span>
           </Link>

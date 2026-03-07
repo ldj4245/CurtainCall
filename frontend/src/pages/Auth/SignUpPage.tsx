@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import { ArrowLeft, User, Mail, Lock, CheckCircle2 } from 'lucide-react'
+import { ArrowLeft, User, Mail, Lock, CheckCircle2, Ticket } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { authApi } from '../../api/auth'
 
@@ -91,8 +91,8 @@ export default function SignUpPage() {
                 <div className="w-full max-w-md my-auto">
                     {/* Logo / Header */}
                     <div className="mb-10 text-center lg:text-left">
-                        <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-brand text-white font-bold text-xl mb-6 shadow-lg shadow-brand/30">
-                            C
+                        <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-brand text-white mb-6 shadow-lg shadow-brand/30">
+                            <Ticket size={22} />
                         </div>
                         <h2 className="text-3xl font-bold text-gray-900 tracking-tight">회원가입</h2>
                         <p className="mt-2 text-gray-500 text-sm">3분 만에 가입하고 공연 기록을 시작하세요.</p>

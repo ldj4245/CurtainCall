@@ -193,6 +193,9 @@ export default function MyPage() {
                             <Star size={48} className="mx-auto mb-3 text-gray-200" />
                             <p className="font-medium">작성한 리뷰가 없어요.</p>
                             <p className="text-sm mt-1">공연을 보고 솔직한 리뷰를 남겨보세요!</p>
+                            <button onClick={() => navigate('/shows')} className="btn-primary mt-4">
+                                공연 둘러보기
+                            </button>
                         </div>
                     )}
                 </div>

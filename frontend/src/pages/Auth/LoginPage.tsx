@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import { ArrowLeft, Mail, Lock } from 'lucide-react'
+import { ArrowLeft, Mail, Lock, Ticket } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { authApi } from '../../api/auth'
 import { useAuthStore } from '../../store/authStore'
@@ -87,8 +87,8 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           {/* Logo / Header */}
           <div className="mb-10 lg:mb-12 text-center lg:text-left">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-brand text-white font-bold text-xl mb-6 shadow-lg shadow-brand/30">
-              C
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-brand text-white mb-6 shadow-lg shadow-brand/30">
+              <Ticket size={22} />
             </div>
             <h2 className="text-3xl font-bold text-gray-900 tracking-tight">다시 오셨군요!</h2>
             <p className="mt-2 text-gray-500 text-sm">계정에 로그인하고 나만의 기록을 남겨보세요.</p>

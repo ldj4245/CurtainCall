@@ -213,22 +213,16 @@ export default function ShowDetailPage() {
               )}
 
               {show.introImages && show.introImages.length > 0 && (
-                <div className="mt-6">
-                  <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-700">
-                    <ImageOff size={15} className="text-gray-400" />
-                    공연 소개 이미지
-                  </div>
-                  <div className="space-y-3">
-                    {show.introImages.map((url, idx) => (
-                      <img
-                        key={idx}
-                        src={url}
-                        alt={`${show.title} 소개 이미지 ${idx + 1}`}
-                        className="w-full rounded-xl border border-gray-100"
-                        loading="lazy"
-                      />
-                    ))}
-                  </div>
+                <div className="mt-6 space-y-3">
+                  {show.introImages.map((url, idx) => (
+                    <img
+                      key={idx}
+                      src={url}
+                      alt={`${show.title} 소개 이미지 ${idx + 1}`}
+                      className="w-full rounded-xl border border-gray-100"
+                      loading="lazy"
+                    />
+                  ))}
                 </div>
               )}
             </div>

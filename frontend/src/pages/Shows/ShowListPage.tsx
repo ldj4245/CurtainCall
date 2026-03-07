@@ -143,42 +143,51 @@ export default function ShowListPage() {
         </div>
       </div>
 
-      <div className="hidden sm:flex flex-wrap items-center gap-2 mb-8">
-        {GENRES.map(({ value, label }) => (
-          <button
-            key={`g-${value}`}
-            onClick={() => handleFilter('genre', value)}
-            className={genre === value ? 'filter-pill-active' : 'filter-pill-inactive'}
-          >
-            {label}
-          </button>
-        ))}
-        <span className="w-px h-5 bg-gray-200 mx-1" />
-        {STATUSES.map(({ value, label }) => (
-          <button
-            key={`s-${value}`}
-            onClick={() => handleFilter('status', value)}
-            className={status === value ? 'filter-pill-active' : 'filter-pill-inactive'}
-          >
-            {label}
-          </button>
-        ))}
-        <span className="w-px h-5 bg-gray-200 mx-1" />
-        {REGIONS.slice(0, 5).map(({ value, label }) => (
-          <button
-            key={`r-${value}`}
-            onClick={() => handleFilter('region', value)}
-            className={region === value ? 'filter-pill-active' : 'filter-pill-inactive'}
-          >
-            {label}
-          </button>
-        ))}
+      <div className="hidden sm:flex flex-wrap items-center gap-x-4 gap-y-2 mb-8">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-gray-400 shrink-0">장르</span>
+          {GENRES.map(({ value, label }) => (
+            <button
+              key={`g-${value}`}
+              onClick={() => handleFilter('genre', value)}
+              className={genre === value ? 'filter-pill-active' : 'filter-pill-inactive'}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <span className="w-px h-5 bg-gray-200" />
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-gray-400 shrink-0">상태</span>
+          {STATUSES.map(({ value, label }) => (
+            <button
+              key={`s-${value}`}
+              onClick={() => handleFilter('status', value)}
+              className={status === value ? 'filter-pill-active' : 'filter-pill-inactive'}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <span className="w-px h-5 bg-gray-200" />
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-gray-400 shrink-0">지역</span>
+          {REGIONS.slice(0, 5).map(({ value, label }) => (
+            <button
+              key={`r-${value}`}
+              onClick={() => handleFilter('region', value)}
+              className={region === value ? 'filter-pill-active' : 'filter-pill-inactive'}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
         {hasActiveFilter && (
           <button
             onClick={resetFilters}
-            className="ml-1 text-sm text-gray-400 hover:text-brand underline underline-offset-2"
+            className="text-sm text-gray-400 hover:text-brand underline underline-offset-2"
           >
-            필터 초기화
+            초기화
           </button>
         )}
       </div>
