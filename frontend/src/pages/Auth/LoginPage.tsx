@@ -55,7 +55,7 @@ export default function LoginPage() {
         {/* Abstract/Dark sophisticated background for a premium feel */}
         <div className="absolute inset-0 bg-gradient-to-br from-brand-dark via-brand to-rose-900 opacity-90 mix-blend-multiply" />
         <img
-          src="https://images.unsplash.com/photo-1507676184212-d0350cb994f1?q=80&w=2690&auto=format&fit=crop"
+          src="https://images.pexels.com/photos/713149/pexels-photo-713149.jpeg?auto=compress&cs=tinysrgb&w=1920"
           alt="Theater Stage"
           className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-40"
         />
