@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Mail, Lock } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { authApi } from '../../api/auth'
 import { useAuthStore } from '../../store/authStore'
@@ -30,14 +30,6 @@ export default function LoginPage() {
     window.location.href = providerUrl
   }
 
-  const handleBack = () => {
-    if (window.history.length > 1) {
-      navigate(-1)
-      return
-    }
-    navigate('/')
-  }
-
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true)
     try {
@@ -57,93 +49,121 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-warm-50">
-      <header className="sticky top-0 z-40 border-b border-gray-100 bg-white/95 backdrop-blur-md">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-          <button
-            onClick={handleBack}
-            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900"
-          >
-            <ArrowLeft size={16} />
-            뒤로가기
-          </button>
-          <Link to="/" className="text-sm font-semibold text-gray-900">
-            CurtainCall 홈
-          </Link>
+    <div className="min-h-screen flex bg-white font-sans">
+      {/* Left Side: Brand Imagery (Hidden on mobile) */}
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-brand">
+        {/* Abstract/Dark sophisticated background for a premium feel */}
+        <div className="absolute inset-0 bg-gradient-to-br from-brand-dark via-brand to-rose-900 opacity-90 mix-blend-multiply" />
+        <img
+          src="https://images.unsplash.com/photo-1507676184212-d0350cb994f1?q=80&w=2690&auto=format&fit=crop"
+          alt="Theater Stage"
+          className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-40"
+        />
+        <div className="relative z-10 w-full p-16 flex flex-col justify-between">
+          <div>
+            <Link to="/" className="inline-flex items-center gap-2 text-white/80 hover:text-white transition group">
+              <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+              <span className="font-medium tracking-wide">홈으로 돌아가기</span>
+            </Link>
+          </div>
+          <div className="mb-24">
+            <h1 className="text-5xl font-bold text-white mb-6 leading-tight tracking-tight">
+              무대의 감동을<br />나눌 시간입니다.
+            </h1>
+            <p className="text-lg text-white/70 font-light max-w-md leading-relaxed">
+              CurtainCall에 오신 것을 환영합니다. 당신의 첫 번째 관극 기록부터 맞춤형 추천까지, 모든 여정이 여기서 시작됩니다.
+            </p>
+          </div>
         </div>
-      </header>
-      <div className="flex items-center justify-center p-4 pt-10">
-        <div className="bg-white rounded-2xl shadow-card-md border border-gray-100 p-8 w-full max-w-sm">
-          <div className="text-center mb-8">
-            <div className="mx-auto mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-brand text-white text-sm font-bold">
+      </div>
+
+      {/* Right Side: Login Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-12 lg:p-16 relative bg-white/50 xl:bg-white inset-shadow-sm">
+        {/* Mobile only back button */}
+        <Link to="/" className="lg:hidden absolute top-8 left-8 text-gray-500 hover:text-gray-900">
+          <ArrowLeft size={24} />
+        </Link>
+
+        <div className="w-full max-w-md">
+          {/* Logo / Header */}
+          <div className="mb-10 lg:mb-12 text-center lg:text-left">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-brand text-white font-bold text-xl mb-6 shadow-lg shadow-brand/30">
               C
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">로그인</h1>
-            <p className="text-gray-400 mt-2 text-sm">CurtainCall 계정으로 서비스를 이용하세요</p>
+            <h2 className="text-3xl font-bold text-gray-900 tracking-tight">다시 오셨군요!</h2>
+            <p className="mt-2 text-gray-500 text-sm">계정에 로그인하고 나만의 기록을 남겨보세요.</p>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mb-6">
-            <div>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-brand transition-colors">
+                <Mail size={18} />
+              </div>
               <input
                 type="email"
-                placeholder="이메일"
-                className="input-field"
+                placeholder="이메일을 입력하세요"
+                className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-200 text-gray-900 rounded-xl focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all outline-none placeholder:text-gray-400 font-medium"
                 {...register('email', {
                   required: '이메일을 입력해주세요',
                   pattern: { value: /^\S+@\S+$/i, message: '올바른 이메일을 입력해주세요' },
                 })}
               />
               {errors.email && (
-                <p className="text-red-500 text-xs mt-1 ml-1">{errors.email.message}</p>
+                <p className="text-red-500 text-xs mt-1.5 ml-1 font-medium">{errors.email.message}</p>
               )}
             </div>
-            <div>
+
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-brand transition-colors">
+                <Lock size={18} />
+              </div>
               <input
                 type="password"
-                placeholder="비밀번호"
-                className="input-field"
+                placeholder="비밀번호를 입력하세요"
+                className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-200 text-gray-900 rounded-xl focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all outline-none placeholder:text-gray-400 font-medium"
                 {...register('password', { required: '비밀번호를 입력해주세요' })}
               />
               {errors.password && (
-                <p className="text-red-500 text-xs mt-1 ml-1">{errors.password.message}</p>
+                <p className="text-red-500 text-xs mt-1.5 ml-1 font-medium">{errors.password.message}</p>
               )}
             </div>
+
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full btn-primary py-3"
+              className="w-full mt-2 py-4 bg-gray-900 hover:bg-gray-800 text-white rounded-xl font-semibold shadow-xl shadow-gray-900/10 transition-all hover:-translate-y-0.5 disabled:opacity-70 disabled:hover:translate-y-0"
             >
-              {isLoading ? '로그인 중...' : '로그인'}
+              {isLoading ? '로그인 중...' : '이메일로 로그인'}
             </button>
           </form>
 
-          <div className="text-center mb-4">
-            <span className="text-sm text-gray-400">
-              계정이 없으신가요?{' '}
-              <Link to="/signup" className="text-brand font-semibold hover:underline">
-                회원가입
-              </Link>
-            </span>
+          <div className="mt-8 relative flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200"></div>
+            </div>
+            <div className="relative bg-white px-4 text-xs font-semibold tracking-wider text-gray-400 uppercase">
+              또는
+            </div>
           </div>
 
-          <div className="flex items-center gap-3 mb-4">
-            <div className="flex-1 h-px bg-gray-100" />
-            <span className="text-xs text-gray-400">또는</span>
-            <div className="flex-1 h-px bg-gray-100" />
-          </div>
-
-          <div className="space-y-2">
+          <div className="mt-8">
             <button
               type="button"
               onClick={() => startSocialLogin('/oauth2/authorization/kakao')}
-              className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-[#FEE500] text-[#191919] font-semibold text-sm hover:brightness-95 transition"
+              className="w-full flex items-center justify-center py-4 px-4 bg-[#FEE500] hover:bg-[#FDD800] text-[#191919] font-bold rounded-xl shadow-sm transition-all hover:-translate-y-0.5"
             >
-              카카오로 시작하기
+              <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 3C6.477 3 2 6.545 2 10.916c0 2.846 1.83 5.344 4.606 6.758-.291 1.09-1.05 3.931-1.076 4.026-.032.115.018.238.109.31.066.052.152.072.235.05.033-.008 3.327-.965 4.61-2.195a12.1 12.1 0 001.516.096c5.523 0 10-3.545 10-7.915S17.523 3 12 3z" />
+              </svg>
+              카카오계정으로 로그인
             </button>
           </div>
 
-          <p className="text-center text-xs text-gray-400 mt-6">
-            로그인 시 서비스 이용약관에 동의하게 됩니다.
+          <p className="mt-10 text-center text-sm text-gray-500">
+            아직 계정이 없으신가요?{' '}
+            <Link to="/signup" className="font-bold text-brand hover:text-brand-dark hover:underline underline-offset-4 transition-colors">
+              회원가입하기
+            </Link>
           </p>
         </div>
       </div>
