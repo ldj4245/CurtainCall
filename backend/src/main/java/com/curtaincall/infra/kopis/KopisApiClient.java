@@ -102,13 +102,14 @@ public class KopisApiClient {
      * @return kopisId 리스트 (1위부터 순서대로)
      */
     public List<String> fetchBoxOffice(String catecode, String area) {
-        String dateStr = LocalDate.now().format(DATE_FORMATTER);
+        // 박스오피스 API 조회 시작일, 종료일 (최근 7일)
+        String stdate = LocalDate.now().minusDays(7).format(DATE_FORMATTER);
+        String eddate = LocalDate.now().minusDays(1).format(DATE_FORMATTER);
+
+        // KOPIS OpenAPI 박스오피스 요청 파라미터 (stdate: 시작일, eddate: 종료일)
         String urlStr = String.format(
-                "%s/boxoffice?service=%s&ststype=week&date=%s&catecode=%s",
-                baseUrl, apiKey, dateStr, catecode);
-        if (area != null && !area.isBlank()) {
-            urlStr += "&area=" + area;
-        }
+                "%s/boxoffice?service=%s&stdate=%s&eddate=%s&catecode=%s",
+                baseUrl, apiKey, stdate, eddate, catecode);
 
         log.info("KOPIS 박스오피스 API 호출: {}", urlStr.replaceAll("service=[^&]+", "service=***"));
 
