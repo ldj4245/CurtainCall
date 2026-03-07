@@ -104,19 +104,26 @@ public class KopisApiClient {
     public List<String> fetchBoxOffice(String catecode, String area) {
         String dateStr = LocalDate.now().format(DATE_FORMATTER);
         String urlStr = String.format(
-                "%s/boxoffice?service=%s&ststype=week&date=%s&catecode=%s&area=%s",
-                baseUrl, apiKey, dateStr, catecode, area != null ? area : "");
+                "%s/boxoffice?service=%s&ststype=week&date=%s&catecode=%s",
+                baseUrl, apiKey, dateStr, catecode);
+        if (area != null && !area.isBlank()) {
+            urlStr += "&area=" + area;
+        }
+
+        log.info("KOPIS 박스오피스 API 호출: {}", urlStr.replaceAll("service=[^&]+", "service=***"));
 
         try {
             Document doc = fetchXml(urlStr);
-            NodeList dbList = doc.getElementsByTagName("db");
+            NodeList boxofList = doc.getElementsByTagName("boxof");
             List<String> kopisIds = new ArrayList<>();
 
-            for (int i = 0; i < dbList.getLength(); i++) {
-                Element el = (Element) dbList.item(i);
+            for (int i = 0; i < boxofList.getLength(); i++) {
+                Element el = (Element) boxofList.item(i);
                 String kopisId = getText(el, "mt20id");
+                String title = getText(el, "prfnm");
                 if (kopisId != null) {
                     kopisIds.add(kopisId);
+                    log.info("박스오피스 #{}: {} ({})", i + 1, title, kopisId);
                 }
             }
             log.info("KOPIS 박스오피스 조회 완료: {}건 (장르: {})", kopisIds.size(), catecode);
