@@ -11,8 +11,10 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -43,29 +45,33 @@ public class BoxOfficeScheduler {
     public void refreshBoxOffice() {
         log.info("=== 박스오피스 인기 순위 갱신 시작 ===");
 
-        // 기존 모든 ONGOING 순위 초기화 (순위 밖 공연은 999)
         List<Show> allShows = showRepository.findByStatus(Show.Status.ONGOING);
         allShows.forEach(show -> show.updatePopularityRank(999));
 
-        // 뮤지컬 박스오피스 TOP 조회
         List<String> musicalRanking = kopisApiClient.fetchBoxOffice("GGGA", "");
-        AtomicInteger rank = new AtomicInteger(1);
-
-        for (String kopisId : musicalRanking) {
-            int currentRank = rank.getAndIncrement();
-            showRepository.findByKopisId(kopisId).ifPresent(show -> {
-                show.updatePopularityRank(currentRank);
-                log.info("인기 #{}: {} ({})", currentRank, show.getTitle(), kopisId);
-            });
-        }
-
-        // 연극 박스오피스도 추가
         List<String> playRanking = kopisApiClient.fetchBoxOffice("AAAA", "");
+
+        List<String> allKopisIds = new ArrayList<>(musicalRanking);
+        allKopisIds.addAll(playRanking);
+
+        Map<String, Show> showByKopisId = showRepository.findAllByKopisIdIn(allKopisIds).stream()
+                .collect(Collectors.toMap(Show::getKopisId, s -> s));
+
+        int rank = 1;
+        for (String kopisId : musicalRanking) {
+            Show show = showByKopisId.get(kopisId);
+            if (show != null) {
+                show.updatePopularityRank(rank);
+                log.info("인기 #{}: {} ({})", rank, show.getTitle(), kopisId);
+            }
+            rank++;
+        }
         for (String kopisId : playRanking) {
-            int currentRank = rank.getAndIncrement();
-            showRepository.findByKopisId(kopisId).ifPresent(show -> {
-                show.updatePopularityRank(currentRank);
-            });
+            Show show = showByKopisId.get(kopisId);
+            if (show != null) {
+                show.updatePopularityRank(rank);
+            }
+            rank++;
         }
 
         log.info("=== 박스오피스 인기 순위 갱신 완료 (뮤지컬 {}건, 연극 {}건) ===",

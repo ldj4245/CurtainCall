@@ -12,12 +12,17 @@ import java.util.Optional;
 
 public interface FavoriteShowRepository extends JpaRepository<FavoriteShow, Long> {
 
+    boolean existsByUserIdAndShowId(Long userId, Long showId);
+
     boolean existsByUserAndShow(User user, Show show);
 
     Optional<FavoriteShow> findByUserAndShow(User user, Show show);
 
-    @Query("SELECT f.show FROM FavoriteShow f WHERE f.user = :user ORDER BY f.createdAt DESC")
+    @Query(value = "SELECT f.show FROM FavoriteShow f JOIN FETCH f.show.theater WHERE f.user = :user ORDER BY f.createdAt DESC",
+           countQuery = "SELECT COUNT(f) FROM FavoriteShow f WHERE f.user = :user")
     Page<Show> findShowsByUser(User user, Pageable pageable);
+
+    long countByShowId(Long showId);
 
     long countByShow(Show show);
 

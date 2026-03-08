@@ -300,6 +300,104 @@ Page<DiaryEntry> findByUserIdOrderByWatchedDateDesc(@Param("userId") Long userId
 
 결과: **2N+1 → 1쿼리**
 
+---
+
+### 2차 점검 — 누락된 도메인 추가 발견 및 해결
+
+코드 리뷰를 더 진행하다 다른 도메인에서도 같은 패턴이 남아있는 걸 발견했다.
+
+**ShowLiveMessage — `m.room` fetch join 누락 (50+1쿼리)**
+
+```java
+// 수정 전
+SELECT m FROM ShowLiveMessage m
+JOIN FETCH m.sender   -- sender만 fetch join
+WHERE m.room.id = :roomId
+
+// ShowLiveMessageDto.from()에서
+.roomId(message.getRoom().getId())  // LAZY 로딩 → 메시지 50건마다 room SELECT 50번
+```
+
+```java
+// 수정 후
+SELECT m FROM ShowLiveMessage m
+JOIN FETCH m.sender
+JOIN FETCH m.room   -- 추가
+WHERE m.room.id = :roomId
+```
+
+결과: **51쿼리 → 1쿼리**
+
+**ShowService.getOngoingShows() — theater fetch join 누락 (N+1쿼리)**
+
+```java
+// 수정 전
+SELECT s FROM Show s
+WHERE s.status = 'ONGOING' AND s.endDate >= CURRENT_DATE
+
+// ShowResponse.from()에서
+.theaterName(show.getTheater().getName())  // LAZY → 공연 N건마다 theater SELECT N번
+```
+
+```java
+// 수정 후
+SELECT s FROM Show s LEFT JOIN FETCH s.theater
+WHERE s.status = 'ONGOING' AND s.endDate >= CURRENT_DATE
+```
+
+같은 파일에 있는 `findPopularOngoing`은 fetch join이 이미 있었는데 `findTop10ByStatusOngoing`만 빠져있었다.
+
+결과: **N+1 → 1쿼리**
+
+**FavoriteShowService — 불필요한 엔티티 로드 + theater fetch join 누락**
+
+```java
+// 수정 전 - isFavorited(): User, Show 엔티티를 각각 로드한 뒤 exists 체크
+User user = userRepository.findById(userId).orElse(null);
+Show show = showRepository.findById(showId).orElse(null);
+return favoriteShowRepository.existsByUserAndShow(user, show);  // 총 3쿼리
+
+// 수정 전 - getMyFavorites(): theater fetch join 없음
+SELECT f.show FROM FavoriteShow f WHERE f.user = :user  // show.theater LAZY → N+1
+```
+
+```java
+// 수정 후 - isFavorited(): ID로 직접 체크 (1쿼리)
+return favoriteShowRepository.existsByUserIdAndShowId(userId, showId);
+
+// 수정 후 - getMyFavorites(): fetch join 추가
+SELECT f.show FROM FavoriteShow f JOIN FETCH f.show.theater WHERE f.user = :user
+```
+
+결과: exists 3쿼리 → 1쿼리 / 찜 목록 N+1 → 1쿼리
+
+**BoxOfficeScheduler.refreshBoxOffice() — 순위 조회 N+1**
+
+박스오피스 순위를 갱신할 때 kopisId 하나마다 SELECT를 날리고 있었다.
+
+```java
+// 수정 전
+for (String kopisId : musicalRanking) {
+    showRepository.findByKopisId(kopisId).ifPresent(show -> {  // 순위 수만큼 SELECT
+        show.updatePopularityRank(currentRank);
+    });
+}
+```
+
+```java
+// 수정 후 - IN 쿼리로 한 번에 조회 후 Map으로 처리
+Map<String, Show> showByKopisId = showRepository
+    .findAllByKopisIdIn(allKopisIds).stream()
+    .collect(Collectors.toMap(Show::getKopisId, s -> s));
+
+for (String kopisId : musicalRanking) {
+    Show show = showByKopisId.get(kopisId);
+    if (show != null) show.updatePopularityRank(rank);
+}
+```
+
+결과: **N쿼리 → 1쿼리**
+
 </details>
 
 ---

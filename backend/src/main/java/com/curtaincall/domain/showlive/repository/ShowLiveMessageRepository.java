@@ -12,6 +12,7 @@ public interface ShowLiveMessageRepository extends JpaRepository<ShowLiveMessage
     @Query("""
             SELECT m FROM ShowLiveMessage m
             JOIN FETCH m.sender
+            JOIN FETCH m.room
             WHERE m.room.id = :roomId
             ORDER BY m.createdAt ASC
             """)

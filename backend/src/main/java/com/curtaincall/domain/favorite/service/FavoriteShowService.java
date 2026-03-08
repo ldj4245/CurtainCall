@@ -49,19 +49,11 @@ public class FavoriteShowService {
     }
 
     public boolean isFavorited(Long userId, Long showId) {
-        User user = userRepository.findById(userId).orElse(null);
-        if (user == null)
-            return false;
-        Show show = showRepository.findById(showId).orElse(null);
-        if (show == null)
-            return false;
-        return favoriteShowRepository.existsByUserAndShow(user, show);
+        return favoriteShowRepository.existsByUserIdAndShowId(userId, showId);
     }
 
     public long getFavoriteCount(Long showId) {
-        Show show = showRepository.findById(showId)
-                .orElseThrow(() -> BusinessException.notFound("공연을 찾을 수 없습니다"));
-        return favoriteShowRepository.countByShow(show);
+        return favoriteShowRepository.countByShowId(showId);
     }
 
     public Page<ShowResponse> getMyFavorites(Long userId, int page, int size) {

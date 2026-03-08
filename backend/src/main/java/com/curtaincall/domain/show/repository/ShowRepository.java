@@ -14,6 +14,8 @@ public interface ShowRepository extends JpaRepository<Show, Long>, ShowRepositor
 
     Optional<Show> findByKopisId(String kopisId);
 
+    List<Show> findAllByKopisIdIn(List<String> kopisIds);
+
     @Query("SELECT s FROM Show s JOIN FETCH s.theater t WHERE s.status = :status ORDER BY s.startDate DESC")
     Page<Show> findByStatusWithTheater(@Param("status") Show.Status status, Pageable pageable);
 
@@ -23,7 +25,7 @@ public interface ShowRepository extends JpaRepository<Show, Long>, ShowRepositor
     @Query("SELECT s FROM Show s JOIN FETCH s.theater t ORDER BY s.startDate DESC")
     Page<Show> findAllWithTheater(Pageable pageable);
 
-    @Query("SELECT s FROM Show s WHERE s.status = 'ONGOING' AND s.endDate >= CURRENT_DATE ORDER BY s.endDate ASC")
+    @Query("SELECT s FROM Show s LEFT JOIN FETCH s.theater WHERE s.status = 'ONGOING' AND s.endDate >= CURRENT_DATE ORDER BY s.endDate ASC")
     List<Show> findTop10ByStatusOngoing(Pageable pageable);
 
     @Query("SELECT s FROM Show s JOIN FETCH s.theater WHERE s.status = 'ONGOING' AND s.popularityRank < 999 ORDER BY s.popularityRank ASC")
