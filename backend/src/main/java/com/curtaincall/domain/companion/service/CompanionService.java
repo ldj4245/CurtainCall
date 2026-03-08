@@ -1,5 +1,6 @@
 package com.curtaincall.domain.companion.service;
 
+import com.curtaincall.domain.chat.repository.ChatMessageRepository;
 import com.curtaincall.domain.chat.repository.ChatRoomRepository;
 import com.curtaincall.domain.chat.service.ChatService;
 import com.curtaincall.domain.companion.dto.CompanionParticipantResponse;
@@ -33,6 +34,7 @@ public class CompanionService {
     private final UserRepository userRepository;
     private final ChatService chatService;
     private final ChatRoomRepository chatRoomRepository;
+    private final ChatMessageRepository chatMessageRepository;
 
     public Page<CompanionPostResponse> getCompanions(Long showId, boolean onlyOpen, Pageable pageable) {
         Page<CompanionPost> posts;
@@ -167,6 +169,10 @@ public class CompanionService {
             throw new IllegalArgumentException("작성자만 삭제할 수 있습니다.");
         }
 
+        chatRoomRepository.findByCompanionPostId(postId).ifPresent(room -> {
+            chatMessageRepository.deleteAll(chatMessageRepository.findByRoomIdOrderByCreatedAtAsc(room.getId(), org.springframework.data.domain.Pageable.unpaged()));
+            chatRoomRepository.delete(room);
+        });
         companionParticipantRepository.deleteAll(companionParticipantRepository.findByCompanionPostId(postId));
         companionPostRepository.delete(post);
     }
