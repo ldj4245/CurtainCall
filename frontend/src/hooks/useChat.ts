@@ -16,6 +16,10 @@ export function useChat({ roomId, initialMessages }: UseChatOptions) {
   const accessToken = useAuthStore((s) => s.accessToken);
 
   useEffect(() => {
+    setMessages(initialMessages);
+  }, [initialMessages]);
+
+  useEffect(() => {
     const client = new Client({
       webSocketFactory: () => new SockJS('/ws'),
       connectHeaders: {
