@@ -178,6 +178,132 @@ curtaincall/
 
 ---
 
+## 트러블슈팅
+
+<details>
+<summary>N+1 쿼리 문제 해결</summary>
+
+### 발견 경위
+
+코드 리뷰 중 목록 API에서 쿼리가 비정상적으로 많이 나가는 걸 확인했다. 로그를 찍어보니 동행 모집글 10개를 조회하는 요청 하나에 쿼리가 40개 넘게 발생하고 있었다.
+
+---
+
+### 원인
+
+목록 조회 후 각 엔티티에 대해 루프 안에서 추가 쿼리를 날리는 구조 때문이었다.
+
+**동행 목록 (최대 4N+1)**
+
+```java
+// 수정 전
+return posts.map(post -> {
+    // 게시글마다 참여자 조회 쿼리 1번
+    List<CompanionParticipantResponse> participants =
+        companionParticipantRepository.findByCompanionPostId(post.getId());
+    // 게시글마다 채팅방 조회 쿼리 1번
+    Long chatRoomId = chatRoomRepository.findByCompanionPostId(post.getId())
+        .map(ChatRoom::getId).orElse(null);
+    // post.getShow(), post.getAuthor() LAZY 로딩으로 추가 2번
+    return CompanionPostResponse.from(post, participants, chatRoomId);
+});
+```
+
+게시글 10개면 기본 1 + 40 = 41쿼리.
+
+**리뷰 목록 (2N+1)**
+
+```java
+// 수정 전
+return reviews.map(review -> {
+    boolean isLiked = likeRepository.existsByReviewIdAndUserId(review.getId(), userId); // N번
+    long commentCount = commentRepository.countByReviewId(review.getId()); // N번
+    return ReviewResponse.from(review, isLiked, commentCount);
+});
+```
+
+---
+
+### 해결
+
+**동행 목록:** fetch join으로 `show`, `author`를 한 번에 가져오고, 참여자와 채팅방은 `IN` 조건 배치 쿼리 1번씩으로 처리했다.
+
+```java
+// 수정 후 - CompanionPostRepository
+@Query(value = "SELECT cp FROM CompanionPost cp JOIN FETCH cp.show JOIN FETCH cp.author WHERE cp.status = :status",
+       countQuery = "SELECT COUNT(cp) FROM CompanionPost cp WHERE cp.status = :status")
+Page<CompanionPost> findByStatus(@Param("status") CompanionPost.Status status, Pageable pageable);
+
+// 수정 후 - CompanionService
+private Page<CompanionPostResponse> toResponsePage(Page<CompanionPost> posts) {
+    List<Long> postIds = posts.getContent().stream().map(CompanionPost::getId).toList();
+
+    // 참여자 전체를 한 번에
+    Map<Long, List<CompanionParticipantResponse>> participantsByPost =
+        companionParticipantRepository.findByCompanionPostIdIn(postIds).stream()
+            .collect(Collectors.groupingBy(p -> p.getCompanionPost().getId(), ...));
+
+    // 채팅방 전체를 한 번에
+    Map<Long, Long> chatRoomByPost =
+        chatRoomRepository.findByCompanionPostIdIn(postIds).stream()
+            .collect(Collectors.toMap(r -> r.getCompanionPost().getId(), ChatRoom::getId));
+
+    return new PageImpl<>(posts.getContent().stream()
+        .map(post -> CompanionPostResponse.from(
+            post,
+            participantsByPost.getOrDefault(post.getId(), List.of()),
+            chatRoomByPost.get(post.getId())))
+        .toList(), posts.getPageable(), posts.getTotalElements());
+}
+```
+
+결과: **41쿼리 → 3쿼리**
+
+**리뷰 목록:** 좋아요는 `IN` 조건으로 좋아요 누른 reviewId 목록을 한 번에 가져오고, 댓글 수는 `GROUP BY`로 집계한 결과를 Map으로 변환했다.
+
+```java
+// ReviewLikeRepository
+@Query("SELECT rl.review.id FROM ReviewLike rl WHERE rl.review.id IN :reviewIds AND rl.user.id = :userId")
+Set<Long> findLikedReviewIds(@Param("reviewIds") List<Long> reviewIds, @Param("userId") Long userId);
+
+// ReviewCommentRepository
+@Query("SELECT c.review.id as reviewId, COUNT(c) as count FROM ReviewComment c WHERE c.review.id IN :reviewIds GROUP BY c.review.id")
+List<CommentCountProjection> countByReviewIds(@Param("reviewIds") List<Long> reviewIds);
+
+// ReviewService
+private Page<ReviewResponse> enrichReviews(Page<Review> reviews, Long currentUserId) {
+    List<Long> reviewIds = reviews.getContent().stream().map(Review::getId).toList();
+
+    Set<Long> likedIds = currentUserId != null
+        ? likeRepository.findLikedReviewIds(reviewIds, currentUserId)
+        : Collections.emptySet();
+
+    Map<Long, Long> commentCounts = commentRepository.countByReviewIds(reviewIds).stream()
+        .collect(Collectors.toMap(CommentCountProjection::getReviewId, CommentCountProjection::getCount));
+
+    return reviews.map(review -> ReviewResponse.from(
+        review,
+        likedIds.contains(review.getId()),
+        commentCounts.getOrDefault(review.getId(), 0L)));
+}
+```
+
+결과: **21쿼리 → 3쿼리**
+
+**다이어리 목록:** `findByUserIdOrderByWatchedDateDesc`에 fetch join을 추가해 `Show`와 `Theater`를 한 번에 로딩했다.
+
+```java
+@Query(value = "SELECT d FROM DiaryEntry d JOIN FETCH d.show s LEFT JOIN FETCH s.theater WHERE d.user.id = :userId ORDER BY d.watchedDate DESC",
+       countQuery = "SELECT COUNT(d) FROM DiaryEntry d WHERE d.user.id = :userId")
+Page<DiaryEntry> findByUserIdOrderByWatchedDateDesc(@Param("userId") Long userId, Pageable pageable);
+```
+
+결과: **2N+1 → 1쿼리**
+
+</details>
+
+---
+
 ## API
 
 Swagger UI: `https://thecurtaincall.me:8080/swagger-ui.html`
