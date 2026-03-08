@@ -57,6 +57,7 @@ export default function MyPage() {
             toast.success('리뷰가 삭제되었습니다.')
             setDeletingReviewId(null)
             queryClient.invalidateQueries({ queryKey: ['my-reviews'] })
+            queryClient.invalidateQueries({ queryKey: ['reviews'] })
         },
         onError: () => toast.error('리뷰 삭제에 실패했습니다.'),
     })

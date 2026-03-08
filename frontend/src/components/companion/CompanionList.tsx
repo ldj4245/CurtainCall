@@ -41,6 +41,7 @@ export default function CompanionList({ showId }: CompanionListProps) {
         mutationFn: (id: number) => companionApi.cancelJoin(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['companions', showId] });
+            queryClient.invalidateQueries({ queryKey: ['recent-companions'] });
             toast.success('참여를 취소했습니다.');
         },
         onError: (err: any) => {
@@ -53,6 +54,7 @@ export default function CompanionList({ showId }: CompanionListProps) {
         mutationFn: (id: number) => companionApi.closeCompanion(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['companions', showId] });
+            queryClient.invalidateQueries({ queryKey: ['recent-companions'] });
             toast.success('동행 모집을 마감했습니다.');
         }
     });
@@ -61,6 +63,7 @@ export default function CompanionList({ showId }: CompanionListProps) {
         mutationFn: (id: number) => companionApi.deleteCompanion(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['companions', showId] });
+            queryClient.invalidateQueries({ queryKey: ['recent-companions'] });
             toast.success('동행 모집글을 삭제했습니다.');
         }
     });
@@ -157,6 +160,7 @@ export default function CompanionList({ showId }: CompanionListProps) {
                     onSuccess={() => {
                         setShowForm(false);
                         queryClient.invalidateQueries({ queryKey: ['companions', showId] });
+                        queryClient.invalidateQueries({ queryKey: ['recent-companions'] });
                         setPage(0);
                     }}
                 />
