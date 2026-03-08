@@ -13,6 +13,19 @@
 
 ---
 
+## 목차
+
+- [기능](#기능)
+- [기술 스택](#기술-스택)
+- [아키텍처](#아키텍처)
+- [프로젝트 구조](#프로젝트-구조)
+- [스크린샷](#스크린샷)
+- [트러블슈팅](#트러블슈팅)
+- [API](#api)
+- [로컬 실행](#로컬-실행)
+
+---
+
 ## 기능
 
 **공연 탐색**
@@ -140,24 +153,31 @@ curtaincall/
 
 ## 스크린샷
 
-### 홈 (비로그인)
+### 홈
 
-![홈](docs/screenshots/home_guest.png)
+![홈 (비로그인)](docs/screenshots/home_guest.png)
 
-### 홈 (로그인)
+![홈 (로그인)](docs/screenshots/home_loggedin.png)
 
-![홈 로그인](docs/screenshots/home_loggedin.png)
-
-### 공연 탐색
+### 공연
 
 ![공연 목록](docs/screenshots/shows_list.png)
 
-### 공연 상세
+![공연 상세](docs/screenshots/show_detail_top.png)
 
-![공연 상세 상단](docs/screenshots/show_detail_top.png)
+<details>
+<summary>공연 상세 — 더 보기 (라이브·동행·리뷰)</summary>
+
 ![오늘 라이브](docs/screenshots/show_detail_live.png)
+
 ![함께 관극](docs/screenshots/show_detail_companion.png)
+
 ![리뷰](docs/screenshots/show_detail_review.png)
+
+</details>
+
+<details>
+<summary>관극 다이어리 · 마이페이지 · 채팅 · 로그인</summary>
 
 ### 관극 다이어리
 
@@ -174,7 +194,10 @@ curtaincall/
 ### 로그인 / 회원가입
 
 ![로그인](docs/screenshots/login.png)
+
 ![회원가입](docs/screenshots/signup.png)
+
+</details>
 
 ---
 
