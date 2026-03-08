@@ -140,34 +140,41 @@ curtaincall/
 
 ## 스크린샷
 
-### 홈
+### 홈 (비로그인)
 
-![홈 히어로](docs/screenshots/01_home_hero_1772338308594.png)
+![홈](docs/screenshots/home_guest.png)
+
+### 홈 (로그인)
+
+![홈 로그인](docs/screenshots/home_loggedin.png)
 
 ### 공연 탐색
 
-![공연 목록](docs/screenshots/04_shows_listing_all_1772338341238.png)
-![필터링](docs/screenshots/04_show_filtering_1772339235147.png)
+![공연 목록](docs/screenshots/shows_list.png)
 
 ### 공연 상세
 
-![공연 상세](docs/screenshots/10_show_detail_top_1772338524353.png)
-![리뷰](docs/screenshots/13_show_reviews_section_1772338590568.png)
+![공연 상세 상단](docs/screenshots/show_detail_top.png)
+![오늘 라이브](docs/screenshots/show_detail_live.png)
+![함께 관극](docs/screenshots/show_detail_companion.png)
+![리뷰](docs/screenshots/show_detail_review.png)
 
 ### 관극 다이어리
 
-![다이어리 목록](docs/screenshots/23_diary_list_view_1772339015783.png)
-![캘린더](docs/screenshots/25_diary_calendar_1772339036787.png)
-![통계](docs/screenshots/26_mypage_stats_1772339046689.png)
+![다이어리](docs/screenshots/diary.png)
 
-### 리뷰
+### 마이페이지
 
-![리뷰 작성](docs/screenshots/18_review_form_full_1772339190317.png)
-![리뷰 댓글](docs/screenshots/21_review_comment_1772339175812.png)
+![마이페이지](docs/screenshots/mypage.png)
+
+### 동행 채팅
+
+![채팅 목록](docs/screenshots/chat_list.png)
 
 ### 로그인 / 회원가입
 
-![로그인](docs/screenshots/14_login_page_1772338602657.png)
+![로그인](docs/screenshots/login.png)
+![회원가입](docs/screenshots/signup.png)
 
 ---
 
