@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,7 +25,7 @@ public class AuthController {
     @Operation(summary = "회원가입")
     @PostMapping("/signup")
     public ResponseEntity<TokenResponse> signUp(@Valid @RequestBody SignUpRequest request) {
-        return ResponseEntity.ok(authService.signUp(request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(authService.signUp(request));
     }
 
     @Operation(summary = "로그인")

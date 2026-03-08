@@ -81,8 +81,7 @@ public class DiaryService {
         }
 
         public List<DiaryResponse> getPublicDiaryByShow(Long showId) {
-                return diaryEntryRepository.findAllByUserIdWithShow(showId).stream()
-                                .filter(DiaryEntry::getIsOpen)
+                return diaryEntryRepository.findPublicByShowId(showId).stream()
                                 .map(DiaryResponse::from)
                                 .toList();
         }

@@ -14,9 +14,13 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
 
     boolean existsByCompanionPostId(Long companionPostId);
 
+    @Query("SELECT cr FROM ChatRoom cr JOIN FETCH cr.companionPost WHERE cr.companionPost.id IN :postIds")
+    List<ChatRoom> findByCompanionPostIdIn(@Param("postIds") List<Long> postIds);
+
     @Query("""
             SELECT cr FROM ChatRoom cr
             JOIN FETCH cr.companionPost cp
+            JOIN FETCH cp.show
             JOIN cp.author a
             JOIN com.curtaincall.domain.companion.entity.CompanionParticipant p ON p.companionPost = cp
             WHERE p.user.id = :userId

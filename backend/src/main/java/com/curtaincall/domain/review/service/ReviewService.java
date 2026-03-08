@@ -5,6 +5,7 @@ import com.curtaincall.domain.review.entity.Review;
 import com.curtaincall.domain.review.entity.ReviewComment;
 import com.curtaincall.domain.review.entity.ReviewLike;
 import com.curtaincall.domain.review.repository.ReviewCommentRepository;
+import com.curtaincall.domain.review.repository.ReviewCommentRepository.CommentCountProjection;
 import com.curtaincall.domain.review.repository.ReviewLikeRepository;
 import com.curtaincall.domain.review.repository.ReviewRepository;
 import com.curtaincall.domain.show.entity.Show;
@@ -18,6 +19,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -44,12 +51,7 @@ public class ReviewService {
                                 ? reviewRepository.findByShowIdOrderByLikeCountDesc(showId, pageable)
                                 : reviewRepository.findByShowIdOrderByCreatedAtDesc(showId, pageable);
 
-                return reviews.map(review -> {
-                        boolean isLiked = currentUserId != null
-                                        && likeRepository.existsByReviewIdAndUserId(review.getId(), currentUserId);
-                        long commentCount = commentRepository.countByReviewId(review.getId());
-                        return ReviewResponse.from(review, isLiked, commentCount);
-                });
+                return enrichReviews(reviews, currentUserId);
         }
 
         @Transactional
@@ -155,12 +157,24 @@ public class ReviewService {
         }
 
         public Page<ReviewResponse> getMyReviews(Long userId, int page, int size) {
-                return reviewRepository.findByUserIdOrderByCreatedAtDesc(userId, PageRequest.of(page, size))
-                                .map(review -> {
-                                        boolean isLiked = likeRepository.existsByReviewIdAndUserId(review.getId(),
-                                                        userId);
-                                        long commentCount = commentRepository.countByReviewId(review.getId());
-                                        return ReviewResponse.from(review, isLiked, commentCount);
-                                });
+                Page<Review> reviews = reviewRepository.findByUserIdOrderByCreatedAtDesc(userId, PageRequest.of(page, size));
+                return enrichReviews(reviews, userId);
+        }
+
+        private Page<ReviewResponse> enrichReviews(Page<Review> reviews, Long currentUserId) {
+                List<Long> reviewIds = reviews.getContent().stream().map(Review::getId).toList();
+                if (reviewIds.isEmpty()) return reviews.map(r -> ReviewResponse.from(r, false, 0L));
+
+                Set<Long> likedIds = currentUserId != null
+                                ? likeRepository.findLikedReviewIds(reviewIds, currentUserId)
+                                : Collections.emptySet();
+
+                Map<Long, Long> commentCounts = commentRepository.countByReviewIds(reviewIds).stream()
+                                .collect(Collectors.toMap(CommentCountProjection::getReviewId, CommentCountProjection::getCount));
+
+                return reviews.map(review -> ReviewResponse.from(
+                                review,
+                                likedIds.contains(review.getId()),
+                                commentCounts.getOrDefault(review.getId(), 0L)));
         }
 }

@@ -49,7 +49,7 @@ public class CompanionController {
             @PathVariable Long id,
             @AuthenticationPrincipal Long userId) {
         companionService.joinCompanion(id, userId);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @DeleteMapping("/companions/{id}/join")
@@ -57,7 +57,7 @@ public class CompanionController {
             @PathVariable Long id,
             @AuthenticationPrincipal Long userId) {
         companionService.cancelJoin(id, userId);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/companions/{id}/close")
@@ -65,7 +65,7 @@ public class CompanionController {
             @PathVariable Long id,
             @AuthenticationPrincipal Long userId) {
         companionService.closeCompanion(id, userId);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/companions/{id}")

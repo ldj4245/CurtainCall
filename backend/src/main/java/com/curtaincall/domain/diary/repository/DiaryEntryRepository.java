@@ -13,7 +13,9 @@ import java.util.Optional;
 
 public interface DiaryEntryRepository extends JpaRepository<DiaryEntry, Long>, DiaryEntryRepositoryCustom {
 
-    Page<DiaryEntry> findByUserIdOrderByWatchedDateDesc(Long userId, Pageable pageable);
+    @Query(value = "SELECT d FROM DiaryEntry d JOIN FETCH d.show s LEFT JOIN FETCH s.theater WHERE d.user.id = :userId ORDER BY d.watchedDate DESC",
+           countQuery = "SELECT COUNT(d) FROM DiaryEntry d WHERE d.user.id = :userId")
+    Page<DiaryEntry> findByUserIdOrderByWatchedDateDesc(@Param("userId") Long userId, Pageable pageable);
 
     Optional<DiaryEntry> findByIdAndUserId(Long id, Long userId);
 
@@ -21,10 +23,15 @@ public interface DiaryEntryRepository extends JpaRepository<DiaryEntry, Long>, D
             "WHERE d.user.id = :userId ORDER BY d.watchedDate DESC")
     List<DiaryEntry> findAllByUserIdWithShow(@Param("userId") Long userId);
 
+    @Query("SELECT d FROM DiaryEntry d JOIN FETCH d.show s JOIN FETCH d.user u " +
+            "WHERE d.show.id = :showId AND d.isOpen = true ORDER BY d.watchedDate DESC")
+    List<DiaryEntry> findPublicByShowId(@Param("showId") Long showId);
+
     long countByUserId(Long userId);
 
     @Query("SELECT COALESCE(SUM(d.ticketPrice), 0) FROM DiaryEntry d WHERE d.user.id = :userId AND d.ticketPrice IS NOT NULL")
     Long sumTicketPriceByUserId(@Param("userId") Long userId);
 
-    List<DiaryEntry> findByUserIdAndWatchedDateBetween(Long userId, LocalDate startDate, LocalDate endDate);
+    @Query("SELECT d FROM DiaryEntry d JOIN FETCH d.show s LEFT JOIN FETCH s.theater WHERE d.user.id = :userId AND d.watchedDate BETWEEN :startDate AND :endDate ORDER BY d.watchedDate ASC")
+    List<DiaryEntry> findByUserIdAndWatchedDateBetween(@Param("userId") Long userId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 }
