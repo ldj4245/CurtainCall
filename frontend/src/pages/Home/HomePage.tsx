@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, BookOpen, Users, MessageCircle } from 'lucide-react'
 import { showsApi } from '../../api/shows'
 import ShowCard from '../../components/show/ShowCard'
 import PopularShows from '../../components/show/PopularShows'
@@ -93,6 +93,45 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* 기능 소개 - 비로그인만 */}
+      {!isAuthenticated && (
+        <section className="py-14 px-4 border-b border-gray-100">
+          <div className="max-w-6xl mx-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              <Link to="/signup" className="group p-6 rounded-2xl border border-gray-100 hover:border-brand/30 hover:bg-brand-50/30 transition-all">
+                <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center mb-4 group-hover:bg-brand/10 transition-colors">
+                  <BookOpen className="w-5 h-5 text-brand" />
+                </div>
+                <h3 className="font-bold text-gray-900 mb-1">관극 다이어리</h3>
+                <p className="text-sm text-gray-500 leading-relaxed">
+                  본 공연 날짜, 좌석, 별점, 사진을 기록해두면 나중에 찾아보기 편해요.
+                </p>
+              </Link>
+
+              <Link to="/signup" className="group p-6 rounded-2xl border border-gray-100 hover:border-brand/30 hover:bg-brand-50/30 transition-all">
+                <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center mb-4 group-hover:bg-brand/10 transition-colors">
+                  <Users className="w-5 h-5 text-brand" />
+                </div>
+                <h3 className="font-bold text-gray-900 mb-1">동행 매칭</h3>
+                <p className="text-sm text-gray-500 leading-relaxed">
+                  같은 공연 같은 날 볼 사람을 구하고, 매칭되면 채팅방이 열려요.
+                </p>
+              </Link>
+
+              <Link to="/signup" className="group p-6 rounded-2xl border border-gray-100 hover:border-brand/30 hover:bg-brand-50/30 transition-all">
+                <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center mb-4 group-hover:bg-brand/10 transition-colors">
+                  <MessageCircle className="w-5 h-5 text-brand" />
+                </div>
+                <h3 className="font-bold text-gray-900 mb-1">오늘 라이브</h3>
+                <p className="text-sm text-gray-500 leading-relaxed">
+                  공연 끝나고 같은 날 본 사람들이랑 바로 얘기할 수 있어요.
+                </p>
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* 🔥 인기 공연 */}
       <section className="py-12 px-4 bg-white">
