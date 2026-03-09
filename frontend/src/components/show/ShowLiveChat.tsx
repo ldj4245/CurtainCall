@@ -38,8 +38,11 @@ export default function ShowLiveChat({ showId }: ShowLiveChatProps) {
     setInput('');
   };
 
-  const formatTime = (iso: string) =>
-    new Date(iso).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+  const formatTime = (iso: string) => {
+    if (!iso) return '';
+    const utc = iso.endsWith('Z') ? iso : iso + 'Z';
+    return new Date(utc).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+  };
 
   return (
     <div className="card overflow-hidden">

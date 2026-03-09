@@ -49,8 +49,9 @@ export default function ChatRoomPage() {
   };
 
   const formatTime = (isoString: string) => {
-    const date = new Date(isoString);
-    return date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+    if (!isoString) return '';
+    const utc = isoString.endsWith('Z') ? isoString : isoString + 'Z';
+    return new Date(utc).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
   };
 
   if (isLoading) {
