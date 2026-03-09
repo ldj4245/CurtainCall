@@ -10,6 +10,14 @@ interface ShowSearchParams {
   size?: number
 }
 
+export interface ShowAutocomplete {
+  id: number
+  title: string
+  posterUrl: string | null
+  genre: string | null
+  status: string | null
+}
+
 export const showsApi = {
   search: (params: ShowSearchParams) =>
     api.get<PageResponse<Show>>('/shows', { params }).then((r) => r.data),
@@ -22,4 +30,7 @@ export const showsApi = {
 
   getPopular: (limit = 8) =>
     api.get<Show[]>('/shows/popular', { params: { limit } }).then((r) => r.data),
+
+  autocomplete: (q: string) =>
+    api.get<ShowAutocomplete[]>('/shows/autocomplete', { params: { q } }).then((r) => r.data),
 }

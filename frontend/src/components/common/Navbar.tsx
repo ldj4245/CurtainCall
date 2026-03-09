@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
-import { Search, User, Ticket } from 'lucide-react'
+import { User, Ticket } from 'lucide-react'
+import SearchBar from './SearchBar'
 
 export default function Navbar() {
   const { isAuthenticated, user } = useAuthStore()
@@ -42,12 +43,9 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Link
-            to="/shows"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-400 hover:text-brand hover:border-brand/30 hover:bg-brand-50 transition-all"
-          >
-            <Search size={18} />
-          </Link>
+          <div className="hidden sm:block">
+            <SearchBar />
+          </div>
           {isAuthenticated ? (
             <Link
               to="/my"

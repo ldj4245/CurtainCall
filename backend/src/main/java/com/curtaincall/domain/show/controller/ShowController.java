@@ -1,5 +1,6 @@
 package com.curtaincall.domain.show.controller;
 
+import com.curtaincall.domain.show.dto.ShowAutocompleteResponse;
 import com.curtaincall.domain.show.dto.ShowResponse;
 import com.curtaincall.domain.show.service.ShowService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -35,6 +36,13 @@ public class ShowController {
     @GetMapping("/{id}")
     public ResponseEntity<ShowResponse> getShow(@PathVariable Long id) {
         return ResponseEntity.ok(showService.getShow(id));
+    }
+
+    @Operation(summary = "공연 이름 자동완성")
+    @GetMapping("/autocomplete")
+    public ResponseEntity<List<ShowAutocompleteResponse>> autocomplete(
+            @RequestParam String q) {
+        return ResponseEntity.ok(showService.autocomplete(q));
     }
 
     @Operation(summary = "현재 공연 중인 공연 목록 (홈 화면용)")

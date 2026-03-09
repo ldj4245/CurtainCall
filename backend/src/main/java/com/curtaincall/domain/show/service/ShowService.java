@@ -1,6 +1,7 @@
 package com.curtaincall.domain.show.service;
 
 import com.curtaincall.domain.review.repository.ReviewRepository;
+import com.curtaincall.domain.show.dto.ShowAutocompleteResponse;
 import com.curtaincall.domain.show.dto.ShowResponse;
 import com.curtaincall.domain.show.entity.Show;
 import com.curtaincall.domain.show.repository.ShowRepository;
@@ -59,6 +60,12 @@ public class ShowService {
         Pageable pageable = PageRequest.of(0, limit);
         return showRepository.findPopularOngoing(pageable)
                 .stream().map(ShowResponse::from).toList();
+    }
+
+    public List<ShowAutocompleteResponse> autocomplete(String keyword) {
+        if (keyword == null || keyword.isBlank()) return List.of();
+        return showRepository.findByTitleContaining(keyword.trim(), PageRequest.of(0, 8))
+                .stream().map(ShowAutocompleteResponse::from).toList();
     }
 
     private <T extends Enum<T>> T parseEnum(Class<T> enumClass, String value) {
