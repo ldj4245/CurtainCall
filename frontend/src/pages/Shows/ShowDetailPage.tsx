@@ -1,7 +1,7 @@
-import { useState, useRef, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { BookOpen, CalendarDays, Clock3, DollarSign, Heart, ImageOff, MapPin, Star, Users } from 'lucide-react'
+import { BookOpen, CalendarDays, Clock3, DollarSign, Heart, ImageOff, MapPin, MessageCircle, Star, Users } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { showsApi } from '../../api/shows'
 import { favoritesApi } from '../../api/favorites'
@@ -12,6 +12,15 @@ import DiaryFormModal from '../../components/diary/DiaryFormModal'
 import CastingBoard from '../../components/casting/CastingBoard'
 import CompanionList from '../../components/companion/CompanionList'
 import ShowLiveChat from '../../components/show/ShowLiveChat'
+
+type Tab = 'info' | 'live' | 'companion' | 'review'
+
+const TABS: { key: Tab; label: string }[] = [
+  { key: 'info', label: '공연 정보' },
+  { key: 'live', label: '오늘 라이브' },
+  { key: 'companion', label: '동행' },
+  { key: 'review', label: '리뷰' },
+]
 
 const STATUS_BADGE_CLASS: Record<string, string> = {
   ONGOING: 'badge-ongoing',
@@ -29,9 +38,9 @@ export default function ShowDetailPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { isAuthenticated } = useAuthStore()
+  const [activeTab, setActiveTab] = useState<Tab>('info')
   const [showReviewForm, setShowReviewForm] = useState(false)
   const [showDiaryForm, setShowDiaryForm] = useState(false)
-  const reviewSectionRef = useRef<HTMLDivElement>(null)
 
   const { data: show, isLoading, isError, refetch } = useQuery({
     queryKey: ['show', id],
@@ -148,16 +157,9 @@ export default function ShowDetailPage() {
                 <button
                   onClick={() => {
                     if (!isAuthenticated) return requireLogin('리뷰 작성은 로그인 후 이용할 수 있어요.')
+                    setActiveTab('review')
                     setShowReviewForm(true)
-                    // 모바일 등 헤더 영역을 고려한 정밀 스크롤
-                    setTimeout(() => {
-                      if (reviewSectionRef.current) {
-                        const yOffset = -80 // 네비게이션 헤더 높이 여백
-                        const element = reviewSectionRef.current
-                        const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset
-                        window.scrollTo({ top: y, behavior: 'smooth' })
-                      }
-                    }, 50)
+                    window.scrollTo({ top: 0, behavior: 'smooth' })
                   }}
                   className="btn-secondary text-sm px-4 py-2.5"
                 >
@@ -172,7 +174,8 @@ export default function ShowDetailPage() {
           </aside>
 
           <section>
-            <div className="card p-6 md:p-8">
+            {/* 공연 제목 + 평점 */}
+            <div className="card p-6 md:p-8 mb-4">
               <div className="flex flex-wrap items-center gap-2 mb-4">
                 <span className={statusBadgeClass}>{show.statusDisplayName}</span>
                 <span className={genreBadgeClass}>{show.genreDisplayName}</span>
@@ -189,60 +192,98 @@ export default function ShowDetailPage() {
                   <span className="text-sm text-gray-400">아직 등록된 평점이 없습니다.</span>
                 )}
               </div>
+            </div>
 
-              <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-3">
-                <InfoCard icon={<MapPin size={15} />} label="공연장" value={show.theaterName || '정보 없음'} />
-                <InfoCard icon={<CalendarDays size={15} />} label="공연 기간" value={show.startDate ? `${show.startDate} ~ ${show.endDate || '미정'}` : '정보 없음'} />
-                <InfoCard icon={<Clock3 size={15} />} label="러닝타임" value={show.runtime || '정보 없음'} />
-                <InfoCard icon={<DollarSign size={15} />} label="가격 정보" value={show.priceInfo || '정보 없음'} multiline />
-              </div>
+            {/* 탭 바 */}
+            <div className="flex gap-1 bg-warm-50 rounded-xl p-1 mb-6">
+              {TABS.map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setActiveTab(key)}
+                  className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
+                    activeTab === key
+                      ? 'bg-white text-brand shadow-sm'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
 
-              {castList.length > 0 && (
-                <div className="mt-6">
-                  <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-700">
-                    <Users size={15} className="text-gray-400" />
-                    출연진
+            {/* 공연 정보 탭 */}
+            {activeTab === 'info' && (
+              <div className="card p-6 md:p-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <InfoCard icon={<MapPin size={15} />} label="공연장" value={show.theaterName || '정보 없음'} />
+                  <InfoCard icon={<CalendarDays size={15} />} label="공연 기간" value={show.startDate ? `${show.startDate} ~ ${show.endDate || '미정'}` : '정보 없음'} />
+                  <InfoCard icon={<Clock3 size={15} />} label="러닝타임" value={show.runtime || '정보 없음'} />
+                  <PriceInfoCard priceInfo={show.priceInfo} />
+                </div>
+
+                {castList.length > 0 && (
+                  <div className="mt-6">
+                    <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-700">
+                      <Users size={15} className="text-gray-400" />
+                      출연진
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {castList.map((name, idx) => (
+                        <span key={idx} className="inline-flex items-center rounded-full border border-gray-100 bg-warm-50 px-3 py-1.5 text-sm text-gray-700">
+                          {name}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {castList.map((name, idx) => (
-                      <span key={idx} className="inline-flex items-center rounded-full border border-gray-100 bg-warm-50 px-3 py-1.5 text-sm text-gray-700">
-                        {name}
-                      </span>
+                )}
+
+                {show.introImages && show.introImages.length > 0 && (
+                  <div className="mt-6 space-y-3">
+                    {show.introImages.map((url, idx) => (
+                      <img
+                        key={idx}
+                        src={url}
+                        alt={`${show.title} 소개 이미지 ${idx + 1}`}
+                        className="w-full rounded-xl border border-gray-100"
+                        loading="lazy"
+                      />
                     ))}
                   </div>
+                )}
+
+                <div className="mt-8">
+                  <CastingBoard showId={Number(id)} />
                 </div>
-              )}
+              </div>
+            )}
 
-              {show.introImages && show.introImages.length > 0 && (
-                <div className="mt-6 space-y-3">
-                  {show.introImages.map((url, idx) => (
-                    <img
-                      key={idx}
-                      src={url}
-                      alt={`${show.title} 소개 이미지 ${idx + 1}`}
-                      className="w-full rounded-xl border border-gray-100"
-                      loading="lazy"
-                    />
-                  ))}
+            {/* 오늘 라이브 탭 */}
+            {activeTab === 'live' && (
+              <div className="card p-6 md:p-8">
+                <div className="flex items-center gap-2 mb-6">
+                  <MessageCircle size={18} className="text-brand" />
+                  <h2 className="text-lg font-bold text-gray-900">오늘 라이브</h2>
+                  <span className="text-xs text-gray-400">오늘 공연을 본 관객들의 실시간 반응</span>
                 </div>
-              )}
-            </div>
+                <ShowLiveChat showId={Number(id)} />
+              </div>
+            )}
 
-            <div className="mt-8">
-              <CastingBoard showId={Number(id)} />
-            </div>
-
-            <div className="mt-8">
-              <ShowLiveChat showId={Number(id)} />
-            </div>
-
-            <div className="mt-8">
+            {/* 동행 탭 */}
+            {activeTab === 'companion' && (
               <CompanionList showId={Number(id)} />
-            </div>
+            )}
 
-            <div className="mt-8" ref={reviewSectionRef}>
-              <ReviewList showId={Number(id)} showReviewForm={showReviewForm} onCloseForm={() => setShowReviewForm(false)} />
-            </div>
+            {/* 리뷰 탭 */}
+            {activeTab === 'review' && (
+              <div ref={(el) => { if (el && showReviewForm) el.scrollIntoView({ behavior: 'smooth' }) }}>
+                <ReviewList
+                  showId={Number(id)}
+                  showReviewForm={showReviewForm}
+                  onCloseForm={() => setShowReviewForm(false)}
+                />
+              </div>
+            )}
           </section>
         </div>
       </div>
@@ -259,14 +300,41 @@ export default function ShowDetailPage() {
   )
 }
 
-function InfoCard({ icon, label, value, multiline }: { icon: ReactNode; label: string; value: string; multiline?: boolean }) {
+function InfoCard({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
   return (
     <div className="rounded-xl border border-gray-100 bg-warm-50 px-4 py-3">
       <p className="text-xs font-medium text-gray-400 mb-1">{label}</p>
-      <div className={`flex items-start gap-2 ${multiline ? '' : 'items-center'}`}>
-        <span className="mt-0.5 text-gray-400">{icon}</span>
-        <p className={`text-sm text-gray-800 ${multiline ? 'leading-relaxed' : ''}`}>{value}</p>
+      <div className="flex items-center gap-2">
+        <span className="text-gray-400">{icon}</span>
+        <p className="text-sm text-gray-800">{value}</p>
       </div>
+    </div>
+  )
+}
+
+function PriceInfoCard({ priceInfo }: { priceInfo?: string }) {
+  const lines = priceInfo
+    ? priceInfo.split(',').map((s) => s.trim()).filter(Boolean)
+    : []
+
+  return (
+    <div className="rounded-xl border border-gray-100 bg-warm-50 px-4 py-3">
+      <p className="text-xs font-medium text-gray-400 mb-1">가격 정보</p>
+      {lines.length > 0 ? (
+        <div className="flex items-start gap-2">
+          <span className="mt-0.5 text-gray-400"><DollarSign size={15} /></span>
+          <div className="space-y-0.5">
+            {lines.map((line, idx) => (
+              <p key={idx} className="text-sm text-gray-800">{line}</p>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2">
+          <span className="text-gray-400"><DollarSign size={15} /></span>
+          <p className="text-sm text-gray-800">정보 없음</p>
+        </div>
+      )}
     </div>
   )
 }
