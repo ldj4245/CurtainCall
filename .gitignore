@@ -18,6 +18,7 @@ Thumbs.db
 # Backend (Spring/Gradle)
 backend/build/
 backend/.gradle/
+backend/.gradle-user-home/
 backend/bin/
 backend/out/
 
