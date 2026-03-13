@@ -14,7 +14,7 @@ interface LoginForm {
 export default function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { setTokens, setUser } = useAuthStore()
+  const { setAccessToken, setUser } = useAuthStore()
   const [isLoading, setIsLoading] = useState(false)
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>()
 
@@ -34,7 +34,7 @@ export default function LoginPage() {
     setIsLoading(true)
     try {
       const res = await authApi.login(data.email, data.password)
-      setTokens(res.accessToken, res.refreshToken)
+      setAccessToken(res.accessToken)
       const user = await authApi.getMe()
       setUser(user)
       toast.success('로그인 성공!')

@@ -1,6 +1,8 @@
 package com.curtaincall.global.jwt;
 
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +15,11 @@ import java.util.Date;
 @Slf4j
 @Component
 public class JwtTokenProvider {
+
+    public enum TokenType {
+        ACCESS,
+        REFRESH
+    }
 
     private final SecretKey secretKey;
     private final long accessExpiration;
@@ -28,19 +35,21 @@ public class JwtTokenProvider {
         this.refreshExpiration = refreshExpiration;
     }
 
-    public String createAccessToken(Long userId, String email) {
-        return createToken(userId, email, accessExpiration);
+    public String createAccessToken(Long userId, String email, String role) {
+        return createToken(userId, email, role, TokenType.ACCESS, accessExpiration);
     }
 
-    public String createRefreshToken(Long userId, String email) {
-        return createToken(userId, email, refreshExpiration);
+    public String createRefreshToken(Long userId, String email, String role) {
+        return createToken(userId, email, role, TokenType.REFRESH, refreshExpiration);
     }
 
-    private String createToken(Long userId, String email, long expiration) {
+    private String createToken(Long userId, String email, String role, TokenType tokenType, long expiration) {
         Date now = new Date();
         return Jwts.builder()
                 .subject(String.valueOf(userId))
                 .claim("email", email)
+                .claim("role", role)
+                .claim("tokenType", tokenType.name())
                 .issuedAt(now)
                 .expiration(new Date(now.getTime() + expiration))
                 .signWith(secretKey)
@@ -53,6 +62,30 @@ public class JwtTokenProvider {
 
     public String getEmail(String token) {
         return getClaims(token).get("email", String.class);
+    }
+
+    public String getRole(String token) {
+        return getClaims(token).get("role", String.class);
+    }
+
+    public TokenType getTokenType(String token) {
+        return TokenType.valueOf(getClaims(token).get("tokenType", String.class));
+    }
+
+    public boolean isAccessToken(String token) {
+        return getTokenType(token) == TokenType.ACCESS;
+    }
+
+    public boolean isRefreshToken(String token) {
+        return getTokenType(token) == TokenType.REFRESH;
+    }
+
+    public long getAccessExpirationSeconds() {
+        return accessExpiration / 1000;
+    }
+
+    public long getRefreshExpirationSeconds() {
+        return refreshExpiration / 1000;
     }
 
     public boolean validateToken(String token) {

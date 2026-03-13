@@ -15,9 +15,9 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
             SELECT m FROM ChatMessage m
             JOIN FETCH m.sender
             WHERE m.room.id = :roomId
-            ORDER BY m.createdAt ASC
+            ORDER BY m.createdAt DESC
             """)
-    List<ChatMessage> findByRoomIdOrderByCreatedAtAsc(@Param("roomId") Long roomId, Pageable pageable);
+    List<ChatMessage> findRecentByRoomId(@Param("roomId") Long roomId, Pageable pageable);
 
     @Modifying
     @Query("DELETE FROM ChatMessage m WHERE m.room.id = :roomId")

@@ -53,22 +53,26 @@ public class CompanionService {
 
     private Page<CompanionPostResponse> toResponsePage(Page<CompanionPost> posts) {
         List<Long> postIds = posts.getContent().stream().map(CompanionPost::getId).toList();
-        if (postIds.isEmpty()) return posts.map(post -> CompanionPostResponse.from(post, List.of(), null));
+        if (postIds.isEmpty()) {
+            return posts.map(post -> CompanionPostResponse.from(post, List.of(), null));
+        }
 
         Map<Long, List<CompanionParticipantResponse>> participantsByPost = companionParticipantRepository
                 .findByCompanionPostIdIn(postIds).stream()
                 .collect(Collectors.groupingBy(
-                        p -> p.getCompanionPost().getId(),
-                        Collectors.mapping(CompanionParticipantResponse::from, Collectors.toList())));
+                        participant -> participant.getCompanionPost().getId(),
+                        Collectors.mapping(CompanionParticipantResponse::from, Collectors.toList())
+                ));
 
         Map<Long, Long> chatRoomByPost = chatRoomRepository.findByCompanionPostIdIn(postIds).stream()
-                .collect(Collectors.toMap(r -> r.getCompanionPost().getId(), ChatRoom::getId));
+                .collect(Collectors.toMap(room -> room.getCompanionPost().getId(), ChatRoom::getId));
 
         List<CompanionPostResponse> content = posts.getContent().stream()
                 .map(post -> CompanionPostResponse.from(
                         post,
                         participantsByPost.getOrDefault(post.getId(), List.of()),
-                        chatRoomByPost.get(post.getId())))
+                        chatRoomByPost.get(post.getId())
+                ))
                 .toList();
 
         return new PageImpl<>(content, posts.getPageable(), posts.getTotalElements());
@@ -77,7 +81,7 @@ public class CompanionService {
     @Transactional
     public Long createCompanionPost(Long showId, Long userId, CompanionPostRequest request) {
         Show show = showRepository.findById(showId)
-                .orElseThrow(() -> BusinessException.notFound("해당 공연을 찾을 수 없습니다."));
+                .orElseThrow(() -> BusinessException.notFound("공연을 찾을 수 없습니다."));
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> BusinessException.notFound("사용자를 찾을 수 없습니다."));
 
@@ -94,53 +98,51 @@ public class CompanionService {
 
         CompanionPost savedPost = companionPostRepository.save(post);
 
-        // 작성자 본인은 자동으로 참여자로 등록
-        CompanionParticipant participant = CompanionParticipant.builder()
+        companionParticipantRepository.save(CompanionParticipant.builder()
                 .companionPost(savedPost)
                 .user(user)
-                .build();
-        companionParticipantRepository.save(participant);
+                .build());
 
         return savedPost.getId();
     }
 
     @Transactional
     public void joinCompanion(Long postId, Long userId) {
-        CompanionPost post = companionPostRepository.findById(postId)
-                .orElseThrow(() -> BusinessException.notFound("해당 모집글을 찾을 수 없습니다."));
+        CompanionPost post = loadPostForUpdate(postId);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> BusinessException.notFound("사용자를 찾을 수 없습니다."));
 
         if (post.getStatus() != CompanionPost.Status.OPEN) {
-            throw BusinessException.badRequest("이미 마감되었거나 만료된 모집글입니다.");
+            throw BusinessException.badRequest("모집 중인 글이 아닙니다.");
+        }
+
+        if (post.isFull()) {
+            throw BusinessException.badRequest("이미 정원이 가득 찼습니다.");
         }
 
         if (companionParticipantRepository.existsByCompanionPostIdAndUserId(postId, userId)) {
-            throw BusinessException.conflict("이미 참여한 모집글입니다.");
+            throw BusinessException.conflict("이미 참여한 동행 모집글입니다.");
         }
 
-        CompanionParticipant participant = CompanionParticipant.builder()
+        companionParticipantRepository.save(CompanionParticipant.builder()
                 .companionPost(post)
                 .user(user)
-                .build();
-        companionParticipantRepository.save(participant);
+                .build());
 
         post.incrementMembers();
-
         chatService.createRoomForCompanionPost(post);
     }
 
     @Transactional
     public void cancelJoin(Long postId, Long userId) {
-        CompanionPost post = companionPostRepository.findById(postId)
-                .orElseThrow(() -> BusinessException.notFound("해당 모집글을 찾을 수 없습니다."));
+        CompanionPost post = loadPostForUpdate(postId);
 
         if (post.getAuthor().getId().equals(userId)) {
-            throw BusinessException.badRequest("작성자는 참여를 취소할 수 없습니다. 글을 삭제해주세요.");
+            throw BusinessException.badRequest("작성자는 참여 취소를 할 수 없습니다. 글을 삭제해 주세요.");
         }
 
         CompanionParticipant participant = companionParticipantRepository.findByCompanionPostIdAndUserId(postId, userId)
-                .orElseThrow(() -> BusinessException.notFound("참여 내역이 없습니다."));
+                .orElseThrow(() -> BusinessException.notFound("참여 내역을 찾을 수 없습니다."));
 
         companionParticipantRepository.delete(participant);
         post.decrementMembers();
@@ -148,11 +150,10 @@ public class CompanionService {
 
     @Transactional
     public void closeCompanion(Long postId, Long userId) {
-        CompanionPost post = companionPostRepository.findById(postId)
-                .orElseThrow(() -> BusinessException.notFound("해당 모집글을 찾을 수 없습니다."));
+        CompanionPost post = loadPostForUpdate(postId);
 
         if (!post.getAuthor().getId().equals(userId)) {
-            throw BusinessException.forbidden("작성자만 마감할 수 있습니다.");
+            throw BusinessException.forbidden("작성자만 모집을 마감할 수 있습니다.");
         }
 
         if (post.getStatus() != CompanionPost.Status.OPEN) {
@@ -164,18 +165,23 @@ public class CompanionService {
 
     @Transactional
     public void deleteCompanion(Long postId, Long userId) {
-        CompanionPost post = companionPostRepository.findById(postId)
-                .orElseThrow(() -> BusinessException.notFound("해당 모집글을 찾을 수 없습니다."));
+        CompanionPost post = loadPostForUpdate(postId);
 
         if (!post.getAuthor().getId().equals(userId)) {
-            throw BusinessException.forbidden("작성자만 삭제할 수 있습니다.");
+            throw BusinessException.forbidden("작성자만 모집글을 삭제할 수 있습니다.");
         }
 
         chatRoomRepository.findByCompanionPostId(postId).ifPresent(room -> {
             chatMessageRepository.deleteByRoomId(room.getId());
             chatRoomRepository.delete(room);
         });
+
         companionParticipantRepository.deleteByCompanionPostId(postId);
         companionPostRepository.delete(post);
+    }
+
+    private CompanionPost loadPostForUpdate(Long postId) {
+        return companionPostRepository.findByIdForUpdate(postId)
+                .orElseThrow(() -> BusinessException.notFound("동행 모집글을 찾을 수 없습니다."));
     }
 }

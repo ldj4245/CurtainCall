@@ -38,7 +38,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         User user = saveOrUpdate(userInfo);
 
-        return new CustomOAuth2User(user.getId(), user.getEmail(), attributes, userNameAttributeName);
+        return new CustomOAuth2User(user.getId(), user.getEmail(), user.getRole(), attributes, userNameAttributeName);
     }
 
     private User saveOrUpdate(OAuth2UserInfo userInfo) {

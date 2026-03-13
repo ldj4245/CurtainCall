@@ -1,6 +1,7 @@
 package com.curtaincall.domain.showlive.repository;
 
 import com.curtaincall.domain.showlive.entity.ShowLiveMessage;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,8 +15,7 @@ public interface ShowLiveMessageRepository extends JpaRepository<ShowLiveMessage
             JOIN FETCH m.sender
             JOIN FETCH m.room
             WHERE m.room.id = :roomId
-            ORDER BY m.createdAt ASC
+            ORDER BY m.createdAt DESC
             """)
-    List<ShowLiveMessage> findTop50ByRoomId(@Param("roomId") Long roomId,
-                                             org.springframework.data.domain.Pageable pageable);
+    List<ShowLiveMessage> findRecentByRoomId(@Param("roomId") Long roomId, Pageable pageable);
 }

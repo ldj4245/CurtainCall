@@ -1,6 +1,4 @@
 package com.curtaincall.infra.oauth2;
-
-import com.curtaincall.global.jwt.JwtTokenProvider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +16,7 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
-    private final JwtTokenProvider jwtTokenProvider;
+    private final OAuth2AuthorizationCodeStore authorizationCodeStore;
 
     @Value("${app.frontend-url}")
     private String frontendUrl;
@@ -27,13 +25,10 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException {
         CustomOAuth2User oAuth2User = (CustomOAuth2User) authentication.getPrincipal();
-
-        String accessToken = jwtTokenProvider.createAccessToken(oAuth2User.getUserId(), oAuth2User.getEmail());
-        String refreshToken = jwtTokenProvider.createRefreshToken(oAuth2User.getUserId(), oAuth2User.getEmail());
+        String code = authorizationCodeStore.issue(oAuth2User.getUserId());
 
         String targetUrl = UriComponentsBuilder.fromUriString(frontendUrl + "/oauth2/callback")
-                .queryParam("accessToken", accessToken)
-                .queryParam("refreshToken", refreshToken)
+                .queryParam("code", code)
                 .build().toUriString();
 
         log.info("OAuth2 로그인 성공 - userId: {}", oAuth2User.getUserId());

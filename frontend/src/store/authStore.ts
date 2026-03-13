@@ -5,9 +5,8 @@ import type { User } from '../types'
 interface AuthState {
   user: User | null
   accessToken: string | null
-  refreshToken: string | null
   isAuthenticated: boolean
-  setTokens: (accessToken: string, refreshToken: string) => void
+  setAccessToken: (accessToken: string | null) => void
   setUser: (user: User) => void
   logout: () => void
 }
@@ -17,19 +16,16 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       user: null,
       accessToken: null,
-      refreshToken: null,
       isAuthenticated: false,
-      setTokens: (accessToken, refreshToken) =>
-        set({ accessToken, refreshToken, isAuthenticated: true }),
+      setAccessToken: (accessToken) =>
+        set({ accessToken, isAuthenticated: Boolean(accessToken) }),
       setUser: (user) => set({ user }),
-      logout: () =>
-        set({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false }),
+      logout: () => set({ user: null, accessToken: null, isAuthenticated: false }),
     }),
     {
       name: 'curtaincall-auth',
       partialize: (state) => ({
         accessToken: state.accessToken,
-        refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
         user: state.user,
       }),

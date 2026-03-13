@@ -9,17 +9,14 @@ import lombok.Getter;
 @AllArgsConstructor
 public class TokenResponse {
     private String accessToken;
-    private String refreshToken;
     private String tokenType;
     private Long expiresIn;
 
-    public static TokenResponse of(String accessToken, String refreshToken) {
+    public static TokenResponse of(String accessToken, long expiresIn) {
         return TokenResponse.builder()
                 .accessToken(accessToken)
-                .refreshToken(refreshToken)
                 .tokenType("Bearer")
-                .expiresIn(3600L)
+                .expiresIn(expiresIn)
                 .build();
     }
 }
-

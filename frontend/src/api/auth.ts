@@ -1,9 +1,8 @@
 import api from './axios'
 import type { User } from '../types'
 
-interface TokenResponse {
+export interface TokenResponse {
   accessToken: string
-  refreshToken: string
   tokenType: string
   expiresIn: number
 }
@@ -19,6 +18,11 @@ export const authApi = {
 
   signUp: (email: string, password: string, nickname: string) =>
     api.post<TokenResponse>('/auth/signup', { email, password, nickname }).then((r) => r.data),
+
+  refresh: () => api.post<TokenResponse>('/auth/refresh').then((r) => r.data),
+
+  exchangeOAuth2Code: (code: string) =>
+    api.post<TokenResponse>('/auth/oauth2/exchange', { code }).then((r) => r.data),
 
   checkEmail: (email: string) =>
     api.get<{ duplicate: boolean }>('/auth/check-email', { params: { email } }).then((r) => r.data),

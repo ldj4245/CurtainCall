@@ -38,6 +38,11 @@ public class ChatController {
         Long senderId = Long.parseLong(principal.getName());
         ChatMessage.MessageType type = request.getType() != null ? request.getType() : ChatMessage.MessageType.TALK;
 
+        if (type == ChatMessage.MessageType.TALK
+                && (request.getContent() == null || request.getContent().isBlank())) {
+            return;
+        }
+
         ChatMessageDto message = chatService.saveAndBroadcast(roomId, senderId, request.getContent(), type);
         messagingTemplate.convertAndSend("/sub/chat/" + roomId, message);
     }

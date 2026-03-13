@@ -1,29 +1,15 @@
 spring:
+  profiles:
+    default: local
+
   servlet:
     multipart:
       max-file-size: 20MB
       max-request-size: 50MB
 
-  datasource:
-    url: jdbc:mysql://127.0.0.1:3306/curtaincall?serverTimezone=Asia/Seoul&characterEncoding=UTF-8&createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
-    username: root
-    password: root123
-    driver-class-name: com.mysql.cj.jdbc.Driver
-
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: false
-    properties:
-      hibernate:
-        format_sql: true
-        dialect: org.hibernate.dialect.MySQL8Dialect
-
   batch:
-    jdbc:
-      initialize-schema: always
     job:
-      enabled: false  # 앱 시작 시 자동 실행 방지
+      enabled: false
 
   security:
     oauth2:
@@ -68,15 +54,12 @@ spring:
 
 jwt:
   secret: ${JWT_SECRET:curtaincall-super-secret-key-that-is-long-enough-for-hs256-algorithm}
-  access-expiration: 3600000      # 1시간
-  refresh-expiration: 604800000   # 7일
+  access-expiration: 3600000
+  refresh-expiration: 604800000
 
 kopis:
   api-key: ${KOPIS_API_KEY:e9a8148559f94e2db0068ef471aa654e}
   base-url: http://www.kopis.or.kr/openApi/restful
-
-app:
-  frontend-url: ${FRONTEND_URL:http://localhost:3000}
 
 storage:
   do-spaces:
@@ -94,11 +77,6 @@ springdoc:
     path: /swagger-ui.html
   default-consumes-media-type: application/json
   default-produces-media-type: application/json
-
-logging:
-  level:
-    com.curtaincall: DEBUG
-    org.hibernate.SQL: WARN
 
 server:
   forward-headers-strategy: native

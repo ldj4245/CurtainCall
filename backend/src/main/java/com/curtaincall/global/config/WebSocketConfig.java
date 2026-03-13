@@ -51,10 +51,11 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                     String token = accessor.getFirstNativeHeader("Authorization");
                     if (token != null && token.startsWith("Bearer ")) {
                         token = token.substring(7);
-                        if (jwtTokenProvider.validateToken(token)) {
+                        if (jwtTokenProvider.validateToken(token) && jwtTokenProvider.isAccessToken(token)) {
                             Long userId = jwtTokenProvider.getUserId(token);
+                            String role = jwtTokenProvider.getRole(token);
                             var auth = new UsernamePasswordAuthenticationToken(
-                                    userId, null, List.of(new SimpleGrantedAuthority("ROLE_USER")));
+                                    userId, null, List.of(new SimpleGrantedAuthority("ROLE_" + role)));
                             accessor.setUser(auth);
                         }
                     }

@@ -249,7 +249,10 @@ export default function MyPage() {
                     </div>
 
                     <button
-                        onClick={handleLogout}
+                        onClick={() => {
+                            void authApi.logout().catch(() => {})
+                            void handleLogout()
+                        }}
                         className="flex items-center gap-2 text-red-500 hover:text-red-600 text-sm font-medium transition-colors"
                     >
                         <LogOut size={16} />

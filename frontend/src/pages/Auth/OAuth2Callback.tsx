@@ -1,33 +1,37 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuthStore } from '../../store/authStore'
 import { authApi } from '../../api/auth'
+import { useAuthStore } from '../../store/authStore'
 
 export default function OAuth2Callback() {
   const navigate = useNavigate()
-  const { setTokens, setUser } = useAuthStore()
+  const { setAccessToken, setUser, logout } = useAuthStore()
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
-    const accessToken = params.get('accessToken')
-    const refreshToken = params.get('refreshToken')
+    const code = params.get('code')
 
-    if (!accessToken || !refreshToken) {
-      navigate('/login')
+    if (!code) {
+      navigate('/login', { replace: true })
       return
     }
 
-    setTokens(accessToken, refreshToken)
-
-    authApi.getMe()
+    authApi.exchangeOAuth2Code(code)
+      .then(({ accessToken }) => {
+        setAccessToken(accessToken)
+        return authApi.getMe()
+      })
       .then((user) => {
         setUser(user)
         const redirectPath = sessionStorage.getItem('postLoginRedirect') || '/'
         sessionStorage.removeItem('postLoginRedirect')
-        navigate(redirectPath)
+        navigate(redirectPath, { replace: true })
       })
-      .catch(() => navigate('/login'))
-  }, [navigate, setTokens, setUser])
+      .catch(() => {
+        logout()
+        navigate('/login', { replace: true })
+      })
+  }, [logout, navigate, setAccessToken, setUser])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-white">

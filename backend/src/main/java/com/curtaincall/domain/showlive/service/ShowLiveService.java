@@ -16,8 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -40,10 +40,11 @@ public class ShowLiveService {
                 .orElseGet(() -> roomRepository.save(ShowLiveRoom.of(show, date)));
 
         List<ShowLiveMessageDto> messages = messageRepository
-                .findTop50ByRoomId(room.getId(), PageRequest.of(0, MESSAGE_LIMIT))
+                .findRecentByRoomId(room.getId(), PageRequest.of(0, MESSAGE_LIMIT))
                 .stream()
                 .map(ShowLiveMessageDto::from)
-                .collect(Collectors.toList());
+                .sorted(Comparator.comparing(ShowLiveMessageDto::getCreatedAt))
+                .toList();
 
         return ShowLiveRoomDto.builder()
                 .roomId(room.getId())
@@ -56,7 +57,7 @@ public class ShowLiveService {
     @Transactional
     public ShowLiveMessageDto saveMessage(Long roomId, Long senderId, String content) {
         ShowLiveRoom room = roomRepository.findById(roomId)
-                .orElseThrow(() -> new IllegalArgumentException("채팅방을 찾을 수 없습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("라이브 채팅방을 찾을 수 없습니다."));
         User sender = userRepository.findById(senderId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 

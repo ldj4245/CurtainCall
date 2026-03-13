@@ -1,5 +1,6 @@
 package com.curtaincall.domain.user.service;
 
+import com.curtaincall.domain.user.dto.AuthTokens;
 import com.curtaincall.domain.user.dto.LoginRequest;
 import com.curtaincall.domain.user.dto.SignUpRequest;
 import com.curtaincall.domain.user.dto.TokenResponse;
@@ -7,6 +8,7 @@ import com.curtaincall.domain.user.entity.User;
 import com.curtaincall.domain.user.repository.UserRepository;
 import com.curtaincall.global.exception.BusinessException;
 import com.curtaincall.global.jwt.JwtTokenProvider;
+import com.curtaincall.infra.oauth2.OAuth2AuthorizationCodeStore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -20,15 +22,14 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final OAuth2AuthorizationCodeStore authorizationCodeStore;
 
     @Transactional
-    public TokenResponse signUp(SignUpRequest request) {
-        // 이메일 중복 확인
+    public AuthTokens signUp(SignUpRequest request) {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw BusinessException.conflict("이미 사용 중인 이메일입니다");
+            throw BusinessException.conflict("이미 사용 중인 이메일입니다.");
         }
 
-        // 사용자 생성
         User user = User.builder()
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
@@ -37,51 +38,69 @@ public class AuthService {
                 .build();
 
         userRepository.save(user);
-
-        // 토큰 생성
-        String accessToken = jwtTokenProvider.createAccessToken(user.getId(), user.getEmail());
-        String refreshToken = jwtTokenProvider.createRefreshToken(user.getId(), user.getEmail());
-
-        return TokenResponse.of(accessToken, refreshToken);
+        return issueTokens(user);
     }
 
-    public TokenResponse login(LoginRequest request) {
-        // 사용자 조회
+    public AuthTokens login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> BusinessException.notFound("사용자를 찾을 수 없습니다"));
+                .orElseThrow(() -> BusinessException.notFound("사용자를 찾을 수 없습니다."));
 
-        // 자체 로그인 사용자인지 확인
         if (!user.isLocalUser()) {
-            throw BusinessException.badRequest("소셜 로그인 사용자입니다. 소셜 로그인을 이용해주세요");
+            throw BusinessException.badRequest("소셜 로그인 계정입니다. 소셜 로그인을 이용해 주세요.");
         }
 
-        // 비밀번호 확인
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw BusinessException.unauthorized("비밀번호가 일치하지 않습니다");
+            throw BusinessException.unauthorized("비밀번호가 일치하지 않습니다.");
         }
 
-        // 토큰 생성
-        String accessToken = jwtTokenProvider.createAccessToken(user.getId(), user.getEmail());
-        String refreshToken = jwtTokenProvider.createRefreshToken(user.getId(), user.getEmail());
-
-        return TokenResponse.of(accessToken, refreshToken);
+        return issueTokens(user);
     }
 
-    public TokenResponse refreshToken(String refreshToken) {
+    public AuthTokens refreshToken(String refreshToken) {
         if (!jwtTokenProvider.validateToken(refreshToken)) {
-            throw BusinessException.unauthorized("유효하지 않은 토큰입니다");
+            throw BusinessException.unauthorized("유효하지 않은 토큰입니다.");
+        }
+
+        if (!jwtTokenProvider.isRefreshToken(refreshToken)) {
+            throw BusinessException.unauthorized("리프레시 토큰만 사용할 수 있습니다.");
         }
 
         Long userId = jwtTokenProvider.getUserId(refreshToken);
-        String email = jwtTokenProvider.getEmail(refreshToken);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> BusinessException.notFound("사용자를 찾을 수 없습니다."));
 
-        String newAccessToken = jwtTokenProvider.createAccessToken(userId, email);
-        String newRefreshToken = jwtTokenProvider.createRefreshToken(userId, email);
+        return issueTokens(user);
+    }
 
-        return TokenResponse.of(newAccessToken, newRefreshToken);
+    public AuthTokens exchangeOAuth2Code(String code) {
+        Long userId = authorizationCodeStore.consume(code)
+                .orElseThrow(() -> BusinessException.unauthorized("유효하지 않거나 만료된 OAuth 인증 코드입니다."));
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> BusinessException.notFound("사용자를 찾을 수 없습니다."));
+
+        return issueTokens(user);
     }
 
     public boolean checkEmailDuplicate(String email) {
         return userRepository.findByEmail(email).isPresent();
+    }
+
+    public TokenResponse toTokenResponse(AuthTokens tokens) {
+        return TokenResponse.of(tokens.accessToken(), jwtTokenProvider.getAccessExpirationSeconds());
+    }
+
+    private AuthTokens issueTokens(User user) {
+        String accessToken = jwtTokenProvider.createAccessToken(
+                user.getId(),
+                user.getEmail(),
+                user.getRole().name()
+        );
+        String refreshToken = jwtTokenProvider.createRefreshToken(
+                user.getId(),
+                user.getEmail(),
+                user.getRole().name()
+        );
+        return new AuthTokens(accessToken, refreshToken);
     }
 }
