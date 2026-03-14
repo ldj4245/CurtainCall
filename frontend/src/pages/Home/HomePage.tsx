@@ -47,27 +47,26 @@ export default function HomePage() {
   })
 
   const featuredShow = ongoingShows?.find((show) => show.posterUrl) ?? ongoingShows?.[0]
-  const supportShows =
-    ongoingShows?.filter((show) => show.posterUrl && show.id !== featuredShow?.id).slice(0, 2) ?? []
+  const supportShows = ongoingShows?.filter((show) => show.posterUrl && show.id !== featuredShow?.id).slice(0, 2) ?? []
   const recentDiary = recentDiaryPage?.content?.[0]
 
   return (
     <div className="min-h-screen bg-white">
       <section className="journal-hero border-b border-gray-100">
-        <div className="mx-auto max-w-6xl px-4 py-12 md:py-16">
-          <div className="grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_360px] lg:items-start">
+        <div className="max-w-6xl mx-auto px-4 py-12 md:py-18">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1.15fr)_360px] lg:items-start">
             <div className="min-w-0">
               <p className="journal-kicker">
-                {isAuthenticated ? `${user?.nickname ?? '사용자'}의 관극 기록` : '공연을 보고 나면 기록도 남겨보세요'}
+                {isAuthenticated ? `${user?.nickname ?? '관극러'}님의 관극 기록` : '공연을 보고 난 뒤를 남기는 곳'}
               </p>
-              <h1 className="mt-3 max-w-3xl text-[2.2rem] font-black leading-[1.05] tracking-[-0.04em] text-gray-900 sm:text-5xl">
-                공연을 찾고,
+              <h1 className="mt-3 max-w-3xl text-[2.3rem] font-black leading-[1.02] tracking-[-0.04em] text-gray-900 sm:text-5xl md:text-6xl">
+                공연은 지나가도
                 <br />
-                보고 난 감상을 남겨두세요
+                기록은 오래 남아요.
               </h1>
-              <p className="mt-5 max-w-2xl text-sm leading-7 text-gray-600 sm:text-base">
-                공연 정보만 보는 곳이 아니라, 본 공연을 기록하고 동행을 찾고 후기를 이어서 확인할 수 있는
-                흐름에 집중했습니다.
+              <p className="mt-5 max-w-xl text-sm leading-7 text-gray-600 sm:text-base">
+                다이어리에 관람일과 감상을 남기고, 마음이 맞는 사람과 동행을 찾고,
+                공연이 끝난 뒤 후기로 다시 이야기를 이어가세요.
               </p>
 
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
@@ -92,40 +91,40 @@ export default function HomePage() {
                   <SummaryCard
                     label="총 관극 수"
                     value={`${stats?.totalCount ?? 0}회`}
-                    hint="지금까지 남긴 기록"
+                    hint="지금까지 남긴 기록의 수"
                   />
                   <SummaryCard
-                    label="평균 평점"
+                    label="평균 별점"
                     value={stats?.averageRating ? stats.averageRating.toFixed(1) : '-'}
-                    hint="남겨 둔 감상의 평균"
+                    hint="기록된 감상 기준"
                   />
                   <SummaryCard
                     label="최근 기록"
                     value={recentDiary?.showTitle ?? '아직 첫 기록 전'}
-                    hint={recentDiary ? `${recentDiary.watchedDate} 관람` : '다이어리에서 첫 기록을 남겨보세요'}
+                    hint={recentDiary ? `${recentDiary.watchedDate} 관람` : '첫 관극을 남겨보세요'}
                   />
                 </div>
               ) : (
                 <div className="mt-8 grid gap-3 sm:grid-cols-3">
-                  <Link to="/signup" className="paper-panel p-5">
+                  <Link to="/signup" className="paper-panel group p-5">
                     <BookOpen className="h-5 w-5 text-brand" />
                     <h2 className="mt-4 text-lg font-semibold text-gray-900">다이어리</h2>
                     <p className="mt-2 text-sm leading-6 text-gray-500">
-                      관람일, 좌석, 감상, 사진까지 한 곳에 정리할 수 있습니다.
+                      날짜, 좌석, 감상, 사진까지 한 장의 관극 기록으로 쌓아두세요.
                     </p>
                   </Link>
-                  <Link to="/shows" className="paper-panel p-5">
+                  <Link to="/shows" className="paper-panel group p-5">
                     <Users className="h-5 w-5 text-brand" />
                     <h2 className="mt-4 text-lg font-semibold text-gray-900">동행</h2>
                     <p className="mt-2 text-sm leading-6 text-gray-500">
-                      공연 상세에서 바로 동행을 찾고 채팅으로 이어질 수 있습니다.
+                      보고 싶은 공연에서 바로 동행을 찾고, 채팅으로 약속을 이어갑니다.
                     </p>
                   </Link>
-                  <Link to="/shows" className="paper-panel p-5">
+                  <Link to="/shows" className="paper-panel group p-5">
                     <MessageCircle className="h-5 w-5 text-brand" />
                     <h2 className="mt-4 text-lg font-semibold text-gray-900">후기</h2>
                     <p className="mt-2 text-sm leading-6 text-gray-500">
-                      보고 난 뒤의 감상을 리뷰로 남기고 다른 관객의 후기도 볼 수 있습니다.
+                      공연 직후의 감정을 리뷰로 남기고 다른 관객의 감상과 비교해보세요.
                     </p>
                   </Link>
                 </div>
@@ -144,15 +143,15 @@ export default function HomePage() {
                       />
                     ) : null}
                     <div className="min-w-0 flex-1">
-                      <p className="journal-kicker">추천 공연</p>
+                      <p className="journal-kicker">기록하기 좋은 오늘의 공연</p>
                       <h2 className="mt-2 text-xl font-semibold tracking-tight text-gray-900">
                         {featuredShow.title}
                       </h2>
                       <p className="mt-3 text-sm leading-6 text-gray-500">
-                        공연 상세에서 기록, 동행, 후기를 한 번에 이어서 볼 수 있습니다.
+                        공연 상세에서 바로 다이어리를 남기고, 동행과 후기까지 이어서 확인할 수 있어요.
                       </p>
                       <div className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-brand">
-                        공연 상세 보기
+                        공연 상세 열기
                         <ArrowUpRight size={15} />
                       </div>
                     </div>
@@ -162,26 +161,26 @@ export default function HomePage() {
 
               {recentDiary ? (
                 <Link to="/diary" className="paper-panel block p-5">
-                  <p className="journal-kicker">최근 기록</p>
+                  <p className="journal-kicker">최근 남긴 기록</p>
                   <div className="mt-3 flex items-start justify-between gap-4">
                     <div className="min-w-0">
                       <p className="truncate text-lg font-semibold text-gray-900">{recentDiary.showTitle}</p>
                       <p className="mt-1 text-sm text-gray-500">{recentDiary.watchedDate}</p>
                       <p className="mt-3 line-clamp-2 text-sm leading-6 text-gray-600">
-                        {recentDiary.comment || '기록을 이어서 수정하거나 다시 읽어볼 수 있습니다.'}
+                        {recentDiary.comment || '짧은 감상을 더 남기면 다음 관극이 더 선명해져요.'}
                       </p>
                     </div>
                     <span className="rounded-full border border-brand/15 bg-brand-50 px-3 py-1 text-xs font-semibold text-brand">
-                      보기
+                      다시 보기
                     </span>
                   </div>
                 </Link>
               ) : (
                 <div className="paper-panel p-5">
-                  <p className="journal-kicker">시작하기</p>
-                  <p className="mt-3 text-lg font-semibold text-gray-900">첫 관극 기록을 남겨보세요</p>
+                  <p className="journal-kicker">첫 기록 안내</p>
+                  <p className="mt-3 text-lg font-semibold text-gray-900">관람일과 별점만으로도 시작할 수 있어요.</p>
                   <p className="mt-2 text-sm leading-6 text-gray-500">
-                    별점과 한 줄 감상만으로도 충분합니다. 필요한 정보는 나중에 더 추가할 수 있습니다.
+                    좌석이나 캐스트 메모는 나중에 덧붙여도 됩니다. 가장 먼저 남겨야 할 건 그날의 감정이에요.
                   </p>
                 </div>
               )}
@@ -207,24 +206,24 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="bg-white px-4 py-12">
-        <div className="mx-auto max-w-6xl">
+      <section className="py-12 px-4 bg-white">
+        <div className="max-w-6xl mx-auto">
           <PopularShows />
         </div>
       </section>
 
-      <section className="bg-warm-50 px-4 py-12">
-        <div className="mx-auto max-w-6xl">
+      <section className="py-12 px-4 bg-warm-50">
+        <div className="max-w-6xl mx-auto">
           <RecentCompanions />
         </div>
       </section>
 
-      <section className="bg-white px-4 py-12">
-        <div className="mx-auto max-w-6xl">
+      <section className="py-12 px-4 bg-white">
+        <div className="max-w-6xl mx-auto">
           <div className="mb-7 flex items-center justify-between">
             <div>
-              <p className="journal-kicker">진행 중인 공연</p>
-              <h2 className="section-title mt-1 text-2xl">지금 바로 볼 수 있는 작품</h2>
+              <p className="journal-kicker">지금 공연 중</p>
+              <h2 className="section-title mt-1 text-2xl">기록으로 이어질 작품들</h2>
             </div>
             <Link
               to="/shows?status=ONGOING"

@@ -8,6 +8,7 @@ import {
   List,
   PenSquare,
   Share2,
+  Sparkles,
 } from 'lucide-react'
 import { diaryApi } from '../../api/diary'
 import DiaryStats from '../../components/diary/DiaryStats'
@@ -81,17 +82,17 @@ export default function DiaryPage() {
     <div className="min-h-screen bg-white">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:py-10">
         <section className="paper-panel overflow-hidden p-6 sm:p-7 lg:p-8">
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_320px] lg:items-start">
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_340px] lg:items-start">
             <div className="min-w-0">
-              <p className="journal-kicker">my diary</p>
+              <p className="journal-kicker">theater journal</p>
               <h1 className="mt-3 text-3xl font-black leading-tight tracking-[-0.04em] text-gray-900 sm:text-4xl">
-                관극 기록을 한 곳에서
+                오늘의 관극을 남기고
                 <br />
-                다시 보고 정리하세요
+                다음 마음을 준비해요
               </h1>
               <p className="mt-4 max-w-2xl text-sm leading-7 text-gray-600 sm:text-base">
-                캘린더와 목록, 갤러리, 통계를 한 페이지에서 볼 수 있게 정리했습니다. 공연을 보고 난 뒤
-                필요한 기록만 빠르게 남기고, 나중에 다시 찾아보기 쉬운 흐름을 목표로 했습니다.
+                다이어리는 평점만 남기는 공간이 아니라, 공연을 본 날의 공기와 좌석, 캐스트 메모,
+                오래 남은 장면까지 다시 붙잡아 두는 개인 기록장이어야 합니다.
               </p>
 
               <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -109,14 +110,14 @@ export default function DiaryPage() {
                   onClick={() => setShowShareCard(true)}
                   className="btn-secondary w-full justify-between px-5 py-3 sm:w-auto sm:justify-center"
                 >
-                  <span>공유 카드</span>
+                  <span>공유 카드 만들기</span>
                   <Share2 size={16} />
                 </button>
               </div>
             </div>
 
             <div className="ticket-panel overflow-hidden p-5 sm:p-6">
-              <p className="journal-kicker">최근 기록</p>
+              <p className="journal-kicker">최근 기록 요약</p>
               {recentEntry ? (
                 <div className="mt-4">
                   {recentEntry.showPosterUrl ? (
@@ -131,26 +132,27 @@ export default function DiaryPage() {
                   </p>
                   <p className="mt-1 text-sm text-gray-500">{recentEntry.watchedDate}</p>
                   <p className="mt-3 line-clamp-3 text-sm leading-6 text-gray-600">
-                    {recentEntry.comment || '최근 기록을 다시 열어 수정하거나 이어서 정리할 수 있습니다.'}
+                    {recentEntry.comment || '기록은 짧아도 괜찮아요. 공연을 본 날의 한 줄만 남겨도 충분합니다.'}
                   </p>
                   <button
                     onClick={() => {
                       setEditEntry(recentEntry)
                       setShowForm(true)
                     }}
-                    className="mt-4 text-sm font-semibold text-brand"
+                    className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-brand"
                   >
-                    이 기록 수정하기
+                    이 기록 이어 쓰기
+                    <Sparkles size={15} />
                   </button>
                 </div>
               ) : (
-                <div className="mt-4 rounded-2xl border border-dashed border-brand/20 bg-white/80 px-5 py-8 text-center">
+                <div className="mt-4 rounded-2xl border border-dashed border-brand/20 bg-white/70 px-5 py-8 text-center">
                   <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand-50 text-brand">
                     <BookOpen size={20} />
                   </div>
-                  <p className="mt-4 text-lg font-semibold text-gray-900">첫 기록을 남겨보세요</p>
+                  <p className="mt-4 text-lg font-semibold text-gray-900">첫 관극을 남겨보세요</p>
                   <p className="mt-2 text-sm leading-6 text-gray-500">
-                    관람일과 평점, 짧은 감상만 있어도 충분히 시작할 수 있습니다.
+                    별점과 짧은 감상만으로도 충분히 시작할 수 있어요.
                   </p>
                 </div>
               )}
@@ -161,22 +163,22 @@ export default function DiaryPage() {
             <SummaryPanel
               label="총 관극 수"
               value={`${stats?.totalCount ?? 0}회`}
-              description="지금까지 남긴 기록"
+              description="지금까지 남긴 공연 기록"
             />
             <SummaryPanel
               label="이번 달"
               value={`${thisMonthCount}회`}
-              description="이번 달에 본 공연"
+              description="이번 달에 본 공연 수"
             />
             <SummaryPanel
               label="평균 평점"
               value={stats?.averageRating ? stats.averageRating.toFixed(1) : '-'}
-              description="남겨 둔 평점 평균"
+              description="남겨 둔 감상의 기준점"
             />
             <SummaryPanel
-              label="최근 공연"
-              value={recentEntry?.showTitle ?? '아직 기록 없음'}
-              description={recentEntry ? recentEntry.watchedDate : '첫 기록을 남겨보세요'}
+              label="최근 한 줄"
+              value={recentEntry?.showTitle ?? '아직 첫 기록 전'}
+              description={recentEntry?.comment || '공연을 보고 난 직후의 감정을 붙잡아 보세요.'}
             />
           </div>
         </section>
@@ -231,9 +233,9 @@ export default function DiaryPage() {
                     <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-50 text-brand">
                       <BookOpen size={22} />
                     </div>
-                    <p className="mt-5 text-xl font-semibold text-gray-900">아직 기록이 없습니다</p>
+                    <p className="mt-5 text-xl font-semibold text-gray-900">아직 첫 기록이 비어 있어요</p>
                     <p className="mt-2 text-sm leading-6 text-gray-500">
-                      공연을 보고 난 뒤 기억하고 싶은 점부터 가볍게 남겨보세요.
+                      관람일과 평점, 한 줄 감상만으로도 나만의 기록이 시작됩니다.
                     </p>
                     <button
                       onClick={() => {
