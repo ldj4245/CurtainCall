@@ -45,10 +45,16 @@ export default function MyPage() {
         onError: () => toast.error('닉네임 변경에 실패했습니다'),
     })
 
-    const handleLogout = () => {
-        storeLogout()
-        toast.success('로그아웃 되었습니다')
-        navigate('/')
+    const handleLogout = async () => {
+        try {
+            await authApi.logout()
+        } catch {
+            // 쿠키 삭제 요청이 실패해도 로컬 세션은 정리합니다.
+        } finally {
+            storeLogout()
+            toast.success('로그아웃 되었습니다')
+            navigate('/')
+        }
     }
 
     const deleteReviewMutation = useMutation({
@@ -249,10 +255,7 @@ export default function MyPage() {
                     </div>
 
                     <button
-                        onClick={() => {
-                            void authApi.logout().catch(() => {})
-                            void handleLogout()
-                        }}
+                        onClick={() => { void handleLogout() }}
                         className="flex items-center gap-2 text-red-500 hover:text-red-600 text-sm font-medium transition-colors"
                     >
                         <LogOut size={16} />

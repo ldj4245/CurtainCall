@@ -53,12 +53,12 @@ spring:
             user-name-attribute: response
 
 jwt:
-  secret: ${JWT_SECRET:curtaincall-super-secret-key-that-is-long-enough-for-hs256-algorithm}
+  secret: ${JWT_SECRET}
   access-expiration: 3600000
   refresh-expiration: 604800000
 
 kopis:
-  api-key: ${KOPIS_API_KEY:e9a8148559f94e2db0068ef471aa654e}
+  api-key: ${KOPIS_API_KEY}
   base-url: http://www.kopis.or.kr/openApi/restful
 
 storage:

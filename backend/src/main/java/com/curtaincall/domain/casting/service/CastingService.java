@@ -5,6 +5,7 @@ import com.curtaincall.domain.casting.entity.CastMember;
 import com.curtaincall.domain.casting.repository.CastMemberRepository;
 import com.curtaincall.domain.show.entity.Show;
 import com.curtaincall.domain.show.repository.ShowRepository;
+import com.curtaincall.global.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,8 @@ public class CastingService {
 
     @Transactional(readOnly = true)
     public List<CastingResponse> getCastingByShow(Long showId) {
+        showRepository.findById(showId)
+                .orElseThrow(() -> BusinessException.notFound("공연을 찾을 수 없습니다."));
         List<CastMember> members = castMemberRepository.findByShowIdOrderByIdAsc(showId);
         return CastingResponse.from(members);
     }
@@ -30,7 +33,7 @@ public class CastingService {
     @Transactional
     public void refreshCasting(Long showId) {
         Show show = showRepository.findById(showId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 공연입니다."));
+                .orElseThrow(() -> BusinessException.notFound("공연을 찾을 수 없습니다."));
         refreshCastingForShow(show);
     }
 
@@ -52,20 +55,4 @@ public class CastingService {
         }
     }
 
-    /**
-     * 캐스팅 정보가 없는 공연의 초기 크롤링 (GET 요청 시 자동 호출)
-     */
-    @Transactional
-    public void initCastingIfEmpty(Long showId) {
-        if (!castMemberRepository.existsByShowId(showId)) {
-            Show show = showRepository.findById(showId).orElse(null);
-            if (show != null) {
-                try {
-                    refreshCastingForShow(show);
-                } catch (Exception e) {
-                    log.warn("초기 캐스팅 크롤링 실패 (showId={}): {}", showId, e.getMessage());
-                }
-            }
-        }
-    }
 }

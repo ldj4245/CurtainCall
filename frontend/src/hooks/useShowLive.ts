@@ -20,6 +20,13 @@ export function useShowLive({ roomId, initialMessages }: UseShowLiveOptions) {
   }, [initialMessages]);
 
   useEffect(() => {
+    if (!accessToken || roomId <= 0) {
+      setConnected(false);
+      clientRef.current?.deactivate();
+      clientRef.current = null;
+      return;
+    }
+
     const client = new Client({
       webSocketFactory: () => new SockJS('/ws'),
       connectHeaders: { Authorization: `Bearer ${accessToken}` },
@@ -37,7 +44,10 @@ export function useShowLive({ roomId, initialMessages }: UseShowLiveOptions) {
     client.activate();
     clientRef.current = client;
 
-    return () => { client.deactivate(); };
+    return () => {
+      client.deactivate();
+      clientRef.current = null;
+    };
   }, [roomId, accessToken]);
 
   const sendMessage = useCallback((content: string) => {

@@ -18,6 +18,7 @@ import com.curtaincall.domain.user.repository.UserRepository;
 import com.curtaincall.global.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.CacheManager;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -126,8 +127,12 @@ public class ReviewService {
                     return false;
                 })
                 .orElseGet(() -> {
-                    likeRepository.save(ReviewLike.builder().review(review).user(user).build());
-                    review.increaseLikeCount();
+                    try {
+                        likeRepository.save(ReviewLike.builder().review(review).user(user).build());
+                        review.increaseLikeCount();
+                    } catch (DataIntegrityViolationException e) {
+                        // 동시 요청으로 이미 좋아요가 생성된 경우는 좋아요 상태로 간주합니다.
+                    }
                     return true;
                 });
     }

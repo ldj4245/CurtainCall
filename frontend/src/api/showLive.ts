@@ -11,7 +11,7 @@ export interface ShowLiveMessage {
 }
 
 export interface ShowLiveRoom {
-  roomId: number;
+  roomId: number | null;
   showTitle: string;
   liveDate: string;
   messages: ShowLiveMessage[];
@@ -20,7 +20,7 @@ export interface ShowLiveRoom {
 export const showLiveApi = {
   getRoom: async (showId: number, date?: string): Promise<ShowLiveRoom> => {
     const params = date ? { date } : {};
-    const { data } = await api.get<ShowLiveRoom>(`/shows/${showId}/live`, { params });
+    const { data } = await api.post<ShowLiveRoom>(`/shows/${showId}/live`, null, { params });
     return data;
   },
 };

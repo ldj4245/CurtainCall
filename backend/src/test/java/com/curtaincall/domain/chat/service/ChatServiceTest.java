@@ -9,12 +9,14 @@ import com.curtaincall.domain.companion.entity.CompanionPost;
 import com.curtaincall.domain.companion.repository.CompanionParticipantRepository;
 import com.curtaincall.domain.user.entity.User;
 import com.curtaincall.domain.user.repository.UserRepository;
+import com.curtaincall.global.exception.BusinessException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
@@ -57,12 +59,13 @@ class ChatServiceTest {
         when(chatRoomRepository.findById(1L)).thenReturn(Optional.of(room));
         when(companionParticipantRepository.existsByCompanionPostIdAndUserId(10L, 2L)).thenReturn(false);
 
-        IllegalStateException exception = assertThrows(
-                IllegalStateException.class,
+        BusinessException exception = assertThrows(
+                BusinessException.class,
                 () -> chatService.getMessageHistory(1L, 2L)
         );
 
         assertEquals("채팅방 참여자만 접근할 수 있습니다.", exception.getMessage());
+        assertEquals(HttpStatus.FORBIDDEN, exception.getStatus());
     }
 
     @Test

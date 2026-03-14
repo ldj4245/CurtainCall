@@ -9,6 +9,7 @@ import com.curtaincall.domain.user.entity.User;
 import com.curtaincall.domain.user.repository.UserRepository;
 import com.curtaincall.global.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -37,10 +38,14 @@ public class FavoriteShowService {
             favoriteShowRepository.deleteByUserAndShow(user, show);
             isFavorited = false;
         } else {
-            favoriteShowRepository.save(FavoriteShow.builder()
-                    .user(user)
-                    .show(show)
-                    .build());
+            try {
+                favoriteShowRepository.save(FavoriteShow.builder()
+                        .user(user)
+                        .show(show)
+                        .build());
+            } catch (DataIntegrityViolationException e) {
+                // 동시 요청으로 이미 저장된 경우는 찜된 상태로 간주합니다.
+            }
             isFavorited = true;
         }
 

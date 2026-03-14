@@ -29,7 +29,7 @@ public class KopisSyncService {
     private static final String[] GENRES = { "GGGA", "AAAA" }; // 뮤지컬, 연극
 
     @Scheduled(cron = "0 0 2 * * *") // 매일 새벽 2시
-    @CacheEvict(value = { "showsSearch", "showDetail", "ongoingShows" }, allEntries = true)
+    @CacheEvict(value = { "showsSearch", "showDetail", "ongoingShows", "popularShows" }, allEntries = true)
     public void syncShows() {
         log.info("KOPIS 공연 동기화 시작");
 
@@ -67,7 +67,7 @@ public class KopisSyncService {
         log.info("KOPIS 극장 동기화 완료");
     }
 
-    @CacheEvict(value = { "showsSearch", "showDetail", "ongoingShows" }, allEntries = true)
+    @CacheEvict(value = { "showsSearch", "showDetail", "ongoingShows", "popularShows" }, allEntries = true)
     public void manualSyncShows(int months) {
         LocalDate today = LocalDate.now();
         LocalDate endDate = today.plusMonths(months);
@@ -244,7 +244,7 @@ public class KopisSyncService {
             // 캐시 명시적 초기화 (내부 호출로 인한 @CacheEvict 무시 우회)
             if (cacheManager != null) {
                 log.info("초기 동기화 완료 후 캐시를 비웁니다...");
-                String[] cacheNames = { "showsSearch", "showDetail", "ongoingShows" };
+                String[] cacheNames = { "showsSearch", "showDetail", "ongoingShows", "popularShows" };
                 for (String cacheName : cacheNames) {
                     org.springframework.cache.Cache cache = cacheManager.getCache(cacheName);
                     if (cache != null) {

@@ -9,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
-import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,26 +44,56 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         return socialAccountRepository.findByProviderAndProviderId(userInfo.getProvider(), userInfo.getId())
                 .map(socialAccount -> {
                     User user = socialAccount.getUser();
-                    user.updateProfile(
-                            userInfo.getName() != null ? userInfo.getName() : user.getNickname(),
-                            userInfo.getImageUrl()
-                    );
+                    syncSocialProfile(user, userInfo);
                     return user;
                 })
                 .orElseGet(() -> {
-                    User newUser = userRepository.save(User.builder()
-                            .nickname(userInfo.getName() != null ? userInfo.getName() : "회원")
-                            .email(userInfo.getEmail())
-                            .profileImage(userInfo.getImageUrl())
-                            .build());
+                    if (userInfo.getEmail() != null && !userInfo.getEmail().isBlank()) {
+                        return userRepository.findByEmail(userInfo.getEmail())
+                                .map(existingUser -> {
+                                    linkSocialAccount(existingUser, userInfo);
+                                    syncLinkedUserProfile(existingUser, userInfo);
+                                    return existingUser;
+                                })
+                                .orElseGet(() -> createUserWithSocialAccount(userInfo));
+                    }
 
-                    socialAccountRepository.save(SocialAccount.builder()
-                            .user(newUser)
-                            .provider(userInfo.getProvider())
-                            .providerId(userInfo.getId())
-                            .build());
-
-                    return newUser;
+                    return createUserWithSocialAccount(userInfo);
                 });
+    }
+
+    private User createUserWithSocialAccount(OAuth2UserInfo userInfo) {
+        User newUser = userRepository.save(User.builder()
+                .nickname(userInfo.getName() != null ? userInfo.getName() : "회원")
+                .email(userInfo.getEmail())
+                .profileImage(userInfo.getImageUrl())
+                .build());
+
+        linkSocialAccount(newUser, userInfo);
+        return newUser;
+    }
+
+    private void linkSocialAccount(User user, OAuth2UserInfo userInfo) {
+        socialAccountRepository.findByUserIdAndProvider(user.getId(), userInfo.getProvider())
+                .orElseGet(() -> socialAccountRepository.save(SocialAccount.builder()
+                        .user(user)
+                        .provider(userInfo.getProvider())
+                        .providerId(userInfo.getId())
+                        .build()));
+    }
+
+    private void syncSocialProfile(User user, OAuth2UserInfo userInfo) {
+        user.updateProfile(
+                userInfo.getName() != null ? userInfo.getName() : user.getNickname(),
+                userInfo.getImageUrl()
+        );
+    }
+
+    private void syncLinkedUserProfile(User user, OAuth2UserInfo userInfo) {
+        if ((user.getProfileImage() == null || user.getProfileImage().isBlank())
+                && userInfo.getImageUrl() != null
+                && !userInfo.getImageUrl().isBlank()) {
+            user.updateProfile(user.getNickname(), userInfo.getImageUrl());
+        }
     }
 }

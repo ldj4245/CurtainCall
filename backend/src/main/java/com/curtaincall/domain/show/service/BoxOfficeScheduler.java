@@ -5,6 +5,8 @@ import com.curtaincall.domain.show.repository.ShowRepository;
 import com.curtaincall.infra.kopis.KopisApiClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -23,6 +25,7 @@ public class BoxOfficeScheduler {
 
     private final KopisApiClient kopisApiClient;
     private final ShowRepository showRepository;
+    private final CacheManager cacheManager;
 
     /**
      * 서버 완전히 뜬 후 최초 1회 박스오피스 갱신
@@ -74,7 +77,15 @@ public class BoxOfficeScheduler {
             rank++;
         }
 
+        clearPopularShowsCache();
         log.info("=== 박스오피스 인기 순위 갱신 완료 (뮤지컬 {}건, 연극 {}건) ===",
                 musicalRanking.size(), playRanking.size());
+    }
+
+    private void clearPopularShowsCache() {
+        Cache cache = cacheManager.getCache("popularShows");
+        if (cache != null) {
+            cache.clear();
+        }
     }
 }

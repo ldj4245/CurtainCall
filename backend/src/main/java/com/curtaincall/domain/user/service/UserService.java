@@ -24,7 +24,7 @@ public class UserService {
     public UserResponse updateNickname(Long userId, String nickname) {
         var user = userRepository.findById(userId)
                 .orElseThrow(() -> BusinessException.notFound("사용자를 찾을 수 없습니다."));
-        user.updateProfile(nickname, user.getProfileImage());
+        user.updateProfile(nickname.trim(), user.getProfileImage());
         return UserResponse.from(user);
     }
 }

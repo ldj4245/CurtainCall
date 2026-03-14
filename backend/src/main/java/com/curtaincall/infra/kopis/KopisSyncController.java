@@ -1,5 +1,6 @@
 package com.curtaincall.infra.kopis;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -9,6 +10,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/sync")
 @RequiredArgsConstructor
+@SecurityRequirement(name = "Bearer Authentication")
 public class KopisSyncController {
 
     private final KopisSyncService kopisSyncService;
