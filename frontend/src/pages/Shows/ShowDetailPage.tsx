@@ -1,23 +1,10 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import {
-  BookOpen,
-  CalendarDays,
-  ChevronRight,
-  Clock3,
-  DollarSign,
-  Heart,
-  ImageOff,
-  MapPin,
-  MessageCircle,
-  Star,
-  Users,
-} from 'lucide-react'
+import { BookOpen, CalendarDays, Clock3, DollarSign, Heart, ImageOff, MapPin, MessageCircle, Star, Users } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { showsApi } from '../../api/shows'
 import { favoritesApi } from '../../api/favorites'
-import { companionApi } from '../../api/companion'
 import { useAuthStore } from '../../store/authStore'
 import StarRating from '../../components/common/StarRating'
 import ReviewList from '../../components/review/ReviewList'
@@ -25,6 +12,15 @@ import DiaryFormModal from '../../components/diary/DiaryFormModal'
 import CastingBoard from '../../components/casting/CastingBoard'
 import CompanionList from '../../components/companion/CompanionList'
 import ShowLiveChat from '../../components/show/ShowLiveChat'
+
+type Tab = 'info' | 'live' | 'companion' | 'review'
+
+const TABS: { key: Tab; label: string }[] = [
+  { key: 'info', label: '공연 정보' },
+  { key: 'live', label: '오늘 라이브' },
+  { key: 'companion', label: '동행' },
+  { key: 'review', label: '리뷰' },
+]
 
 const STATUS_BADGE_CLASS: Record<string, string> = {
   ONGOING: 'badge-ongoing',
@@ -37,81 +33,14 @@ const GENRE_BADGE_CLASS: Record<string, string> = {
   PLAY: 'badge-play',
 }
 
-function StatChip({
-  label,
-  value,
-  tone = 'default',
-}: {
-  label: string
-  value: string
-  tone?: 'default' | 'highlight'
-}) {
-  return (
-    <div
-      className={`rounded-2xl border px-4 py-3 ${
-        tone === 'highlight'
-          ? 'border-brand/15 bg-brand-50 text-brand'
-          : 'border-gray-100 bg-white text-gray-700'
-      }`}
-    >
-      <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-gray-400">{label}</p>
-      <p className="mt-2 text-base font-semibold tracking-tight">{value}</p>
-    </div>
-  )
-}
-
-function DetailCard({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-gray-100 bg-white px-4 py-3">
-      <p className="text-xs font-medium text-gray-400">{label}</p>
-      <div className="mt-2 flex items-center gap-2 text-sm text-gray-700">
-        <span className="text-gray-400">{icon}</span>
-        <span>{value}</span>
-      </div>
-    </div>
-  )
-}
-
-function PriceCard({ priceInfo }: { priceInfo?: string }) {
-  const lines = priceInfo
-    ? priceInfo
-        .split(',')
-        .map((item) => item.trim())
-        .filter(Boolean)
-    : []
-
-  return (
-    <div className="rounded-2xl border border-gray-100 bg-white px-4 py-3">
-      <p className="text-xs font-medium text-gray-400">가격 정보</p>
-      <div className="mt-2 flex gap-2 text-sm text-gray-700">
-        <span className="text-gray-400">
-          <DollarSign size={15} />
-        </span>
-        {lines.length > 0 ? (
-          <div className="space-y-1">
-            {lines.map((line) => (
-              <p key={line}>{line}</p>
-            ))}
-          </div>
-        ) : (
-          <p>정보 없음</p>
-        )}
-      </div>
-    </div>
-  )
-}
-
 export default function ShowDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { isAuthenticated } = useAuthStore()
+  const [activeTab, setActiveTab] = useState<Tab>('info')
   const [showReviewForm, setShowReviewForm] = useState(false)
   const [showDiaryForm, setShowDiaryForm] = useState(false)
-
-  const infoSectionRef = useRef<HTMLElement | null>(null)
-  const companionSectionRef = useRef<HTMLElement | null>(null)
-  const reviewSectionRef = useRef<HTMLElement | null>(null)
 
   const { data: show, isLoading, isError, refetch } = useQuery({
     queryKey: ['show', id],
@@ -125,18 +54,12 @@ export default function ShowDetailPage() {
     enabled: !!id && isAuthenticated,
   })
 
-  const { data: companionSummary } = useQuery({
-    queryKey: ['companions', id, 'summary'],
-    queryFn: () => companionApi.getCompanions(Number(id), 0, false),
-    enabled: !!id,
-  })
-
   const toggleFav = useMutation({
     mutationFn: () => favoritesApi.toggle(Number(id)),
     onSuccess: (data) => {
       queryClient.setQueryData(['favorite-status', id], data)
       queryClient.invalidateQueries({ queryKey: ['my-favorites'] })
-      toast.success(data.isFavorited ? '찜 목록에 추가했어요.' : '찜 목록에서 제거했어요.')
+      toast.success(data.isFavorited ? '찜 목록에 추가되었습니다.' : '찜 목록에서 제거되었습니다.')
     },
   })
 
@@ -146,34 +69,18 @@ export default function ShowDetailPage() {
     navigate('/login', { state: { from: { pathname: `/shows/${id}` } } })
   }
 
-  const scrollToSection = (section: 'info' | 'companion' | 'review') => {
-    const target =
-      section === 'info'
-        ? infoSectionRef.current
-        : section === 'companion'
-        ? companionSectionRef.current
-        : reviewSectionRef.current
-
-    target?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }
-
-  useEffect(() => {
-    if (showReviewForm) {
-      reviewSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }
-  }, [showReviewForm])
-
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-6xl animate-pulse px-4 py-10">
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[320px_minmax(0,1fr)]">
-          <div className="aspect-[3/4] rounded-3xl bg-warm-100" />
+      <div className="max-w-6xl mx-auto px-4 py-10 animate-pulse">
+        <div className="grid grid-cols-1 lg:grid-cols-[340px_minmax(0,1fr)] gap-8">
+          <div className="aspect-[3/4] bg-warm-100 rounded-2xl" />
           <div className="space-y-4">
-            <div className="h-6 w-24 rounded bg-warm-100" />
-            <div className="h-12 w-2/3 rounded bg-warm-100" />
-            <div className="grid gap-3 md:grid-cols-3">
-              {Array.from({ length: 6 }).map((_, index) => (
-                <div key={index} className="h-20 rounded-2xl bg-warm-100" />
+            <div className="h-6 bg-warm-100 rounded w-1/4" />
+            <div className="h-10 bg-warm-100 rounded w-2/3" />
+            <div className="h-5 bg-warm-100 rounded w-1/3" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+              {Array.from({ length: 4 }).map((_, idx) => (
+                <div key={idx} className="h-16 bg-warm-100 rounded-xl" />
               ))}
             </div>
           </div>
@@ -184,10 +91,10 @@ export default function ShowDetailPage() {
 
   if (isError) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-16 text-center">
-        <p className="text-lg font-semibold text-gray-800">공연 정보를 불러오지 못했어요.</p>
-        <p className="mt-2 text-sm text-gray-500">잠시 후 다시 시도해 주세요.</p>
-        <button onClick={() => refetch()} className="btn-primary mt-6 px-6">
+      <div className="max-w-5xl mx-auto px-4 py-16 text-center">
+        <p className="text-lg font-semibold text-gray-800 mb-2">공연 정보를 불러오지 못했습니다</p>
+        <p className="text-sm text-gray-500 mb-6">네트워크 상태를 확인한 뒤 다시 시도해주세요.</p>
+        <button onClick={() => refetch()} className="btn-primary px-6">
           다시 시도
         </button>
       </div>
@@ -196,351 +103,237 @@ export default function ShowDetailPage() {
 
   if (!show) return null
 
-  const castList =
-    show.castList ||
-    (show.castInfo
-      ? show.castInfo
-          .split(',')
-          .map((item) => item.trim())
-          .filter(Boolean)
-      : [])
+  const castList: string[] =
+    (show as { castList?: string[] }).castList ||
+    (show.castInfo ? show.castInfo.split(',').map((s: string) => s.trim()).filter(Boolean) : [])
 
   const statusBadgeClass = STATUS_BADGE_CLASS[show.status] || 'badge-ended'
   const genreBadgeClass = GENRE_BADGE_CLASS[show.genre] || 'badge-play'
-  const companionCount = companionSummary?.totalElements ?? 0
-
-  const handleDiary = () => {
-    if (!isAuthenticated) {
-      requireLogin('관극 기록은 로그인 후에 남길 수 있어요.')
-      return
-    }
-    setShowDiaryForm(true)
-  }
-
-  const handleReview = () => {
-    if (!isAuthenticated) {
-      requireLogin('후기 작성은 로그인 후에 이용할 수 있어요.')
-      return
-    }
-    setShowReviewForm(true)
-  }
 
   return (
-    <div className="bg-white pb-28 sm:pb-0">
-      <div className="mx-auto max-w-6xl px-4 py-8 md:py-10">
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[320px_minmax(0,1fr)]">
-          <aside className="hidden lg:block">
-            <div className="sticky top-24 space-y-4">
-              <div className="overflow-hidden rounded-[28px] border border-gray-100 bg-white shadow-card-md">
-                {show.posterUrl ? (
-                  <img src={show.posterUrl} alt={show.title} className="aspect-[3/4] w-full object-cover" />
-                ) : (
-                  <div className="flex aspect-[3/4] flex-col items-center justify-center gap-3 bg-warm-100 text-gray-400">
-                    <ImageOff size={24} />
-                    <p className="text-sm font-medium">포스터 준비 중</p>
-                  </div>
-                )}
-              </div>
+    <div className="bg-white">
+      <div className="max-w-6xl mx-auto px-4 py-8 md:py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-[340px_minmax(0,1fr)] gap-8">
+          <aside className="space-y-4 lg:sticky lg:top-24 h-fit">
+            <div className="rounded-2xl overflow-hidden shadow-card-md">
+              {show.posterUrl ? (
+                <img src={show.posterUrl} alt={show.title} className="w-full aspect-[3/4] object-cover" />
+              ) : (
+                <div className="w-full aspect-[3/4] bg-warm-100 flex flex-col items-center justify-center gap-2 text-gray-400">
+                  <ImageOff size={24} />
+                  <p className="text-xs font-medium">포스터 준비 중</p>
+                </div>
+              )}
+            </div>
 
-              <div className="paper-panel p-5">
-                <p className="journal-kicker">이 공연에서 할 수 있는 일</p>
-                <div className="mt-4 grid gap-2">
-                  <button onClick={handleDiary} className="btn-primary justify-between px-4 py-3">
-                    <span>관극 기록</span>
-                    <BookOpen size={16} />
-                  </button>
-                  <button
-                    onClick={() => scrollToSection('companion')}
-                    className="btn-secondary justify-between px-4 py-3"
-                  >
-                    <span>동행 보기</span>
-                    <ChevronRight size={16} />
-                  </button>
-                  <button
-                    onClick={handleReview}
-                    className="btn-secondary justify-between px-4 py-3"
-                  >
-                    <span>후기 남기기</span>
-                    <Star size={16} />
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (!isAuthenticated) {
-                        requireLogin('찜 기능은 로그인 후에 이용할 수 있어요.')
-                        return
-                      }
-                      toggleFav.mutate()
-                    }}
-                    disabled={isAuthenticated && toggleFav.isPending}
-                    className={`inline-flex items-center justify-between gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition-all ${
-                      favStatus?.isFavorited
-                        ? 'border-brand/15 bg-brand-50 text-brand'
-                        : 'border-gray-200 bg-white text-gray-700 hover:bg-warm-50'
+            <div className="card p-4">
+              <p className="text-xs font-semibold tracking-wide text-gray-400 mb-3">개인 액션</p>
+              <div className="grid gap-2">
+                <button
+                  onClick={() => {
+                    if (!isAuthenticated) return requireLogin('찜 기능은 로그인 후 이용할 수 있어요.')
+                    toggleFav.mutate()
+                  }}
+                  disabled={isAuthenticated && toggleFav.isPending}
+                  className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold border transition-all ${favStatus?.isFavorited
+                    ? 'border-brand-200 bg-brand-50 text-brand hover:bg-brand-100'
+                    : 'border-gray-200 bg-white text-gray-700 hover:bg-warm-50'
                     }`}
-                  >
-                    <span>{favStatus?.isFavorited ? '찜 해제' : '찜하기'}</span>
-                    <Heart size={16} className={favStatus?.isFavorited ? 'fill-brand' : ''} />
-                  </button>
-                </div>
-
-                <div className="mt-4 grid gap-2">
-                  <StatChip label="동행" value={`${companionCount}개 모집`} />
-                  <StatChip label="리뷰" value={`${show.reviewCount ?? 0}개`} />
-                </div>
+                >
+                  <Heart size={15} className={favStatus?.isFavorited ? 'fill-brand' : ''} />
+                  {favStatus?.isFavorited ? '찜 해제' : '찜하기'}
+                  {favStatus?.favoriteCount ? <span className="text-xs text-gray-400">({favStatus.favoriteCount})</span> : null}
+                </button>
+                <button
+                  onClick={() => {
+                    if (!isAuthenticated) return requireLogin('관람 기록은 로그인 후 이용할 수 있어요.')
+                    setShowDiaryForm(true)
+                  }}
+                  className="btn-primary text-sm px-4 py-2.5"
+                >
+                  <BookOpen size={15} />
+                  관람 기록
+                </button>
+                <button
+                  onClick={() => {
+                    if (!isAuthenticated) return requireLogin('리뷰 작성은 로그인 후 이용할 수 있어요.')
+                    setActiveTab('review')
+                    setShowReviewForm(true)
+                    window.scrollTo({ top: 0, behavior: 'smooth' })
+                  }}
+                  className="btn-secondary text-sm px-4 py-2.5"
+                >
+                  <Star size={15} />
+                  리뷰 쓰기
+                </button>
               </div>
+              {!isAuthenticated && (
+                <p className="mt-3 text-xs text-gray-400">로그인하면 찜 저장, 관람 기록, 리뷰 작성을 이용할 수 있어요.</p>
+              )}
             </div>
           </aside>
 
-          <main className="min-w-0">
-            <section className="paper-panel overflow-hidden p-5 sm:p-6">
-              <div className="lg:hidden">
-                <div className="flex gap-4">
-                  {show.posterUrl ? (
-                    <img
-                      src={show.posterUrl}
-                      alt={show.title}
-                      className="h-40 w-28 rounded-2xl object-cover shadow-card-md"
-                    />
-                  ) : (
-                    <div className="flex h-40 w-28 items-center justify-center rounded-2xl bg-warm-100 text-gray-400">
-                      <ImageOff size={22} />
-                    </div>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap gap-2">
-                      <span className={statusBadgeClass}>{show.statusDisplayName}</span>
-                      <span className={genreBadgeClass}>{show.genreDisplayName}</span>
-                    </div>
-                    <h1 className="mt-3 text-3xl font-black leading-tight tracking-[-0.04em] text-gray-900">
-                      {show.title}
-                    </h1>
-                    <div className="mt-3 flex items-center gap-2">
-                      {show.averageScore !== undefined && show.averageScore !== null ? (
-                        <>
-                          <StarRating value={Math.round(show.averageScore)} readonly size="sm" />
-                          <span className="text-base font-semibold text-gray-900">
-                            {show.averageScore.toFixed(1)}
-                          </span>
-                          <span className="text-sm text-gray-400">({show.reviewCount ?? 0})</span>
-                        </>
-                      ) : (
-                        <span className="text-sm text-gray-400">아직 첫 후기가 없어요.</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
+          <section>
+            {/* 공연 제목 + 평점 */}
+            <div className="card p-6 md:p-8 mb-4">
+              <div className="flex flex-wrap items-center gap-2 mb-4">
+                <span className={statusBadgeClass}>{show.statusDisplayName}</span>
+                <span className={genreBadgeClass}>{show.genreDisplayName}</span>
               </div>
-
-              <div className="hidden lg:block">
-                <div className="flex flex-wrap gap-2">
-                  <span className={statusBadgeClass}>{show.statusDisplayName}</span>
-                  <span className={genreBadgeClass}>{show.genreDisplayName}</span>
-                </div>
-                <h1 className="mt-3 text-4xl font-black leading-tight tracking-[-0.04em] text-gray-900 xl:text-5xl">
-                  {show.title}
-                </h1>
-                <div className="mt-4 flex items-center gap-2">
-                  {show.averageScore !== undefined && show.averageScore !== null ? (
-                    <>
-                      <StarRating value={Math.round(show.averageScore)} readonly size="sm" />
-                      <span className="text-lg font-semibold text-gray-900">{show.averageScore.toFixed(1)}</span>
-                      <span className="text-sm text-gray-400">({show.reviewCount ?? 0}개 후기)</span>
-                    </>
-                  ) : (
-                    <span className="text-sm text-gray-400">아직 첫 후기가 없어요.</span>
-                  )}
-                </div>
+              <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900">{show.title}</h1>
+              <div className="mt-4 flex items-center gap-2">
+                {show.averageScore !== undefined && show.averageScore !== null ? (
+                  <>
+                    <StarRating value={Math.round(show.averageScore)} readonly size="sm" />
+                    <span className="text-lg font-semibold text-gray-900">{show.averageScore.toFixed(1)}</span>
+                    <span className="text-sm text-gray-400">({show.reviewCount ?? 0}개 리뷰)</span>
+                  </>
+                ) : (
+                  <span className="text-sm text-gray-400">아직 등록된 평점이 없습니다.</span>
+                )}
               </div>
+            </div>
 
-              <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                <StatChip label="관극 기록" value="오늘의 감상 남기기" tone="highlight" />
-                <StatChip label="동행" value={`${companionCount}개 모집 중`} />
-                <StatChip label="후기" value={`${show.reviewCount ?? 0}개`} />
-                <StatChip label="상태" value={show.statusDisplayName} />
-              </div>
-
-              <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                <DetailCard
-                  icon={<MapPin size={15} />}
-                  label="공연장"
-                  value={show.theaterName || '정보 없음'}
-                />
-                <DetailCard
-                  icon={<CalendarDays size={15} />}
-                  label="공연 기간"
-                  value={show.startDate ? `${show.startDate} ~ ${show.endDate || '미정'}` : '정보 없음'}
-                />
-                <DetailCard
-                  icon={<Clock3 size={15} />}
-                  label="러닝타임"
-                  value={show.runtime || '정보 없음'}
-                />
-                <PriceCard priceInfo={show.priceInfo} />
-              </div>
-            </section>
-
-            <section className="ticket-panel mt-4 p-4 sm:p-5">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="journal-kicker">quick actions</p>
-                  <p className="mt-1 text-lg font-semibold tracking-tight text-gray-900">
-                    이 공연을 본 뒤 바로 이어지는 행동
-                  </p>
-                </div>
-                <div className="grid gap-2 sm:grid-cols-3">
-                  <button onClick={handleDiary} className="btn-primary justify-between px-4 py-3">
-                    <span>다이어리 작성</span>
-                    <BookOpen size={16} />
-                  </button>
-                  <button
-                    onClick={() => scrollToSection('companion')}
-                    className="btn-secondary justify-between px-4 py-3"
-                  >
-                    <span>동행 보기</span>
-                    <Users size={16} />
-                  </button>
-                  <button
-                    onClick={() => scrollToSection('review')}
-                    className="btn-secondary justify-between px-4 py-3"
-                  >
-                    <span>후기 보기</span>
-                    <MessageCircle size={16} />
-                  </button>
-                </div>
-              </div>
-            </section>
-
-            <section ref={infoSectionRef} className="paper-panel mt-6 p-6 sm:p-7 scroll-mt-24">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="journal-kicker">show info</p>
-                  <h2 className="mt-1 text-2xl font-bold tracking-tight text-gray-900">공연 정보와 캐스팅</h2>
-                </div>
+            {/* 탭 바 */}
+            <div className="flex gap-1 bg-warm-50 rounded-xl p-1 mb-6">
+              {TABS.map(({ key, label }) => (
                 <button
-                  onClick={() => scrollToSection('review')}
-                  className="hidden items-center gap-2 text-sm font-semibold text-gray-400 transition-colors hover:text-brand sm:inline-flex"
+                  key={key}
+                  onClick={() => setActiveTab(key)}
+                  className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
+                    activeTab === key
+                      ? 'bg-white text-brand shadow-sm'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
                 >
-                  후기 섹션으로 이동
-                  <ChevronRight size={16} />
+                  {label}
                 </button>
-              </div>
+              ))}
+            </div>
 
-              {castList.length > 0 && (
-                <div className="mt-6">
-                  <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-700">
-                    <Users size={15} className="text-gray-400" />
-                    출연진
+            {/* 공연 정보 탭 */}
+            {activeTab === 'info' && (
+              <div className="card p-6 md:p-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <InfoCard icon={<MapPin size={15} />} label="공연장" value={show.theaterName || '정보 없음'} />
+                  <InfoCard icon={<CalendarDays size={15} />} label="공연 기간" value={show.startDate ? `${show.startDate} ~ ${show.endDate || '미정'}` : '정보 없음'} />
+                  <InfoCard icon={<Clock3 size={15} />} label="러닝타임" value={show.runtime || '정보 없음'} />
+                  <PriceInfoCard priceInfo={show.priceInfo} />
+                </div>
+
+                {castList.length > 0 && (
+                  <div className="mt-6">
+                    <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-700">
+                      <Users size={15} className="text-gray-400" />
+                      출연진
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {castList.map((name, idx) => (
+                        <span key={idx} className="inline-flex items-center rounded-full border border-gray-100 bg-warm-50 px-3 py-1.5 text-sm text-gray-700">
+                          {name}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {castList.map((name) => (
-                      <span
-                        key={name}
-                        className="inline-flex items-center rounded-full border border-gray-100 bg-warm-50 px-3 py-1.5 text-sm text-gray-700"
-                      >
-                        {name}
-                      </span>
+                )}
+
+                {show.introImages && show.introImages.length > 0 && (
+                  <div className="mt-6 space-y-3">
+                    {show.introImages.map((url, idx) => (
+                      <img
+                        key={idx}
+                        src={url}
+                        alt={`${show.title} 소개 이미지 ${idx + 1}`}
+                        className="w-full rounded-xl border border-gray-100"
+                        loading="lazy"
+                      />
                     ))}
                   </div>
-                </div>
-              )}
+                )}
 
-              {show.introImages && show.introImages.length > 0 && (
-                <div className="mt-6 space-y-3">
-                  {show.introImages.map((url, index) => (
-                    <img
-                      key={index}
-                      src={url}
-                      alt={`${show.title} 소개 이미지 ${index + 1}`}
-                      className="w-full rounded-2xl border border-gray-100"
-                      loading="lazy"
-                    />
-                  ))}
+                <div className="mt-8">
+                  <CastingBoard showId={Number(id)} />
                 </div>
-              )}
-
-              <div className="mt-8">
-                <CastingBoard showId={Number(id)} />
               </div>
-            </section>
-
-            <section ref={companionSectionRef} className="mt-6 scroll-mt-24">
-              <CompanionList showId={Number(id)} />
-            </section>
-
-            <section ref={reviewSectionRef} className="paper-panel mt-6 p-6 sm:p-7 scroll-mt-24">
-              <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <p className="journal-kicker">reviews</p>
-                  <h2 className="mt-1 text-2xl font-bold tracking-tight text-gray-900">후기와 감상</h2>
-                </div>
-                <button onClick={handleReview} className="btn-secondary px-4 py-2.5">
-                  <Star size={16} />
-                  후기 남기기
-                </button>
-              </div>
-              <ReviewList
-                showId={Number(id)}
-                showReviewForm={showReviewForm}
-                onCloseForm={() => setShowReviewForm(false)}
-              />
-            </section>
-
-            {show.status === 'ONGOING' && (
-              <section className="paper-panel mt-6 overflow-hidden p-0">
-                <details>
-                  <summary className="flex cursor-pointer list-none items-center justify-between px-6 py-5">
-                    <div>
-                      <p className="journal-kicker">supporting live chat</p>
-                      <h2 className="mt-1 text-xl font-semibold tracking-tight text-gray-900">
-                        오늘 관람자 대화 보기
-                      </h2>
-                      <p className="mt-2 text-sm leading-6 text-gray-500">
-                        메인 기능이 아니라, 같은 날 공연을 보는 사람들의 짧은 반응을 보는 보조 공간입니다.
-                      </p>
-                    </div>
-                    <span className="rounded-full border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-500">
-                      펼쳐 보기
-                    </span>
-                  </summary>
-                  <div className="border-t border-gray-100 px-4 py-4 sm:px-6">
-                    <ShowLiveChat showId={Number(id)} />
-                  </div>
-                </details>
-              </section>
             )}
-          </main>
+
+            {/* 오늘 라이브 탭 */}
+            {activeTab === 'live' && (
+              <div className="card p-6 md:p-8">
+                <div className="flex items-center gap-2 mb-6">
+                  <MessageCircle size={18} className="text-brand" />
+                  <h2 className="text-lg font-bold text-gray-900">오늘 라이브</h2>
+                  <span className="text-xs text-gray-400">오늘 공연을 본 관객들의 실시간 반응</span>
+                </div>
+                <ShowLiveChat showId={Number(id)} />
+              </div>
+            )}
+
+            {/* 동행 탭 */}
+            {activeTab === 'companion' && (
+              <CompanionList showId={Number(id)} />
+            )}
+
+            {/* 리뷰 탭 */}
+            {activeTab === 'review' && (
+              <div ref={(el) => { if (el && showReviewForm) el.scrollIntoView({ behavior: 'smooth' }) }}>
+                <ReviewList
+                  showId={Number(id)}
+                  showReviewForm={showReviewForm}
+                  onCloseForm={() => setShowReviewForm(false)}
+                />
+              </div>
+            )}
+          </section>
         </div>
       </div>
 
-      <div className="fixed inset-x-0 bottom-[4.5rem] z-40 px-4 sm:hidden">
-        <div className="mx-auto max-w-md rounded-2xl border border-gray-200 bg-white/95 p-2 shadow-card-md backdrop-blur">
-          <div className="grid grid-cols-3 gap-2">
-            <button onClick={handleDiary} className="btn-primary px-3 py-3 text-sm">
-              기록
-            </button>
-            <button
-              onClick={() => scrollToSection('companion')}
-              className="btn-secondary px-3 py-3 text-sm"
-            >
-              동행
-            </button>
-            <button
-              onClick={() => scrollToSection('review')}
-              className="btn-secondary px-3 py-3 text-sm"
-            >
-              후기
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {showDiaryForm && (
+      {showDiaryForm && show && (
         <DiaryFormModal
           initialShowId={show.id}
           initialShowTitle={show.title}
           onClose={() => setShowDiaryForm(false)}
           onSaved={() => setShowDiaryForm(false)}
         />
+      )}
+    </div>
+  )
+}
+
+function InfoCard({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-gray-100 bg-warm-50 px-4 py-3">
+      <p className="text-xs font-medium text-gray-400 mb-1">{label}</p>
+      <div className="flex items-center gap-2">
+        <span className="text-gray-400">{icon}</span>
+        <p className="text-sm text-gray-800">{value}</p>
+      </div>
+    </div>
+  )
+}
+
+function PriceInfoCard({ priceInfo }: { priceInfo?: string }) {
+  const lines = priceInfo
+    ? priceInfo.split(',').map((s) => s.trim()).filter(Boolean)
+    : []
+
+  return (
+    <div className="rounded-xl border border-gray-100 bg-warm-50 px-4 py-3">
+      <p className="text-xs font-medium text-gray-400 mb-1">가격 정보</p>
+      {lines.length > 0 ? (
+        <div className="flex items-start gap-2">
+          <span className="mt-0.5 text-gray-400"><DollarSign size={15} /></span>
+          <div className="space-y-0.5">
+            {lines.map((line, idx) => (
+              <p key={idx} className="text-sm text-gray-800">{line}</p>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2">
+          <span className="text-gray-400"><DollarSign size={15} /></span>
+          <p className="text-sm text-gray-800">정보 없음</p>
+        </div>
       )}
     </div>
   )

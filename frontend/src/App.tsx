@@ -15,7 +15,6 @@ const ChatRoomPage = lazy(() => import('./pages/Chat/ChatRoomPage'))
 const LoginPage = lazy(() => import('./pages/Auth/LoginPage'))
 const SignUpPage = lazy(() => import('./pages/Auth/SignUpPage'))
 const OAuth2Callback = lazy(() => import('./pages/Auth/OAuth2Callback'))
-const JournalRefreshPreview = lazy(() => import('./pages/Preview/JournalRefreshPreview'))
 const NotFoundPage = lazy(() => import('./pages/NotFound/NotFoundPage'))
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -44,7 +43,6 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignUpPage />} />
           <Route path="/oauth2/callback" element={<OAuth2Callback />} />
-          <Route path="/__preview/journal-refresh" element={<JournalRefreshPreview />} />
           <Route
             path="/*"
             element={
