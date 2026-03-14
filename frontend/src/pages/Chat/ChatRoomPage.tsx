@@ -10,26 +10,55 @@ export default function ChatRoomPage() {
   const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
   const currentUser = useAuthStore((s) => s.user);
+  const roomIdNumber = Number(roomId);
+  const draftStorageKey = `chat-draft-${roomIdNumber}`;
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { data: initialMessages = [], isLoading } = useQuery({
-    queryKey: ['chat-messages', roomId],
-    queryFn: () => chatApi.getMessages(Number(roomId)),
-    enabled: !!roomId,
+    queryKey: ['chat-messages', roomIdNumber],
+    queryFn: () => chatApi.getMessages(roomIdNumber),
+    enabled: Number.isFinite(roomIdNumber) && roomIdNumber > 0,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 
   const { data: rooms = [] } = useQuery({
     queryKey: ['chat-rooms'],
     queryFn: chatApi.getMyRooms,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 
-  const currentRoom = rooms.find((r) => r.id === Number(roomId));
+  const currentRoom = rooms.find((r) => r.id === roomIdNumber);
 
   const { messages, connected, sendMessage } = useChat({
-    roomId: Number(roomId),
+    roomId: roomIdNumber,
     initialMessages,
   });
+
+  useEffect(() => {
+    if (!Number.isFinite(roomIdNumber) || roomIdNumber <= 0) {
+      setInput('');
+      return;
+    }
+
+    const savedDraft = sessionStorage.getItem(draftStorageKey);
+    setInput(savedDraft ?? '');
+  }, [draftStorageKey, roomIdNumber]);
+
+  useEffect(() => {
+    if (!Number.isFinite(roomIdNumber) || roomIdNumber <= 0) {
+      return;
+    }
+
+    if (input) {
+      sessionStorage.setItem(draftStorageKey, input);
+      return;
+    }
+
+    sessionStorage.removeItem(draftStorageKey);
+  }, [draftStorageKey, input, roomIdNumber]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -39,6 +68,7 @@ export default function ChatRoomPage() {
     if (!input.trim()) return;
     sendMessage(input.trim());
     setInput('');
+    sessionStorage.removeItem(draftStorageKey);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {

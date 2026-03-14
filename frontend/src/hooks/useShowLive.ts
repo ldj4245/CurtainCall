@@ -9,6 +9,21 @@ interface UseShowLiveOptions {
   initialMessages: ShowLiveMessage[];
 }
 
+function mergeMessages(current: ShowLiveMessage[], incoming: ShowLiveMessage[]) {
+  const merged = new Map<string, ShowLiveMessage>();
+
+  [...current, ...incoming].forEach((message) => {
+    const key = message.id != null
+      ? `id-${message.id}`
+      : `${message.senderId}-${message.createdAt}-${message.content}`;
+    merged.set(key, message);
+  });
+
+  return [...merged.values()].sort(
+    (left, right) => new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime()
+  );
+}
+
 export function useShowLive({ roomId, initialMessages }: UseShowLiveOptions) {
   const [messages, setMessages] = useState<ShowLiveMessage[]>(initialMessages);
   const [connected, setConnected] = useState(false);
@@ -16,7 +31,7 @@ export function useShowLive({ roomId, initialMessages }: UseShowLiveOptions) {
   const accessToken = useAuthStore((s) => s.accessToken);
 
   useEffect(() => {
-    setMessages(initialMessages);
+    setMessages((prev) => mergeMessages(prev, initialMessages));
   }, [initialMessages]);
 
   useEffect(() => {
@@ -35,7 +50,7 @@ export function useShowLive({ roomId, initialMessages }: UseShowLiveOptions) {
         setConnected(true);
         client.subscribe(`/sub/live/${roomId}`, (frame) => {
           const msg: ShowLiveMessage = JSON.parse(frame.body);
-          setMessages((prev) => [...prev, msg]);
+          setMessages((prev) => mergeMessages(prev, [msg]));
         });
       },
       onDisconnect: () => setConnected(false),

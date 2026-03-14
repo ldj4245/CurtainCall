@@ -14,6 +14,7 @@ const TODAY = new Date().toISOString().split('T')[0];
 
 export default function ShowLiveChat({ showId }: ShowLiveChatProps) {
   const { isAuthenticated, user } = useAuthStore();
+  const draftStorageKey = `show-live-draft-${showId}-${TODAY}`;
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -21,12 +22,38 @@ export default function ShowLiveChat({ showId }: ShowLiveChatProps) {
     queryKey: ['show-live', showId, TODAY],
     queryFn: () => showLiveApi.getRoom(showId, TODAY),
     enabled: isAuthenticated,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 
   const { messages, connected, sendMessage } = useShowLive({
     roomId: room?.roomId ?? 0,
     initialMessages: room?.messages ?? [],
   });
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setInput('');
+      sessionStorage.removeItem(draftStorageKey);
+      return;
+    }
+
+    const savedDraft = sessionStorage.getItem(draftStorageKey);
+    setInput(savedDraft ?? '');
+  }, [draftStorageKey, isAuthenticated]);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      return;
+    }
+
+    if (input) {
+      sessionStorage.setItem(draftStorageKey, input);
+      return;
+    }
+
+    sessionStorage.removeItem(draftStorageKey);
+  }, [draftStorageKey, input, isAuthenticated]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -36,6 +63,7 @@ export default function ShowLiveChat({ showId }: ShowLiveChatProps) {
     if (!input.trim()) return;
     sendMessage(input.trim());
     setInput('');
+    sessionStorage.removeItem(draftStorageKey);
   };
 
   const formatTime = (iso: string) => {

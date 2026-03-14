@@ -9,6 +9,8 @@ export default function ChatListPage() {
   const { data: rooms = [], isLoading } = useQuery({
     queryKey: ['chat-rooms'],
     queryFn: chatApi.getMyRooms,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 
   if (isLoading) {
