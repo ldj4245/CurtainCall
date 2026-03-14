@@ -54,7 +54,7 @@ function StatChip({
           : 'border-gray-100 bg-white text-gray-700'
       }`}
     >
-      <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-gray-400">{label}</p>
+      <p className="text-[11px] font-semibold tracking-[0.18em] text-gray-400 uppercase">{label}</p>
       <p className="mt-2 text-base font-semibold tracking-tight">{value}</p>
     </div>
   )
@@ -231,7 +231,7 @@ export default function ShowDetailPage() {
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[320px_minmax(0,1fr)]">
           <aside className="hidden lg:block">
             <div className="sticky top-24 space-y-4">
-              <div className="overflow-hidden rounded-[28px] border border-gray-100 bg-white shadow-card-md">
+              <div className="overflow-hidden rounded-[24px] border border-gray-100 bg-white shadow-card-md">
                 {show.posterUrl ? (
                   <img src={show.posterUrl} alt={show.title} className="aspect-[3/4] w-full object-cover" />
                 ) : (
@@ -243,7 +243,7 @@ export default function ShowDetailPage() {
               </div>
 
               <div className="paper-panel p-5">
-                <p className="journal-kicker">이 공연에서 할 수 있는 일</p>
+                <p className="journal-kicker">바로 할 수 있는 일</p>
                 <div className="mt-4 grid gap-2">
                   <button onClick={handleDiary} className="btn-primary justify-between px-4 py-3">
                     <span>관극 기록</span>
@@ -256,10 +256,7 @@ export default function ShowDetailPage() {
                     <span>동행 보기</span>
                     <ChevronRight size={16} />
                   </button>
-                  <button
-                    onClick={handleReview}
-                    className="btn-secondary justify-between px-4 py-3"
-                  >
+                  <button onClick={handleReview} className="btn-secondary justify-between px-4 py-3">
                     <span>후기 남기기</span>
                     <Star size={16} />
                   </button>
@@ -284,7 +281,7 @@ export default function ShowDetailPage() {
                 </div>
 
                 <div className="mt-4 grid gap-2">
-                  <StatChip label="동행" value={`${companionCount}개 모집`} />
+                  <StatChip label="동행" value={`${companionCount}개`} />
                   <StatChip label="리뷰" value={`${show.reviewCount ?? 0}개`} />
                 </div>
               </div>
@@ -324,7 +321,7 @@ export default function ShowDetailPage() {
                           <span className="text-sm text-gray-400">({show.reviewCount ?? 0})</span>
                         </>
                       ) : (
-                        <span className="text-sm text-gray-400">아직 첫 후기가 없어요.</span>
+                        <span className="text-sm text-gray-400">아직 후기 없음</span>
                       )}
                     </div>
                   </div>
@@ -347,34 +344,26 @@ export default function ShowDetailPage() {
                       <span className="text-sm text-gray-400">({show.reviewCount ?? 0}개 후기)</span>
                     </>
                   ) : (
-                    <span className="text-sm text-gray-400">아직 첫 후기가 없어요.</span>
+                    <span className="text-sm text-gray-400">아직 후기 없음</span>
                   )}
                 </div>
               </div>
 
               <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                <StatChip label="관극 기록" value="오늘의 감상 남기기" tone="highlight" />
-                <StatChip label="동행" value={`${companionCount}개 모집 중`} />
-                <StatChip label="후기" value={`${show.reviewCount ?? 0}개`} />
+                <StatChip label="관극 기록" value="다이어리 남기기" tone="highlight" />
+                <StatChip label="동행" value={`${companionCount}개 모집`} />
+                <StatChip label="리뷰" value={`${show.reviewCount ?? 0}개`} />
                 <StatChip label="상태" value={show.statusDisplayName} />
               </div>
 
               <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                <DetailCard
-                  icon={<MapPin size={15} />}
-                  label="공연장"
-                  value={show.theaterName || '정보 없음'}
-                />
+                <DetailCard icon={<MapPin size={15} />} label="공연장" value={show.theaterName || '정보 없음'} />
                 <DetailCard
                   icon={<CalendarDays size={15} />}
                   label="공연 기간"
                   value={show.startDate ? `${show.startDate} ~ ${show.endDate || '미정'}` : '정보 없음'}
                 />
-                <DetailCard
-                  icon={<Clock3 size={15} />}
-                  label="러닝타임"
-                  value={show.runtime || '정보 없음'}
-                />
+                <DetailCard icon={<Clock3 size={15} />} label="러닝타임" value={show.runtime || '정보 없음'} />
                 <PriceCard priceInfo={show.priceInfo} />
               </div>
             </section>
@@ -382,9 +371,9 @@ export default function ShowDetailPage() {
             <section className="ticket-panel mt-4 p-4 sm:p-5">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="journal-kicker">quick actions</p>
+                  <p className="journal-kicker">빠른 이동</p>
                   <p className="mt-1 text-lg font-semibold tracking-tight text-gray-900">
-                    이 공연을 본 뒤 바로 이어지는 행동
+                    필요한 섹션으로 바로 이동하세요
                   </p>
                 </div>
                 <div className="grid gap-2 sm:grid-cols-3">
@@ -413,14 +402,14 @@ export default function ShowDetailPage() {
             <section ref={infoSectionRef} className="paper-panel mt-6 p-6 sm:p-7 scroll-mt-24">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="journal-kicker">show info</p>
-                  <h2 className="mt-1 text-2xl font-bold tracking-tight text-gray-900">공연 정보와 캐스팅</h2>
+                  <p className="journal-kicker">공연 정보</p>
+                  <h2 className="mt-1 text-2xl font-bold tracking-tight text-gray-900">상세 정보와 캐스팅</h2>
                 </div>
                 <button
                   onClick={() => scrollToSection('review')}
                   className="hidden items-center gap-2 text-sm font-semibold text-gray-400 transition-colors hover:text-brand sm:inline-flex"
                 >
-                  후기 섹션으로 이동
+                  후기로 이동
                   <ChevronRight size={16} />
                 </button>
               </div>
@@ -470,8 +459,8 @@ export default function ShowDetailPage() {
             <section ref={reviewSectionRef} className="paper-panel mt-6 p-6 sm:p-7 scroll-mt-24">
               <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <p className="journal-kicker">reviews</p>
-                  <h2 className="mt-1 text-2xl font-bold tracking-tight text-gray-900">후기와 감상</h2>
+                  <p className="journal-kicker">리뷰</p>
+                  <h2 className="mt-1 text-2xl font-bold tracking-tight text-gray-900">관람 후기</h2>
                 </div>
                 <button onClick={handleReview} className="btn-secondary px-4 py-2.5">
                   <Star size={16} />
@@ -490,16 +479,16 @@ export default function ShowDetailPage() {
                 <details>
                   <summary className="flex cursor-pointer list-none items-center justify-between px-6 py-5">
                     <div>
-                      <p className="journal-kicker">supporting live chat</p>
+                      <p className="journal-kicker">라이브 채팅</p>
                       <h2 className="mt-1 text-xl font-semibold tracking-tight text-gray-900">
-                        오늘 관람자 대화 보기
+                        오늘 관람자 대화
                       </h2>
                       <p className="mt-2 text-sm leading-6 text-gray-500">
-                        메인 기능이 아니라, 같은 날 공연을 보는 사람들의 짧은 반응을 보는 보조 공간입니다.
+                        필요할 때만 열어볼 수 있는 보조 기능으로 두었습니다.
                       </p>
                     </div>
                     <span className="rounded-full border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-500">
-                      펼쳐 보기
+                      펼치기
                     </span>
                   </summary>
                   <div className="border-t border-gray-100 px-4 py-4 sm:px-6">
@@ -524,10 +513,7 @@ export default function ShowDetailPage() {
             >
               동행
             </button>
-            <button
-              onClick={() => scrollToSection('review')}
-              className="btn-secondary px-3 py-3 text-sm"
-            >
+            <button onClick={() => scrollToSection('review')} className="btn-secondary px-3 py-3 text-sm">
               후기
             </button>
           </div>
