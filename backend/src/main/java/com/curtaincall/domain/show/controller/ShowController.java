@@ -1,5 +1,7 @@
 package com.curtaincall.domain.show.controller;
 
+import com.curtaincall.domain.diary.dto.DiarySnippetResponse;
+import com.curtaincall.domain.diary.service.DiaryService;
 import com.curtaincall.domain.show.dto.ShowAutocompleteResponse;
 import com.curtaincall.domain.show.dto.ShowResponse;
 import com.curtaincall.domain.show.service.ShowService;
@@ -19,6 +21,7 @@ import java.util.List;
 public class ShowController {
 
     private final ShowService showService;
+    private final DiaryService diaryService;
 
     @Operation(summary = "공연 목록 조회", description = "필터와 검색어로 공연을 조회합니다.")
     @GetMapping
@@ -57,5 +60,13 @@ public class ShowController {
     public ResponseEntity<List<ShowResponse>> getPopularShows(
             @RequestParam(defaultValue = "8") int limit) {
         return ResponseEntity.ok(showService.getPopularShows(limit));
+    }
+
+    @Operation(summary = "공연별 공개 관극 기록 요약")
+    @GetMapping("/{showId}/diary-snippets")
+    public ResponseEntity<DiarySnippetResponse> getDiarySnippets(
+            @PathVariable Long showId,
+            @RequestParam(defaultValue = "3") int size) {
+        return ResponseEntity.ok(diaryService.getPublicDiarySnippets(showId, size));
     }
 }

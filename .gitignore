@@ -34,3 +34,6 @@ yarn-error.log*
 
 # Docs
 DEPLOY_GUIDE.md
+
+# Local Codex memory
+.project-memory/

@@ -13,12 +13,15 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -72,6 +75,25 @@ class DiaryServiceTest {
         verify(imageUploadService).deleteImage("https://cdn.example.com/b.jpg");
     }
 
+    @Test
+    void getPublicDiarySnippetsReturnsCountAndItems() {
+        DiaryEntry first = diaryEntry(1L, "https://cdn.example.com/a.jpg");
+        DiaryEntry second = diaryEntry(2L, null);
+        ReflectionTestUtils.setField(second, "comment", "짧은 감상");
+
+        when(diaryEntryRepository.findPublicPageByShowId(20L, PageRequest.of(0, 3)))
+                .thenReturn(new PageImpl<>(List.of(first, second), PageRequest.of(0, 3), 7));
+
+        var response = diaryService.getPublicDiarySnippets(20L, 3);
+
+        assertThat(response.getTotalCount()).isEqualTo(7);
+        assertThat(response.getItems()).hasSize(2);
+        assertThat(response.getItems().get(0).getDiaryId()).isEqualTo(1L);
+        assertThat(response.getItems().get(0).getUserNickname()).isEqualTo("테스터");
+        assertThat(response.getItems().get(0).getRepresentativeImageUrl()).isEqualTo("https://cdn.example.com/a.jpg");
+        assertThat(response.getItems().get(1).getRepresentativeImageUrl()).isEqualTo("https://poster.example.com/20.jpg");
+    }
+
     private DiaryEntry diaryEntry(Long id, String photoUrls) {
         DiaryEntry entry = DiaryEntry.builder()
                 .user(user(10L))
@@ -109,6 +131,7 @@ class DiaryServiceTest {
                 .id(showId)
                 .kopisId("show-" + showId)
                 .title("공연")
+                .posterUrl("https://poster.example.com/" + showId + ".jpg")
                 .build();
     }
 }

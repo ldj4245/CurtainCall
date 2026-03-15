@@ -27,6 +27,11 @@ public interface DiaryEntryRepository extends JpaRepository<DiaryEntry, Long>, D
             "WHERE d.show.id = :showId AND d.isOpen = true ORDER BY d.watchedDate DESC")
     List<DiaryEntry> findPublicByShowId(@Param("showId") Long showId);
 
+    @Query(value = "SELECT d FROM DiaryEntry d JOIN FETCH d.show s JOIN FETCH d.user u " +
+            "WHERE d.show.id = :showId AND d.isOpen = true ORDER BY d.watchedDate DESC, d.createdAt DESC",
+            countQuery = "SELECT COUNT(d) FROM DiaryEntry d WHERE d.show.id = :showId AND d.isOpen = true")
+    Page<DiaryEntry> findPublicPageByShowId(@Param("showId") Long showId, Pageable pageable);
+
     long countByUserId(Long userId);
 
     @Query("SELECT COALESCE(SUM(d.ticketPrice), 0) FROM DiaryEntry d WHERE d.user.id = :userId AND d.ticketPrice IS NOT NULL")

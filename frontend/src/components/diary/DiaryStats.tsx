@@ -1,6 +1,6 @@
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import { type ReactNode } from 'react'
+import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { ImageOff, Star } from 'lucide-react'
-import type { ReactNode } from 'react'
 import type { DiaryStats as DiaryStatsType } from '../../types'
 
 interface Props {
@@ -11,7 +11,7 @@ export default function DiaryStats({ stats }: Props) {
   if (!stats) {
     return (
       <div className="animate-pulse space-y-4">
-        <div className="h-96 bg-warm-100 rounded-2xl" />
+        <div className="h-96 rounded-2xl bg-warm-100" />
       </div>
     )
   }
@@ -23,23 +23,23 @@ export default function DiaryStats({ stats }: Props) {
   return (
     <div className="card p-6 md:p-8">
       <div className="mb-8">
-        <p className="text-xs font-semibold tracking-wide text-gray-400 mb-1">MY STAGE REPORT</p>
-        <h2 className="text-2xl font-bold text-gray-900">나의 관극 리포트</h2>
+        <p className="text-sm font-semibold text-gray-900">관극 통계</p>
+        <p className="mt-1 text-sm text-gray-500">최근 기록 흐름과 가장 자주 본 작품, 배우를 볼 수 있습니다.</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3 mb-8">
+      <div className="mb-8 grid gap-4 md:grid-cols-3">
         <StatItem label="총 관극 횟수" value={`${stats.totalCount}회`} />
         <StatItem label="총 지출 금액" value={`${(stats.totalSpent / 10000).toFixed(0)}만원`} />
         <StatItem
           label="평균 평점"
-          value={`${stats.averageRating.toFixed(1)}점`}
+          value={stats.averageRating.toFixed(1)}
           icon={<Star size={14} className="fill-gold text-gold" />}
         />
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid gap-6 md:grid-cols-2">
         <div className="rounded-2xl border border-gray-100 bg-warm-50 p-5">
-          <h3 className="text-sm font-semibold text-gray-700 mb-5">최근 6개월 관람</h3>
+          <h3 className="mb-5 text-sm font-semibold text-gray-700">최근 6개월 관극 수</h3>
           <div className="h-44">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={monthlyData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
@@ -53,7 +53,7 @@ export default function DiaryStats({ stats }: Props) {
                     borderRadius: '10px',
                     color: '#1a1a1a',
                   }}
-                  formatter={(value) => [`${value}회`, '관람 수']}
+                  formatter={(value) => [`${value}회`, '관극 수']}
                 />
                 <Bar dataKey="count" fill="#8b2252" radius={[6, 6, 0, 0]} barSize={28} />
               </BarChart>
@@ -62,59 +62,69 @@ export default function DiaryStats({ stats }: Props) {
         </div>
 
         <div className="rounded-2xl border border-gray-100 bg-warm-50 p-5">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4">가장 많이 본 작품</h3>
+          <h3 className="mb-4 text-sm font-semibold text-gray-700">가장 많이 본 작품</h3>
           {stats.topShows.length > 0 ? (
             <div className="space-y-3">
-              {stats.topShows.slice(0, 3).map((show, i) => (
+              {stats.topShows.slice(0, 3).map((show, index) => (
                 <div key={show.showId} className="flex items-center gap-3 rounded-xl border border-gray-100 bg-white p-3">
                   <div
-                    className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs ${i === 0 ? 'bg-gold-100 text-gold-700' : i === 1 ? 'bg-gray-100 text-gray-700' : 'bg-orange-100 text-orange-700'
-                      }`}
+                    className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
+                      index === 0
+                        ? 'bg-gold-100 text-gold-700'
+                        : index === 1
+                          ? 'bg-gray-100 text-gray-700'
+                          : 'bg-orange-100 text-orange-700'
+                    }`}
                   >
-                    {i + 1}
+                    {index + 1}
                   </div>
                   {show.posterUrl ? (
-                    <img src={show.posterUrl} alt={show.showTitle} className="w-10 h-14 object-cover rounded-md border border-gray-100" />
+                    <img src={show.posterUrl} alt={show.showTitle} className="h-14 w-10 rounded-md border border-gray-100 object-cover" />
                   ) : (
-                    <div className="w-10 h-14 rounded-md border border-gray-100 bg-warm-100 text-gray-400 flex items-center justify-center">
+                    <div className="flex h-14 w-10 items-center justify-center rounded-md border border-gray-100 bg-warm-100 text-gray-400">
                       <ImageOff size={14} />
                     </div>
                   )}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold truncate text-gray-900 text-sm">{show.showTitle}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{show.count}회 관람</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-gray-900">{show.showTitle}</p>
+                    <p className="mt-0.5 text-xs text-gray-400">{show.count}회 관람</p>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="h-full min-h-28 flex items-center justify-center text-gray-400 text-sm">
-              아직 통계가 부족합니다.
+            <div className="flex min-h-28 items-center justify-center text-sm text-gray-400">
+              아직 쌓인 통계가 없습니다.
             </div>
           )}
         </div>
 
-        {stats.topCasts && stats.topCasts.length > 0 && (
-          <div className="rounded-2xl border border-gray-100 bg-warm-50 p-5 mt-6">
-            <h3 className="text-sm font-semibold text-gray-700 mb-4">가장 많이 본 배우</h3>
-            <div className="space-y-3">
-              {stats.topCasts.slice(0, 5).map((cast, i) => (
+        {stats.topCasts?.length > 0 ? (
+          <div className="rounded-2xl border border-gray-100 bg-warm-50 p-5 md:col-span-2">
+            <h3 className="mb-4 text-sm font-semibold text-gray-700">가장 많이 본 배우</h3>
+            <div className="grid gap-3 md:grid-cols-2">
+              {stats.topCasts.slice(0, 5).map((cast, index) => (
                 <div key={cast.castName} className="flex items-center gap-3 rounded-xl border border-gray-100 bg-white p-3">
                   <div
-                    className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs ${i === 0 ? 'bg-gold-100 text-gold-700' : i === 1 ? 'bg-gray-100 text-gray-700' : 'bg-orange-100 text-orange-700'
-                      }`}
+                    className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
+                      index === 0
+                        ? 'bg-gold-100 text-gold-700'
+                        : index === 1
+                          ? 'bg-gray-100 text-gray-700'
+                          : 'bg-orange-100 text-orange-700'
+                    }`}
                   >
-                    {i + 1}
+                    {index + 1}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold truncate text-gray-900 text-sm">{cast.castName}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{cast.count}회 관람</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-gray-900">{cast.castName}</p>
+                    <p className="mt-0.5 text-xs text-gray-400">{cast.count}회 관람</p>
                   </div>
                 </div>
               ))}
             </div>
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   )

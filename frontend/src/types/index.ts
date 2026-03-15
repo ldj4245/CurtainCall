@@ -75,6 +75,20 @@ export interface DiaryStats {
   monthlyCount: Record<string, number>
 }
 
+export interface DiarySnippet {
+  diaryId: number
+  userNickname: string
+  watchedDate: string
+  rating: number
+  comment?: string
+  representativeImageUrl?: string
+}
+
+export interface DiarySnippetResponse {
+  totalCount: number
+  items: DiarySnippet[]
+}
+
 export interface Review {
   id: number
   userId: number

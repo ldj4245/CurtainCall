@@ -1,5 +1,5 @@
 import api from './axios'
-import type { DiaryEntry, DiaryStats, PageResponse } from '../types'
+import type { DiaryEntry, DiarySnippetResponse, DiaryStats, PageResponse } from '../types'
 
 export interface DiaryCreateRequest {
   showId: number
@@ -22,6 +22,9 @@ export const diaryApi = {
 
   getStats: () =>
     api.get<DiaryStats>('/diary/me/stats').then((r) => r.data),
+
+  getPublicSnippets: (showId: number, size = 3) =>
+    api.get<DiarySnippetResponse>(`/shows/${showId}/diary-snippets`, { params: { size } }).then((r) => r.data),
 
   create: (data: DiaryCreateRequest) =>
     api.post<DiaryEntry>('/diary', data).then((r) => r.data),

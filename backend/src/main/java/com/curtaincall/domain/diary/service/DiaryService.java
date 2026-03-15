@@ -2,6 +2,8 @@ package com.curtaincall.domain.diary.service;
 
 import com.curtaincall.domain.diary.dto.DiaryRequest;
 import com.curtaincall.domain.diary.dto.DiaryResponse;
+import com.curtaincall.domain.diary.dto.DiarySnippetItemDto;
+import com.curtaincall.domain.diary.dto.DiarySnippetResponse;
 import com.curtaincall.domain.diary.dto.DiaryStatsDto;
 import com.curtaincall.domain.diary.entity.DiaryEntry;
 import com.curtaincall.domain.diary.repository.DiaryEntryRepository;
@@ -103,6 +105,18 @@ public class DiaryService {
         return diaryEntryRepository.findPublicByShowId(showId).stream()
                 .map(DiaryResponse::from)
                 .toList();
+    }
+
+    public DiarySnippetResponse getPublicDiarySnippets(Long showId, int size) {
+        int safeSize = Math.max(1, Math.min(size, 10));
+        Page<DiaryEntry> page = diaryEntryRepository.findPublicPageByShowId(showId, PageRequest.of(0, safeSize));
+
+        return DiarySnippetResponse.builder()
+                .totalCount(page.getTotalElements())
+                .items(page.getContent().stream()
+                        .map(DiarySnippetItemDto::from)
+                        .toList())
+                .build();
     }
 
     public List<DiaryResponse> getCalendarDiary(Long userId, int year, int month) {
