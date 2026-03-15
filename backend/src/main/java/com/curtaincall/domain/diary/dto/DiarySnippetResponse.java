@@ -10,6 +10,5 @@ import java.util.List;
 public class DiarySnippetResponse {
 
     private long totalCount;
-    private long seatRecordCount;
     private List<DiarySnippetItemDto> items;
 }

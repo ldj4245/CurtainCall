@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { diaryApi, type DiaryCreateRequest } from '../../api/diary'
 import { showsApi } from '../../api/shows'
-import type { DiaryEntry, TicketDraftResponse } from '../../types'
+import type { DiaryEntry } from '../../types'
 import StarRating from '../common/StarRating'
 
 const MAX_PHOTOS = 5
@@ -14,7 +14,6 @@ interface Props {
   entry?: DiaryEntry
   initialShowId?: number
   initialShowTitle?: string
-  initialDraft?: TicketDraftResponse
   mode?: 'quick' | 'full'
   onClose: () => void
   onSaved: (savedEntry: DiaryEntry) => void
@@ -24,66 +23,52 @@ export default function DiaryFormModal({
   entry,
   initialShowId,
   initialShowTitle,
-  initialDraft,
   mode = 'full',
   onClose,
   onSaved,
 }: Props) {
   const queryClient = useQueryClient()
   const isQuickMode = mode === 'quick' && !entry
-  const matchedDraftShow = initialDraft?.matchedShow
-  const presetShowId = entry?.showId ?? initialShowId ?? matchedDraftShow?.id ?? null
-  const presetShowTitle = entry?.showTitle ?? initialShowTitle ?? matchedDraftShow?.title ?? ''
+  const isPresetShow = initialShowId != null && !entry
   const hasEntryExtras = Boolean(
     entry &&
-      (entry.seatInfo ||
-        entry.castMemo ||
-        entry.ticketPrice ||
-        entry.photoUrls?.length ||
-        entry.isOpen ||
-        entry.performanceTime ||
-        entry.viewRating)
+      (entry.seatInfo || entry.castMemo || entry.ticketPrice || entry.photoUrls?.length || entry.isOpen)
   )
 
   const [rating, setRating] = useState(entry?.rating ?? 5)
-  const [viewRating, setViewRating] = useState(entry?.viewRating ?? 0)
   const [showSearch, setShowSearch] = useState('')
-  const [selectedShowId, setSelectedShowId] = useState<number | null>(presetShowId)
-  const [selectedShowTitle, setSelectedShowTitle] = useState(presetShowTitle)
+  const [selectedShowId, setSelectedShowId] = useState<number | null>(entry?.showId ?? initialShowId ?? null)
+  const [selectedShowTitle, setSelectedShowTitle] = useState(entry?.showTitle ?? initialShowTitle ?? '')
   const [photoUrls, setPhotoUrls] = useState<string[]>(entry?.photoUrls ?? [])
   const [isUploading, setIsUploading] = useState(false)
-  const [showExtraFields, setShowExtraFields] = useState(!isQuickMode || hasEntryExtras)
+  const [showExtraFields, setShowExtraFields] = useState(
+    !isQuickMode || hasEntryExtras
+  )
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const isPresetShow = selectedShowId != null && (initialShowId != null || entry != null)
 
   const { data: searchResults } = useQuery({
     queryKey: ['shows', 'search', showSearch],
     queryFn: () => showsApi.search({ keyword: showSearch, size: 5 }),
-    enabled: !isPresetShow && !selectedShowId && showSearch.trim().length > 1,
+    enabled: !isPresetShow && !selectedShowId && showSearch.length > 1,
   })
 
   const defaultValues = useMemo<DiaryCreateRequest>(
     () => ({
-      showId: entry?.showId ?? matchedDraftShow?.id ?? initialShowId ?? 0,
-      watchedDate: entry?.watchedDate ?? initialDraft?.watchedDate ?? new Date().toISOString().slice(0, 10),
-      performanceTime: entry?.performanceTime ?? initialDraft?.performanceTime,
+      showId: entry?.showId ?? initialShowId ?? 0,
+      watchedDate: entry?.watchedDate ?? new Date().toISOString().slice(0, 10),
       rating: entry?.rating ?? 5,
-      seatInfo: entry?.seatInfo ?? initialDraft?.seatInfo ?? '',
+      seatInfo: entry?.seatInfo ?? '',
       castMemo: entry?.castMemo ?? '',
       comment: entry?.comment ?? '',
-      ticketPrice: entry?.ticketPrice ?? initialDraft?.ticketPrice,
-      viewRating: entry?.viewRating,
+      ticketPrice: entry?.ticketPrice,
       isOpen: entry?.isOpen ?? false,
-      entrySource: entry?.entrySource ?? (initialDraft ? 'TICKET_CAPTURE' : 'MANUAL'),
     }),
-    [entry, initialDraft, initialShowId, matchedDraftShow?.id]
+    [entry, initialShowId]
   )
 
   const {
     register,
     handleSubmit,
-    setValue,
     formState: { errors },
   } = useForm<DiaryCreateRequest>({
     defaultValues,
@@ -91,6 +76,7 @@ export default function DiaryFormModal({
 
   const handlePhotoSelect = async (event: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files ?? [])
+
     if (photoUrls.length + files.length > MAX_PHOTOS) {
       toast.error(`사진은 최대 ${MAX_PHOTOS}장까지 첨부할 수 있습니다.`)
       return
@@ -116,31 +102,25 @@ export default function DiaryFormModal({
 
   const mutation = useMutation({
     mutationFn: (data: DiaryCreateRequest) => {
-      if (!selectedShowId) {
-        throw new Error('공연을 선택해 주세요.')
-      }
-
       const payload: DiaryCreateRequest = {
         ...data,
-        showId: selectedShowId,
+        showId: selectedShowId!,
         rating,
-        viewRating: viewRating > 0 ? viewRating : undefined,
-        entrySource: entry?.entrySource ?? (initialDraft ? 'TICKET_CAPTURE' : 'MANUAL'),
         photoUrls,
       }
 
       return entry ? diaryApi.update(entry.id, payload) : diaryApi.create(payload)
     },
     onSuccess: (savedEntry) => {
-      toast.success(entry ? '기록을 수정했습니다.' : '관극 기록을 남겼습니다.')
+      toast.success(entry ? '기록을 수정했습니다.' : '관극 기록을 저장했습니다.')
       queryClient.invalidateQueries({ queryKey: ['diary'] })
       queryClient.invalidateQueries({ queryKey: ['diary', 'stats'] })
       queryClient.invalidateQueries({ queryKey: ['diary', 'me', 'recent-home'] })
       queryClient.invalidateQueries({ queryKey: ['show-diary-snippets', selectedShowId] })
       onSaved(savedEntry)
     },
-    onError: (error: any) => {
-      toast.error(error?.response?.data?.message || '저장에 실패했습니다.')
+    onError: () => {
+      toast.error('저장에 실패했습니다.')
     },
   })
 
@@ -149,24 +129,14 @@ export default function DiaryFormModal({
       toast.error('공연을 먼저 선택해 주세요.')
       return
     }
+
     mutation.mutate(data)
   }
 
-  const confidenceWarning =
-    initialDraft && initialDraft.confidence > 0 && initialDraft.confidence < 0.7
-      ? '자동 인식 결과가 완전히 확실하지 않아 값 확인이 필요합니다.'
-      : null
-
-  const title = entry
-    ? '기록 수정'
-    : initialDraft
-      ? '티켓 확인 후 기록'
-      : isQuickMode
-        ? '빠른 기록'
-        : '관극 기록 남기기'
+  const title = entry ? '기록 수정' : isQuickMode ? '빠른 기록' : '관극 기록 남기기'
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <div
         className={`w-full overflow-hidden rounded-2xl bg-white shadow-card-lg ${
           isQuickMode ? 'max-w-xl' : 'max-w-2xl'
@@ -177,7 +147,9 @@ export default function DiaryFormModal({
           <div>
             <h2 className="text-xl font-bold text-gray-900">{title}</h2>
             <p className="mt-1 text-sm text-gray-500">
-              {isQuickMode ? '관람일, 평점, 짧은 감상부터 먼저 남깁니다.' : '필요한 정보만 골라서 기록해도 충분합니다.'}
+              {isQuickMode
+                ? '관람일, 별점, 한 줄 감상만 먼저 남겨도 됩니다.'
+                : '필요한 정보만 골라서 기록해도 충분합니다.'}
             </p>
           </div>
           <button onClick={onClose} className="text-gray-400 transition-colors hover:text-gray-600" aria-label="닫기">
@@ -187,19 +159,6 @@ export default function DiaryFormModal({
 
         <form onSubmit={handleSubmit(onSubmit)} className="max-h-[80vh] overflow-y-auto px-5 py-5 sm:px-6">
           <div className="space-y-5">
-            {initialDraft?.warnings?.length || confidenceWarning ? (
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900">
-                {confidenceWarning ? <p className="font-semibold">{confidenceWarning}</p> : null}
-                {initialDraft?.warnings?.length ? (
-                  <ul className={`space-y-1 ${confidenceWarning ? 'mt-2' : ''}`}>
-                    {initialDraft.warnings.map((warning) => (
-                      <li key={warning}>• {warning}</li>
-                    ))}
-                  </ul>
-                ) : null}
-              </div>
-            ) : null}
-
             {selectedShowTitle ? (
               <div className="rounded-2xl border border-gray-100 bg-warm-50 px-4 py-4">
                 <p className="text-xs font-medium text-gray-400">공연</p>
@@ -207,17 +166,19 @@ export default function DiaryFormModal({
                   <div className="min-w-0">
                     <p className="truncate text-base font-semibold text-gray-900">{selectedShowTitle}</p>
                     <p className="mt-1 text-sm text-gray-500">
-                      {initialDraft ? '티켓에서 읽은 정보로 기록을 시작합니다.' : '선택한 공연을 기준으로 기록합니다.'}
+                      {isQuickMode
+                        ? '이 공연 기준으로 빠른 기록을 남깁니다.'
+                        : '선택한 공연을 기준으로 기록을 작성합니다.'}
                     </p>
                   </div>
-                  {!isPresetShow ? (
+                  {!isPresetShow && !isQuickMode ? (
                     <button
                       type="button"
                       onClick={() => {
                         setSelectedShowId(null)
                         setSelectedShowTitle('')
                       }}
-                      className="text-sm font-medium text-gray-400 transition-colors hover:text-brand"
+                      className="text-sm font-medium text-gray-400 hover:text-brand"
                     >
                       변경
                     </button>
@@ -238,26 +199,7 @@ export default function DiaryFormModal({
                   />
                 </div>
 
-                {initialDraft?.suggestions?.length ? (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {initialDraft.suggestions.map((candidate) => (
-                      <button
-                        key={candidate.id}
-                        type="button"
-                        onClick={() => {
-                          setSelectedShowId(candidate.id)
-                          setSelectedShowTitle(candidate.title)
-                          setValue('showId', candidate.id)
-                        }}
-                        className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 transition-colors hover:border-brand/40 hover:text-brand"
-                      >
-                        {candidate.title}
-                      </button>
-                    ))}
-                  </div>
-                ) : null}
-
-                {searchResults && searchResults.content.length > 0 && showSearch.trim().length > 1 ? (
+                {searchResults && searchResults.content.length > 0 && showSearch.length > 1 ? (
                   <div className="mt-2 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-card-md">
                     {searchResults.content.map((show) => (
                       <button
@@ -266,7 +208,6 @@ export default function DiaryFormModal({
                         onClick={() => {
                           setSelectedShowId(show.id)
                           setSelectedShowTitle(show.title)
-                          setValue('showId', show.id)
                           setShowSearch('')
                         }}
                         className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-warm-50"
@@ -287,15 +228,10 @@ export default function DiaryFormModal({
               </div>
             )}
 
-            <div className="grid gap-4 sm:grid-cols-[180px_140px_minmax(0,1fr)]">
+            <div className="grid gap-4 sm:grid-cols-[180px_minmax(0,1fr)]">
               <div>
                 <label className="mb-1 block text-sm font-medium text-gray-700">관람일</label>
                 <input type="date" {...register('watchedDate', { required: true })} className="input-field" />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">회차 시간</label>
-                <input type="time" {...register('performanceTime')} className="input-field" />
               </div>
 
               <div>
@@ -307,21 +243,11 @@ export default function DiaryFormModal({
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">시야 만족도</label>
-              <div className="rounded-xl border border-gray-100 bg-white px-4 py-3">
-                <StarRating value={viewRating} onChange={setViewRating} size="lg" />
-                <p className="mt-2 text-xs text-gray-400">
-                  남기고 싶을 때만 선택해 주세요. 0점은 입력하지 않은 상태로 저장됩니다.
-                </p>
-              </div>
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">짧은 감상</label>
+              <label className="mb-1 block text-sm font-medium text-gray-700">한 줄 감상</label>
               <textarea
-                {...register('comment', isQuickMode ? { required: '짧은 감상을 한 줄이라도 남겨 주세요.' } : undefined)}
+                {...register('comment', isQuickMode ? { required: '짧은 감상을 한 줄 남겨주세요.' } : undefined)}
                 rows={isQuickMode ? 3 : 4}
-                placeholder="공연을 보고 가장 먼저 남기고 싶은 말을 적어 보세요."
+                placeholder="공연을 보고 가장 먼저 남기고 싶은 장면이나 느낌을 적어보세요."
                 className="input-field resize-none"
               />
               {errors.comment ? <p className="mt-2 text-sm text-red-500">{errors.comment.message}</p> : null}
@@ -335,7 +261,7 @@ export default function DiaryFormModal({
               >
                 <div>
                   <p className="text-sm font-semibold text-gray-900">추가 정보 입력</p>
-                  <p className="mt-1 text-sm text-gray-500">좌석, 가격, 사진, 공개 여부는 필요할 때만 더 적어 주세요.</p>
+                  <p className="mt-1 text-sm text-gray-500">좌석, 캐스트 메모, 가격, 사진, 공개 여부를 남길 수 있습니다.</p>
                 </div>
                 {showExtraFields ? <ChevronUp size={18} className="text-gray-400" /> : <ChevronDown size={18} className="text-gray-400" />}
               </button>
@@ -369,7 +295,7 @@ export default function DiaryFormModal({
                     <input
                       type="text"
                       {...register('castMemo')}
-                      placeholder="오늘 기억하고 싶은 배우나 캐스트 메모"
+                      placeholder="오늘 본 배우나 기억하고 싶은 메모"
                       className="input-field"
                     />
                   </div>

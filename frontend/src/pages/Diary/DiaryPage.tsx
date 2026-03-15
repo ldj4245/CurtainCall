@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { BarChart2, BookOpen, CalendarDays, LayoutGrid, List, PlusCircle, ScanLine, Share2 } from 'lucide-react'
+import { BarChart2, BookOpen, CalendarDays, LayoutGrid, List, PlusCircle, Share2 } from 'lucide-react'
 import { diaryApi } from '../../api/diary'
 import DiaryCalendar from '../../components/diary/DiaryCalendar'
 import DiaryEntryCard from '../../components/diary/DiaryEntryCard'
@@ -8,9 +8,8 @@ import DiaryFormModal from '../../components/diary/DiaryFormModal'
 import DiaryGalleryView from '../../components/diary/DiaryGalleryView'
 import DiaryStats from '../../components/diary/DiaryStats'
 import ShareCard from '../../components/diary/ShareCard'
-import TicketDraftUploadModal from '../../components/diary/TicketDraftUploadModal'
 import Pagination from '../../components/common/Pagination'
-import type { DiaryEntry, TicketDraftResponse } from '../../types'
+import type { DiaryEntry } from '../../types'
 import { getDiaryReminder, getThisMonthDiaryCount, getDaysSinceWatched } from '../../utils/diaryReminder'
 
 type DiaryTab = 'list' | 'calendar' | 'gallery' | 'stats'
@@ -18,8 +17,6 @@ type DiaryTab = 'list' | 'calendar' | 'gallery' | 'stats'
 export default function DiaryPage() {
   const [page, setPage] = useState(0)
   const [showForm, setShowForm] = useState(false)
-  const [showTicketDraft, setShowTicketDraft] = useState(false)
-  const [ticketDraft, setTicketDraft] = useState<TicketDraftResponse | undefined>()
   const [editEntry, setEditEntry] = useState<DiaryEntry | undefined>(undefined)
   const [showShareCard, setShowShareCard] = useState(false)
   const [activeTab, setActiveTab] = useState<DiaryTab>('list')
@@ -48,28 +45,18 @@ export default function DiaryPage() {
   const reminder = getDiaryReminder(stats, recentEntry)
   const thisMonthCount = getThisMonthDiaryCount(stats)
   const daysSinceRecent = getDaysSinceWatched(recentEntry)
-  const seatDataReminder =
-    recentEntry && !recentEntry.seatInfo && !recentEntry.viewRating
-      ? '최근 기록에 좌석이나 시야 정보가 없습니다. 다음 기록부터 함께 남겨 보세요.'
-      : null
-
-  const openManualForm = () => {
-    setEditEntry(undefined)
-    setTicketDraft(undefined)
-    setShowForm(true)
-  }
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-6">
-      <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+      <div className="mb-6 flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">관극 패스포트</h1>
-          <p className="mt-1 text-sm leading-6 text-gray-500">
-            최근 기록과 이번 달 관극 흐름을 한 곳에서 보고, 티켓 이미지로 더 빠르게 기록을 시작할 수 있습니다.
+          <h1 className="text-2xl font-bold text-gray-900">관극 다이어리</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            최근 기록과 통계를 한곳에서 보고, 새 기록을 바로 남길 수 있습니다.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-1.5">
+        <div className="flex items-center gap-1.5">
           <button
             onClick={() => setShowShareCard(true)}
             className="flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 transition-colors hover:border-brand/30 hover:text-brand sm:w-auto sm:px-3 sm:gap-1.5"
@@ -79,12 +66,13 @@ export default function DiaryPage() {
             <span className="hidden text-sm font-medium sm:inline">공유</span>
           </button>
 
-          <button onClick={() => setShowTicketDraft(true)} className="btn-secondary px-3 py-2 text-sm">
-            <ScanLine size={16} />
-            <span>티켓으로 시작</span>
-          </button>
-
-          <button onClick={openManualForm} className="btn-primary px-3 py-2 text-sm">
+          <button
+            onClick={() => {
+              setEditEntry(undefined)
+              setShowForm(true)
+            }}
+            className="btn-primary px-3 py-2 text-sm"
+          >
             <PlusCircle size={16} />
             <span>새 기록</span>
           </button>
@@ -92,22 +80,19 @@ export default function DiaryPage() {
       </div>
 
       {reminder ? (
-        <div className="mb-4 rounded-2xl border border-brand-100 bg-brand-50 px-4 py-4">
+        <div className="mb-5 rounded-2xl border border-brand-100 bg-brand-50 px-4 py-4">
           <p className="text-sm font-semibold text-gray-900">{reminder.title}</p>
           <p className="mt-1 text-sm text-gray-600">{reminder.description}</p>
-        </div>
-      ) : null}
-
-      {seatDataReminder ? (
-        <div className="mb-5 rounded-2xl border border-gray-100 bg-white px-4 py-4 text-sm text-gray-700">
-          {seatDataReminder}
         </div>
       ) : null}
 
       <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <SummaryCard label="이번 달 관극" value={`${thisMonthCount}회`} />
         <SummaryCard label="총 기록 수" value={`${stats?.totalCount ?? 0}개`} />
-        <SummaryCard label="평균 별점" value={stats?.averageRating ? stats.averageRating.toFixed(1) : '-'} />
+        <SummaryCard
+          label="평균 평점"
+          value={stats?.averageRating ? stats.averageRating.toFixed(1) : '-'}
+        />
         <SummaryCard
           label="최근 기록"
           value={
@@ -158,15 +143,10 @@ export default function DiaryPage() {
                 <BookOpen size={20} />
               </div>
               <p className="text-lg font-medium text-gray-700">아직 관극 기록이 없습니다.</p>
-              <p className="mt-1 text-sm">티켓 이미지로 시작하거나 첫 감상부터 가볍게 남겨 보세요.</p>
-              <div className="mt-4 flex flex-col items-center justify-center gap-2 sm:flex-row">
-                <button onClick={() => setShowTicketDraft(true)} className="btn-primary px-5 py-2.5">
-                  티켓으로 시작
-                </button>
-                <button onClick={openManualForm} className="btn-secondary px-5 py-2.5">
-                  직접 기록하기
-                </button>
-              </div>
+              <p className="mt-1 text-sm">공연을 본 날의 짧은 메모부터 남겨보세요.</p>
+              <button onClick={() => setShowForm(true)} className="btn-primary mt-4 px-5 py-2.5">
+                첫 기록 남기기
+              </button>
             </div>
           )}
         </div>
@@ -183,7 +163,6 @@ export default function DiaryPage() {
           <DiaryGalleryView
             onEdit={(entry) => {
               setEditEntry(entry)
-              setTicketDraft(undefined)
               setShowForm(true)
             }}
           />
@@ -205,33 +184,17 @@ export default function DiaryPage() {
       {showForm ? (
         <DiaryFormModal
           entry={editEntry}
-          initialDraft={ticketDraft}
-          mode={ticketDraft ? 'quick' : 'full'}
           onClose={() => {
             setShowForm(false)
             setEditEntry(undefined)
-            setTicketDraft(undefined)
           }}
           onSaved={() => {
             setShowForm(false)
             setEditEntry(undefined)
-            setTicketDraft(undefined)
             setPage(0)
             setActiveTab('list')
             refetchDiary()
             refetchStats()
-          }}
-        />
-      ) : null}
-
-      {showTicketDraft ? (
-        <TicketDraftUploadModal
-          onClose={() => setShowTicketDraft(false)}
-          onDraftReady={(draft) => {
-            setShowTicketDraft(false)
-            setEditEntry(undefined)
-            setTicketDraft(draft)
-            setShowForm(true)
           }}
         />
       ) : null}

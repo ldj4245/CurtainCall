@@ -11,7 +11,6 @@ import {
   Heart,
   ImageOff,
   MapPin,
-  ScanLine,
   Star,
   Users,
 } from 'lucide-react'
@@ -21,14 +20,13 @@ import { favoritesApi } from '../../api/favorites'
 import { showsApi } from '../../api/shows'
 import DiaryFormModal from '../../components/diary/DiaryFormModal'
 import DiarySavedSheet from '../../components/diary/DiarySavedSheet'
-import TicketDraftUploadModal from '../../components/diary/TicketDraftUploadModal'
 import CompanionList from '../../components/companion/CompanionList'
 import ReviewList from '../../components/review/ReviewList'
 import CastingBoard from '../../components/casting/CastingBoard'
 import ShowLiveChat from '../../components/show/ShowLiveChat'
 import StarRating from '../../components/common/StarRating'
 import { useAuthStore } from '../../store/authStore'
-import type { DiaryEntry, DiarySnippet, Show, TicketDraftResponse } from '../../types'
+import type { DiaryEntry, DiarySnippet, Show } from '../../types'
 
 const STATUS_BADGE_CLASS: Record<string, string> = {
   ONGOING: 'badge-ongoing',
@@ -53,9 +51,7 @@ export default function ShowDetailPage() {
 
   const [showReviewForm, setShowReviewForm] = useState(false)
   const [showDiaryForm, setShowDiaryForm] = useState(false)
-  const [showTicketDraft, setShowTicketDraft] = useState(false)
   const [diaryMode, setDiaryMode] = useState<'quick' | 'full'>('quick')
-  const [ticketDraft, setTicketDraft] = useState<TicketDraftResponse | undefined>()
   const [editingDiaryEntry, setEditingDiaryEntry] = useState<DiaryEntry | undefined>()
   const [savedDiaryEntry, setSavedDiaryEntry] = useState<DiaryEntry | undefined>()
   const [showSavedSheet, setShowSavedSheet] = useState(false)
@@ -104,18 +100,9 @@ export default function ShowDetailPage() {
       return
     }
 
-    setTicketDraft(undefined)
     setEditingDiaryEntry(entry)
     setDiaryMode(mode)
     setShowDiaryForm(true)
-  }
-
-  const openTicketDraftModal = () => {
-    if (!isAuthenticated) {
-      requireLogin('티켓으로 시작하려면 로그인해 주세요.')
-      return
-    }
-    setShowTicketDraft(true)
   }
 
   const openReviewForm = () => {
@@ -139,7 +126,6 @@ export default function ShowDetailPage() {
 
     setEditingDiaryEntry(undefined)
     setSavedDiaryEntry(undefined)
-    setTicketDraft(undefined)
   }
 
   if (isLoading) {
@@ -200,7 +186,7 @@ export default function ShowDetailPage() {
             </div>
 
             <div className="card hidden p-4 lg:block">
-              <p className="mb-3 text-xs font-semibold tracking-wide text-gray-400">빠른 이동</p>
+              <p className="mb-3 text-xs font-semibold tracking-wide text-gray-400">내 활동</p>
               <div className="grid gap-2">
                 <button
                   onClick={() => {
@@ -226,12 +212,7 @@ export default function ShowDetailPage() {
 
                 <button onClick={() => openDiaryModal('quick')} className="btn-primary px-4 py-2.5 text-sm">
                   <BookOpen size={15} />
-                  기록하기
-                </button>
-
-                <button onClick={openTicketDraftModal} className="btn-secondary px-4 py-2.5 text-sm">
-                  <ScanLine size={15} />
-                  티켓으로 시작
+                  관극 기록
                 </button>
 
                 <button
@@ -247,6 +228,12 @@ export default function ShowDetailPage() {
                   후기 남기기
                 </button>
               </div>
+
+              {!isAuthenticated ? (
+                <p className="mt-3 text-xs text-gray-400">
+                  로그인하면 찜, 관극 기록, 후기 작성 기능을 바로 이용할 수 있습니다.
+                </p>
+              ) : null}
             </div>
           </aside>
 
@@ -271,12 +258,9 @@ export default function ShowDetailPage() {
                 )}
               </div>
 
-              <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="mt-6 grid gap-3 sm:grid-cols-3">
                 <button onClick={() => openDiaryModal('quick')} className="btn-primary justify-center px-4 py-3">
                   기록하기
-                </button>
-                <button onClick={openTicketDraftModal} className="btn-secondary justify-center px-4 py-3">
-                  티켓으로 시작
                 </button>
                 <button
                   onClick={() => scrollToSection(companionRef.current)}
@@ -348,10 +332,8 @@ export default function ShowDetailPage() {
               show={show}
               snippets={diarySnippets?.items ?? []}
               totalCount={diarySnippets?.totalCount ?? 0}
-              seatRecordCount={diarySnippets?.seatRecordCount ?? 0}
               isLoading={isDiarySnippetsLoading}
               onWriteDiary={() => openDiaryModal('quick')}
-              onStartWithTicket={openTicketDraftModal}
               onRequireLogin={() => requireLogin('관극 기록은 로그인 후 이용할 수 있습니다.')}
               isAuthenticated={isAuthenticated}
             />
@@ -415,27 +397,12 @@ export default function ShowDetailPage() {
           entry={editingDiaryEntry}
           initialShowId={show.id}
           initialShowTitle={show.title}
-          initialDraft={ticketDraft}
           mode={diaryMode}
           onClose={() => {
             setShowDiaryForm(false)
             setEditingDiaryEntry(undefined)
-            setTicketDraft(undefined)
           }}
           onSaved={handleDiarySaved}
-        />
-      ) : null}
-
-      {showTicketDraft ? (
-        <TicketDraftUploadModal
-          onClose={() => setShowTicketDraft(false)}
-          onDraftReady={(draft) => {
-            setShowTicketDraft(false)
-            setTicketDraft(draft)
-            setEditingDiaryEntry(undefined)
-            setDiaryMode('quick')
-            setShowDiaryForm(true)
-          }}
         />
       ) : null}
 
@@ -445,11 +412,9 @@ export default function ShowDetailPage() {
           onClose={() => {
             setShowSavedSheet(false)
             setSavedDiaryEntry(undefined)
-            setTicketDraft(undefined)
           }}
           onExpand={() => {
             setShowSavedSheet(false)
-            setTicketDraft(undefined)
             setEditingDiaryEntry(savedDiaryEntry)
             setDiaryMode('full')
             setShowDiaryForm(true)
@@ -469,50 +434,35 @@ function PublicDiarySection({
   show,
   snippets,
   totalCount,
-  seatRecordCount,
   isLoading,
   onWriteDiary,
-  onStartWithTicket,
   onRequireLogin,
   isAuthenticated,
 }: {
   show: Show
   snippets: DiarySnippet[]
   totalCount: number
-  seatRecordCount: number
   isLoading: boolean
   onWriteDiary: () => void
-  onStartWithTicket: () => void
   onRequireLogin: () => void
   isAuthenticated: boolean
 }) {
-  const seatSnippets = snippets.filter((snippet) => snippet.seatInfo || snippet.viewRating)
-
   return (
     <section className="card p-6 md:p-8">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <h2 className="text-lg font-semibold text-gray-900">최근 공개 기록</h2>
           <p className="mt-1 text-sm text-gray-500">
-            공개 기록 {totalCount}개 · 좌석 기록 {seatRecordCount}개
-            {show.averageScore ? ` · 현재 평균 평점 ${show.averageScore.toFixed(1)}` : ''}
+            공개된 관극 기록 {totalCount}개{show.averageScore ? ` · 현재 평균 평점 ${show.averageScore.toFixed(1)}` : ''}
           </p>
         </div>
 
-        <div className="flex flex-col gap-2 sm:w-auto sm:flex-row">
-          <button
-            onClick={isAuthenticated ? onStartWithTicket : onRequireLogin}
-            className="btn-secondary w-full justify-center px-4 py-2.5 text-sm sm:w-auto"
-          >
-            티켓으로 시작
-          </button>
-          <button
-            onClick={isAuthenticated ? onWriteDiary : onRequireLogin}
-            className="btn-secondary w-full justify-center px-4 py-2.5 text-sm sm:w-auto"
-          >
-            나도 기록하기
-          </button>
-        </div>
+        <button
+          onClick={isAuthenticated ? onWriteDiary : onRequireLogin}
+          className="btn-secondary w-full justify-center px-4 py-2.5 text-sm sm:w-auto"
+        >
+          나도 기록하기
+        </button>
       </div>
 
       {isLoading ? (
@@ -527,81 +477,40 @@ function PublicDiarySection({
           ))}
         </div>
       ) : snippets.length > 0 ? (
-        <div className="mt-5 space-y-5">
-          {seatSnippets.length > 0 ? (
-            <div>
-              <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-gray-800">좌석과 시야 기록</h3>
-                <span className="text-xs text-gray-400">최근 {seatSnippets.length}개 표시</span>
+        <div className="mt-5 grid gap-4 md:grid-cols-3">
+          {snippets.map((snippet) => (
+            <article key={snippet.diaryId} className="rounded-2xl border border-gray-100 bg-white p-4">
+              {snippet.representativeImageUrl ? (
+                <img
+                  src={snippet.representativeImageUrl}
+                  alt={`${snippet.userNickname}님의 기록`}
+                  className="h-36 w-full rounded-xl object-cover"
+                />
+              ) : (
+                <div className="flex h-36 w-full items-center justify-center rounded-xl bg-warm-100 text-gray-400">
+                  <BookOpen size={20} />
+                </div>
+              )}
+
+              <div className="mt-4 flex items-center justify-between gap-3">
+                <p className="truncate text-sm font-semibold text-gray-900">{snippet.userNickname}</p>
+                <span className="text-xs text-gray-400">{snippet.watchedDate}</span>
               </div>
-              <div className="grid gap-4 md:grid-cols-3">
-                {seatSnippets.map((snippet) => (
-                  <article key={snippet.diaryId} className="rounded-2xl border border-gray-100 bg-warm-50 p-4">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="truncate text-sm font-semibold text-gray-900">{snippet.userNickname}</p>
-                      <span className="text-xs text-gray-400">{snippet.watchedDate}</span>
-                    </div>
-                    <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                      {snippet.seatInfo ? (
-                        <span className="rounded-full bg-white px-2.5 py-1 text-gray-700">{snippet.seatInfo}</span>
-                      ) : null}
-                      {snippet.viewRating ? (
-                        <span className="rounded-full bg-white px-2.5 py-1 text-gray-700">시야 {snippet.viewRating}점</span>
-                      ) : null}
-                      {snippet.entrySource === 'TICKET_CAPTURE' ? (
-                        <span className="rounded-full bg-brand-50 px-2.5 py-1 text-brand">티켓 시작</span>
-                      ) : null}
-                    </div>
-                    <p className="mt-3 line-clamp-3 text-sm leading-6 text-gray-600">
-                      {snippet.comment || '짧은 감상은 아직 남기지 않았습니다.'}
-                    </p>
-                  </article>
-                ))}
+
+              <div className="mt-2 flex items-center gap-1 text-sm text-gray-700">
+                <Star size={14} className="fill-gold text-gold" />
+                <span>{snippet.rating.toFixed(1)}</span>
               </div>
-            </div>
-          ) : null}
 
-          <div>
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-gray-800">공개 기록 조각</h3>
-              <span className="text-xs text-gray-400">최근 {snippets.length}개 표시</span>
-            </div>
-            <div className="grid gap-4 md:grid-cols-3">
-              {snippets.map((snippet) => (
-                <article key={snippet.diaryId} className="rounded-2xl border border-gray-100 bg-white p-4">
-                  {snippet.representativeImageUrl ? (
-                    <img
-                      src={snippet.representativeImageUrl}
-                      alt={`${snippet.userNickname}의 기록`}
-                      className="h-36 w-full rounded-xl object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-36 w-full items-center justify-center rounded-xl bg-warm-100 text-gray-400">
-                      <BookOpen size={20} />
-                    </div>
-                  )}
-
-                  <div className="mt-4 flex items-center justify-between gap-3">
-                    <p className="truncate text-sm font-semibold text-gray-900">{snippet.userNickname}</p>
-                    <span className="text-xs text-gray-400">{snippet.watchedDate}</span>
-                  </div>
-
-                  <div className="mt-2 flex items-center gap-1 text-sm text-gray-700">
-                    <Star size={14} className="fill-gold text-gold" />
-                    <span>{snippet.rating.toFixed(1)}</span>
-                  </div>
-
-                  <p className="mt-3 line-clamp-3 text-sm leading-6 text-gray-600">
-                    {snippet.comment || '짧은 감상은 아직 남기지 않았습니다.'}
-                  </p>
-                </article>
-              ))}
-            </div>
-          </div>
+              <p className="mt-3 line-clamp-3 text-sm leading-6 text-gray-600">
+                {snippet.comment || '짧은 감상은 아직 남기지 않았습니다.'}
+              </p>
+            </article>
+          ))}
         </div>
       ) : (
         <div className="mt-5 rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-4 py-10 text-center text-sm text-gray-500">
-          아직 공개된 기록이 없습니다. 이 공연을 보고 남긴 첫 기록을 만들어 보세요.
+          아직 공개된 기록이 없습니다. 이 공연을 보고 느낀 점을 먼저 남겨보세요.
         </div>
       )}
     </section>

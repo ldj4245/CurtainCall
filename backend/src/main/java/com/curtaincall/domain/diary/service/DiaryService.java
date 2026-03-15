@@ -6,7 +6,6 @@ import com.curtaincall.domain.diary.dto.DiarySnippetItemDto;
 import com.curtaincall.domain.diary.dto.DiarySnippetResponse;
 import com.curtaincall.domain.diary.dto.DiaryStatsDto;
 import com.curtaincall.domain.diary.entity.DiaryEntry;
-import com.curtaincall.domain.diary.entity.DiaryEntrySource;
 import com.curtaincall.domain.diary.repository.DiaryEntryRepository;
 import com.curtaincall.domain.show.entity.Show;
 import com.curtaincall.domain.show.repository.ShowRepository;
@@ -58,14 +57,11 @@ public class DiaryService {
                 .show(show)
                 .watchedDate(request.getWatchedDate())
                 .seatInfo(request.getSeatInfo())
-                .performanceTime(request.getPerformanceTime())
                 .castMemo(request.getCastMemo())
                 .rating(request.getRating())
                 .comment(request.getComment())
                 .ticketPrice(request.getTicketPrice())
-                .viewRating(request.getViewRating())
                 .isOpen(Boolean.TRUE.equals(request.getIsOpen()))
-                .entrySource(request.getEntrySource() == null ? DiaryEntrySource.MANUAL : request.getEntrySource())
                 .photoUrls(joinPhotoUrls(request.getPhotoUrls()))
                 .build());
 
@@ -83,14 +79,11 @@ public class DiaryService {
         entry.update(
                 request.getWatchedDate(),
                 request.getSeatInfo(),
-                request.getPerformanceTime(),
                 request.getCastMemo(),
                 request.getRating(),
                 request.getComment(),
                 request.getTicketPrice(),
-                request.getViewRating(),
                 Boolean.TRUE.equals(request.getIsOpen()),
-                request.getEntrySource() == null ? DiaryEntrySource.MANUAL : request.getEntrySource(),
                 joinPhotoUrls(updatedPhotoUrls)
         );
 
@@ -120,7 +113,6 @@ public class DiaryService {
 
         return DiarySnippetResponse.builder()
                 .totalCount(page.getTotalElements())
-                .seatRecordCount(diaryEntryRepository.countPublicSeatRecordsByShowId(showId))
                 .items(page.getContent().stream()
                         .map(DiarySnippetItemDto::from)
                         .toList())
