@@ -10,6 +10,7 @@ import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 @Entity
 @Table(name = "diary_entries")
@@ -39,6 +40,9 @@ public class DiaryEntry extends com.curtaincall.global.common.SoftDeleteEntity {
     @Column(name = "seat_info", length = 100)
     private String seatInfo;
 
+    @Column(name = "performance_time")
+    private LocalTime performanceTime;
+
     @Column(name = "cast_memo", length = 500)
     private String castMemo;
 
@@ -51,22 +55,34 @@ public class DiaryEntry extends com.curtaincall.global.common.SoftDeleteEntity {
     @Column(name = "ticket_price")
     private Integer ticketPrice;
 
+    @Column(name = "view_rating")
+    private Integer viewRating;
+
     @Column(name = "is_open", nullable = false)
     @Builder.Default
     private Boolean isOpen = false;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "entry_source", nullable = false, length = 30)
+    @Builder.Default
+    private DiaryEntrySource entrySource = DiaryEntrySource.MANUAL;
+
     @Column(name = "photo_urls", columnDefinition = "TEXT")
     private String photoUrls; // 쉼표로 구분된 이미지 URL 목록 (최대 5장)
 
-    public void update(LocalDate watchedDate, String seatInfo, String castMemo,
-            Integer rating, String comment, Integer ticketPrice, Boolean isOpen, String photoUrls) {
+    public void update(LocalDate watchedDate, String seatInfo, LocalTime performanceTime, String castMemo,
+            Integer rating, String comment, Integer ticketPrice, Integer viewRating,
+            Boolean isOpen, DiaryEntrySource entrySource, String photoUrls) {
         this.watchedDate = watchedDate;
         this.seatInfo = seatInfo;
+        this.performanceTime = performanceTime;
         this.castMemo = castMemo;
         this.rating = rating;
         this.comment = comment;
         this.ticketPrice = ticketPrice;
+        this.viewRating = viewRating;
         this.isOpen = isOpen;
+        this.entrySource = entrySource == null ? DiaryEntrySource.MANUAL : entrySource;
         this.photoUrls = photoUrls;
     }
 }

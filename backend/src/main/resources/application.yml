@@ -61,6 +61,11 @@ kopis:
   api-key: ${KOPIS_API_KEY}
   base-url: http://www.kopis.or.kr/openApi/restful
 
+openai:
+  api-key: ${OPENAI_API_KEY:}
+  base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1}
+  model: ${OPENAI_MODEL:gpt-4.1-mini}
+
 storage:
   do-spaces:
     endpoint: ${DO_SPACES_ENDPOINT:https://sgp1.digitaloceanspaces.com}

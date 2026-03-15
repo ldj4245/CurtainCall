@@ -3,7 +3,9 @@ package com.curtaincall.domain.diary.controller;
 import com.curtaincall.domain.diary.dto.DiaryRequest;
 import com.curtaincall.domain.diary.dto.DiaryResponse;
 import com.curtaincall.domain.diary.dto.DiaryStatsDto;
+import com.curtaincall.domain.diary.dto.TicketDraftResponse;
 import com.curtaincall.domain.diary.service.DiaryService;
+import com.curtaincall.domain.diary.service.TicketDraftService;
 import com.curtaincall.global.infra.storage.ImageUploadService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -29,6 +31,7 @@ public class DiaryController {
 
     private final DiaryService diaryService;
     private final ImageUploadService imageUploadService;
+    private final TicketDraftService ticketDraftService;
 
     @Operation(summary = "내 관극 기록 목록 조회")
     @GetMapping("/me")
@@ -78,6 +81,14 @@ public class DiaryController {
             @RequestParam("file") MultipartFile file) {
         String url = imageUploadService.uploadImage(file, "diary/" + userId);
         return ResponseEntity.ok(Map.of("url", url));
+    }
+
+    @Operation(summary = "티켓 이미지로 관극 초안 만들기")
+    @PostMapping(value = "/ticket-draft", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<TicketDraftResponse> createTicketDraft(
+            @AuthenticationPrincipal Long userId,
+            @RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(ticketDraftService.createDraft(file));
     }
 
     @Operation(summary = "월별 캘린더 관극 기록 조회")

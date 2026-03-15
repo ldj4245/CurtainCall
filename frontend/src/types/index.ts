@@ -48,11 +48,14 @@ export interface DiaryEntry {
   theaterName?: string
   watchedDate: string
   seatInfo?: string
+  performanceTime?: string
   castMemo?: string
   rating: number
   comment?: string
   ticketPrice?: number
+  viewRating?: number
   isOpen: boolean
+  entrySource: 'MANUAL' | 'TICKET_CAPTURE'
   photoUrls: string[]
   representativeImageUrl?: string
   createdAt: string
@@ -81,12 +84,37 @@ export interface DiarySnippet {
   watchedDate: string
   rating: number
   comment?: string
+  seatInfo?: string
+  viewRating?: number
+  entrySource: 'MANUAL' | 'TICKET_CAPTURE'
   representativeImageUrl?: string
 }
 
 export interface DiarySnippetResponse {
   totalCount: number
+  seatRecordCount: number
   items: DiarySnippet[]
+}
+
+export interface TicketDraftShow {
+  id: number
+  title: string
+  posterUrl?: string
+  theaterName?: string
+  startDate?: string
+  endDate?: string
+}
+
+export interface TicketDraftResponse {
+  matchedShow: TicketDraftShow | null
+  suggestions: TicketDraftShow[]
+  watchedDate?: string
+  performanceTime?: string
+  theaterName?: string
+  seatInfo?: string
+  ticketPrice?: number
+  confidence: number
+  warnings: string[]
 }
 
 export interface Review {

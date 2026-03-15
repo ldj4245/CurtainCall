@@ -1,15 +1,18 @@
 import api from './axios'
-import type { DiaryEntry, DiarySnippetResponse, DiaryStats, PageResponse } from '../types'
+import type { DiaryEntry, DiarySnippetResponse, DiaryStats, PageResponse, TicketDraftResponse } from '../types'
 
 export interface DiaryCreateRequest {
   showId: number
   watchedDate: string
   seatInfo?: string
+  performanceTime?: string
   castMemo?: string
   rating: number
   comment?: string
   ticketPrice?: number
+  viewRating?: number
   isOpen?: boolean
+  entrySource?: 'MANUAL' | 'TICKET_CAPTURE'
   photoUrls?: string[]
 }
 
@@ -25,6 +28,14 @@ export const diaryApi = {
 
   getPublicSnippets: (showId: number, size = 3) =>
     api.get<DiarySnippetResponse>(`/shows/${showId}/diary-snippets`, { params: { size } }).then((r) => r.data),
+
+  createTicketDraft: (file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return api.post<TicketDraftResponse>('/diary/ticket-draft', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then((r) => r.data)
+  },
 
   create: (data: DiaryCreateRequest) =>
     api.post<DiaryEntry>('/diary', data).then((r) => r.data),

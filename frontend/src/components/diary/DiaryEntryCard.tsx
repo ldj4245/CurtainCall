@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { Calendar, Edit2, MapPin, Trash2 } from 'lucide-react'
+import { Calendar, Clock3, Edit2, MapPin, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { diaryApi } from '../../api/diary'
 import type { DiaryEntry } from '../../types'
@@ -49,12 +49,26 @@ export default function DiaryEntryCard({ entry, onUpdated }: Props) {
 
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
-            <Link
-              to={`/shows/${entry.showId}`}
-              className="truncate font-bold text-gray-900 transition-colors hover:text-brand"
-            >
-              {entry.showTitle}
-            </Link>
+            <div className="min-w-0">
+              <Link
+                to={`/shows/${entry.showId}`}
+                className="truncate font-bold text-gray-900 transition-colors hover:text-brand"
+              >
+                {entry.showTitle}
+              </Link>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {entry.entrySource === 'TICKET_CAPTURE' ? (
+                  <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand">
+                    티켓 시작
+                  </span>
+                ) : null}
+                {entry.viewRating ? (
+                  <span className="rounded-full bg-warm-50 px-2.5 py-1 text-xs font-medium text-gray-700">
+                    시야 {entry.viewRating}점
+                  </span>
+                ) : null}
+              </div>
+            </div>
 
             <div className="flex shrink-0 gap-1">
               <button
@@ -75,10 +89,15 @@ export default function DiaryEntryCard({ entry, onUpdated }: Props) {
             </div>
           </div>
 
-          <div className="mb-2 mt-1 flex flex-wrap gap-3 text-xs text-gray-500">
+          <div className="mb-2 mt-2 flex flex-wrap gap-3 text-xs text-gray-500">
             <span className="flex items-center gap-1">
               <Calendar size={12} /> {entry.watchedDate}
             </span>
+            {entry.performanceTime ? (
+              <span className="flex items-center gap-1">
+                <Clock3 size={12} /> {entry.performanceTime}
+              </span>
+            ) : null}
             {entry.theaterName ? (
               <span className="flex items-center gap-1">
                 <MapPin size={12} /> {entry.theaterName}
@@ -130,7 +149,7 @@ export default function DiaryEntryCard({ entry, onUpdated }: Props) {
       {deleting ? (
         <ConfirmModal
           title="관극 기록 삭제"
-          message="정말 이 기록을 삭제하시겠습니까? 삭제한 기록은 다시 복구할 수 없습니다."
+          message="정말 이 기록을 삭제하시겠어요? 삭제한 기록은 다시 복구할 수 없습니다."
           confirmText="삭제하기"
           cancelText="취소"
           onConfirm={handleDelete}

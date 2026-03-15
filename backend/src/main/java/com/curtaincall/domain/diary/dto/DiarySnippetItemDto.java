@@ -1,6 +1,7 @@
 package com.curtaincall.domain.diary.dto;
 
 import com.curtaincall.domain.diary.entity.DiaryEntry;
+import com.curtaincall.domain.diary.entity.DiaryEntrySource;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -18,6 +19,9 @@ public class DiarySnippetItemDto {
     private LocalDate watchedDate;
     private Integer rating;
     private String comment;
+    private String seatInfo;
+    private Integer viewRating;
+    private DiaryEntrySource entrySource;
     private String representativeImageUrl;
 
     public static DiarySnippetItemDto from(DiaryEntry entry) {
@@ -32,6 +36,9 @@ public class DiarySnippetItemDto {
                 .watchedDate(entry.getWatchedDate())
                 .rating(entry.getRating())
                 .comment(entry.getComment())
+                .seatInfo(entry.getSeatInfo())
+                .viewRating(entry.getViewRating())
+                .entrySource(entry.getEntrySource())
                 .representativeImageUrl(representativeImage)
                 .build();
     }

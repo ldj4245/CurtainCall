@@ -1,11 +1,14 @@
 package com.curtaincall.domain.diary.dto;
 
 import com.curtaincall.domain.diary.entity.DiaryEntry;
+import com.curtaincall.domain.diary.entity.DiaryEntrySource;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -20,11 +23,15 @@ public class DiaryResponse {
     private String theaterName;
     private LocalDate watchedDate;
     private String seatInfo;
+    @JsonFormat(pattern = "HH:mm")
+    private LocalTime performanceTime;
     private String castMemo;
     private Integer rating;
     private String comment;
     private Integer ticketPrice;
+    private Integer viewRating;
     private Boolean isOpen;
+    private DiaryEntrySource entrySource;
     private List<String> photoUrls;
     private String representativeImageUrl;
     private LocalDateTime createdAt;
@@ -43,11 +50,14 @@ public class DiaryResponse {
                 .theaterName(entry.getShow().getTheater() != null ? entry.getShow().getTheater().getName() : null)
                 .watchedDate(entry.getWatchedDate())
                 .seatInfo(entry.getSeatInfo())
+                .performanceTime(entry.getPerformanceTime())
                 .castMemo(entry.getCastMemo())
                 .rating(entry.getRating())
                 .comment(entry.getComment())
                 .ticketPrice(entry.getTicketPrice())
+                .viewRating(entry.getViewRating())
                 .isOpen(entry.getIsOpen())
+                .entrySource(entry.getEntrySource())
                 .photoUrls(photos)
                 .representativeImageUrl(representativeImage)
                 .createdAt(entry.getCreatedAt())
