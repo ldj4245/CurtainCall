@@ -421,6 +421,95 @@ for (String kopisId : musicalRanking) {
 
 결과: **N쿼리 → 1쿼리**
 
+---
+
+### 3차 점검 — DTO 변환에서 남은 지연 로딩 제거
+
+앞선 개선 뒤에도 목록 DTO를 만들 때 연관 엔티티를 다시 건드리는 경로가 남아 있었다.
+쿼리 자체는 페이지 단위로 줄였지만, `from()` 메서드에서 `user`, `show`, `parent`, `replies`를 접근하면서
+데이터가 늘면 다시 N+1이 생길 수 있는 구조였다.
+
+**리뷰 목록 — 작성자/공연 fetch 계획 누락**
+
+```java
+// ReviewResponse.from()
+.userNickname(review.getUser().getNickname())
+.showTitle(review.getShow().getTitle())
+```
+
+리뷰 목록은 페이지 조회 후 모든 항목에서 작성자와 공연을 사용하므로 repository fetch 계획에 포함했다.
+
+```java
+@EntityGraph(attributePaths = {"user", "show"})
+Page<Review> findByShowIdOrderByCreatedAtDesc(Long showId, Pageable pageable);
+
+@EntityGraph(attributePaths = {"user", "show"})
+Page<Review> findByShowIdOrderByLikeCountDesc(Long showId, Pageable pageable);
+```
+
+**댓글 목록 — root 댓글과 대댓글을 분리 조회**
+
+댓글은 페이지네이션이 필요하고 대댓글은 collection이어서 한 번에 fetch join하면 페이징이 깨질 수 있다.
+그래서 root 댓글은 페이지로 조회하고, 화면에 필요한 대댓글은 parent id 목록으로 한 번 더 조회한다.
+
+```java
+Page<ReviewComment> rootComments =
+    commentRepository.findRootCommentsWithUser(reviewId, safePageRequest(page, size));
+
+List<Long> rootCommentIds = rootComments.getContent().stream()
+    .map(ReviewComment::getId)
+    .toList();
+
+Map<Long, List<CommentResponse>> repliesByParentId =
+    commentRepository.findRepliesByParentIdIn(rootCommentIds).stream()
+        .collect(Collectors.groupingBy(
+            reply -> reply.getParent().getId(),
+            Collectors.mapping(CommentResponse::fromReply, Collectors.toList())
+        ));
+```
+
+```java
+@Query("""
+        SELECT c FROM ReviewComment c
+        JOIN FETCH c.user
+        WHERE c.review.id = :reviewId AND c.parent IS NULL
+        ORDER BY c.createdAt ASC
+        """)
+Page<ReviewComment> findRootCommentsWithUser(@Param("reviewId") Long reviewId, Pageable pageable);
+
+@Query("""
+        SELECT c FROM ReviewComment c
+        JOIN FETCH c.user
+        JOIN FETCH c.parent
+        WHERE c.parent.id IN :parentIds
+        ORDER BY c.createdAt ASC
+        """)
+List<ReviewComment> findRepliesByParentIdIn(@Param("parentIds") List<Long> parentIds);
+```
+
+**동행 참여자 — 참여자 user fetch 누락**
+
+동행 글 자체는 `show`, `author`를 fetch join하고 있었지만, 참여자 목록을 DTO로 바꿀 때
+`participant.getUser()`를 다시 접근했다.
+
+```java
+@Query("SELECT p FROM CompanionParticipant p JOIN FETCH p.companionPost JOIN FETCH p.user WHERE p.companionPost.id IN :postIds")
+List<CompanionParticipant> findByCompanionPostIdIn(@Param("postIds") List<Long> postIds);
+```
+
+**요청 크기 방어**
+
+목록 API에 큰 `size`나 `limit`이 들어오면 한 요청이 DB와 메모리를 과하게 사용할 수 있다.
+서비스 레이어에서 페이지 크기를 최대 50, 홈 목록 limit을 최대 20으로 제한했다.
+
+```java
+private PageRequest safePageRequest(int page, int size) {
+    return PageRequest.of(Math.max(page, 0), Math.max(1, Math.min(size, MAX_PAGE_SIZE)));
+}
+```
+
+결과: 리뷰/댓글/동행 목록의 남은 N+1 위험을 줄이고, 비정상적으로 큰 목록 요청을 서비스 레이어에서 차단했다.
+
 </details>
 
 ---

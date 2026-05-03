@@ -21,13 +21,16 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class ShowService {
 
+    private static final int MAX_PAGE_SIZE = 50;
+    private static final int MAX_HOME_LIMIT = 20;
+
     private final ShowRepository showRepository;
     private final ReviewRepository reviewRepository;
 
     @Cacheable(value = "showsSearch", key = "{#keyword, #genre, #status, #region, #page, #size}")
     public Page<ShowResponse> searchShows(String keyword, String genre, String status, String region, int page,
             int size) {
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(safePage(page), safeSize(size, MAX_PAGE_SIZE));
         Show.Genre genreEnum = parseEnum(Show.Genre.class, genre);
         Show.Status statusEnum = parseEnum(Show.Status.class, status);
 
@@ -50,14 +53,14 @@ public class ShowService {
 
     @Cacheable(value = "ongoingShows", key = "#limit")
     public List<ShowResponse> getOngoingShows(int limit) {
-        Pageable pageable = PageRequest.of(0, limit);
+        Pageable pageable = PageRequest.of(0, safeSize(limit, MAX_HOME_LIMIT));
         return showRepository.findTop10ByStatusOngoing(pageable)
                 .stream().map(ShowResponse::from).toList();
     }
 
     @Cacheable(value = "popularShows", key = "#limit")
     public List<ShowResponse> getPopularShows(int limit) {
-        Pageable pageable = PageRequest.of(0, limit);
+        Pageable pageable = PageRequest.of(0, safeSize(limit, MAX_HOME_LIMIT));
         return showRepository.findPopularOngoing(pageable)
                 .stream().map(ShowResponse::from).toList();
     }
@@ -76,5 +79,13 @@ public class ShowService {
         } catch (IllegalArgumentException e) {
             return null;
         }
+    }
+
+    private int safePage(int page) {
+        return Math.max(page, 0);
+    }
+
+    private int safeSize(int size, int maxSize) {
+        return Math.max(1, Math.min(size, maxSize));
     }
 }

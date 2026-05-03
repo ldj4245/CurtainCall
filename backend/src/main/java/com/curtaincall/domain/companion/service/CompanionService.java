@@ -19,6 +19,7 @@ import com.curtaincall.global.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +33,8 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class CompanionService {
 
+    private static final int MAX_PAGE_SIZE = 50;
+
     private final CompanionPostRepository companionPostRepository;
     private final CompanionParticipantRepository companionParticipantRepository;
     private final ShowRepository showRepository;
@@ -41,14 +44,15 @@ public class CompanionService {
     private final ChatMessageRepository chatMessageRepository;
 
     public Page<CompanionPostResponse> getCompanions(Long showId, boolean onlyOpen, Pageable pageable) {
+        Pageable safePageable = safePageable(pageable);
         Page<CompanionPost> posts = onlyOpen
-                ? companionPostRepository.findByShowIdAndStatus(showId, CompanionPost.Status.OPEN, pageable)
-                : companionPostRepository.findByShowId(showId, pageable);
+                ? companionPostRepository.findByShowIdAndStatus(showId, CompanionPost.Status.OPEN, safePageable)
+                : companionPostRepository.findByShowId(showId, safePageable);
         return toResponsePage(posts);
     }
 
     public Page<CompanionPostResponse> getRecentCompanions(Pageable pageable) {
-        return toResponsePage(companionPostRepository.findByStatus(CompanionPost.Status.OPEN, pageable));
+        return toResponsePage(companionPostRepository.findByStatus(CompanionPost.Status.OPEN, safePageable(pageable)));
     }
 
     private Page<CompanionPostResponse> toResponsePage(Page<CompanionPost> posts) {
@@ -183,5 +187,10 @@ public class CompanionService {
     private CompanionPost loadPostForUpdate(Long postId) {
         return companionPostRepository.findByIdForUpdate(postId)
                 .orElseThrow(() -> BusinessException.notFound("동행 모집글을 찾을 수 없습니다."));
+    }
+
+    private Pageable safePageable(Pageable pageable) {
+        int safeSize = Math.max(1, Math.min(pageable.getPageSize(), MAX_PAGE_SIZE));
+        return PageRequest.of(pageable.getPageNumber(), safeSize, pageable.getSort());
     }
 }

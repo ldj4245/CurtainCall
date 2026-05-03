@@ -21,6 +21,12 @@ public class CommentResponse {
     private LocalDateTime createdAt;
 
     public static CommentResponse from(ReviewComment comment) {
+        return from(comment, comment.getReplies().stream()
+                .map(CommentResponse::fromReply)
+                .collect(Collectors.toList()));
+    }
+
+    public static CommentResponse from(ReviewComment comment, List<CommentResponse> replies) {
         return CommentResponse.builder()
                 .id(comment.getId())
                 .userId(comment.getUser().getId())
@@ -28,9 +34,7 @@ public class CommentResponse {
                 .userProfileImage(comment.getUser().getProfileImage())
                 .content(comment.getContent())
                 .parentId(comment.getParent() != null ? comment.getParent().getId() : null)
-                .replies(comment.getReplies().stream()
-                        .map(CommentResponse::fromReply)
-                        .collect(Collectors.toList()))
+                .replies(replies)
                 .createdAt(comment.getCreatedAt())
                 .build();
     }

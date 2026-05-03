@@ -30,6 +30,8 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class DiaryService {
 
+    private static final int MAX_PAGE_SIZE = 50;
+
     private final DiaryEntryRepository diaryEntryRepository;
     private final ShowRepository showRepository;
     private final UserRepository userRepository;
@@ -37,7 +39,7 @@ public class DiaryService {
 
     public Page<DiaryResponse> getMyDiary(Long userId, int page, int size) {
         return diaryEntryRepository
-                .findByUserIdOrderByWatchedDateDesc(userId, PageRequest.of(page, size))
+                .findByUserIdOrderByWatchedDateDesc(userId, safePageRequest(page, size))
                 .map(DiaryResponse::from);
     }
 
@@ -179,5 +181,9 @@ public class DiaryService {
                 deleteTask.run();
             }
         });
+    }
+
+    private PageRequest safePageRequest(int page, int size) {
+        return PageRequest.of(Math.max(page, 0), Math.max(1, Math.min(size, MAX_PAGE_SIZE)));
     }
 }

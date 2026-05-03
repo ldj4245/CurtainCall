@@ -13,7 +13,8 @@ public interface CompanionParticipantRepository extends JpaRepository<CompanionP
 
     List<CompanionParticipant> findByCompanionPostId(Long postId);
 
-    List<CompanionParticipant> findByCompanionPostIdIn(List<Long> postIds);
+    @Query("SELECT p FROM CompanionParticipant p JOIN FETCH p.companionPost JOIN FETCH p.user WHERE p.companionPost.id IN :postIds")
+    List<CompanionParticipant> findByCompanionPostIdIn(@Param("postIds") List<Long> postIds);
 
     Optional<CompanionParticipant> findByCompanionPostIdAndUserId(Long postId, Long userId);
 

@@ -35,6 +35,8 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class ReviewService {
 
+    private static final int MAX_PAGE_SIZE = 50;
+
     private final ReviewRepository reviewRepository;
     private final ReviewCommentRepository commentRepository;
     private final ReviewLikeRepository likeRepository;
@@ -50,7 +52,7 @@ public class ReviewService {
     }
 
     public Page<ReviewResponse> getReviewsByShow(Long showId, String sort, int page, int size, Long currentUserId) {
-        PageRequest pageable = PageRequest.of(page, size);
+        PageRequest pageable = safePageRequest(page, size);
         Page<Review> reviews = "likes".equals(sort)
                 ? reviewRepository.findByShowIdOrderByLikeCountDesc(showId, pageable)
                 : reviewRepository.findByShowIdOrderByCreatedAtDesc(showId, pageable);
@@ -138,9 +140,26 @@ public class ReviewService {
     }
 
     public Page<CommentResponse> getComments(Long reviewId, int page, int size) {
-        return commentRepository
-                .findByReviewIdAndParentIsNullOrderByCreatedAtAsc(reviewId, PageRequest.of(page, size))
-                .map(CommentResponse::from);
+        Page<ReviewComment> rootComments = commentRepository.findRootCommentsWithUser(reviewId, safePageRequest(page, size));
+        List<Long> rootCommentIds = rootComments.getContent().stream()
+                .map(ReviewComment::getId)
+                .toList();
+
+        if (rootCommentIds.isEmpty()) {
+            return rootComments.map(comment -> CommentResponse.from(comment, List.of()));
+        }
+
+        Map<Long, List<CommentResponse>> repliesByParentId = commentRepository.findRepliesByParentIdIn(rootCommentIds)
+                .stream()
+                .collect(Collectors.groupingBy(
+                        reply -> reply.getParent().getId(),
+                        Collectors.mapping(CommentResponse::fromReply, Collectors.toList())
+                ));
+
+        return rootComments.map(comment -> CommentResponse.from(
+                comment,
+                repliesByParentId.getOrDefault(comment.getId(), List.of())
+        ));
     }
 
     @Transactional
@@ -182,8 +201,12 @@ public class ReviewService {
     }
 
     public Page<ReviewResponse> getMyReviews(Long userId, int page, int size) {
-        Page<Review> reviews = reviewRepository.findByUserIdOrderByCreatedAtDesc(userId, PageRequest.of(page, size));
+        Page<Review> reviews = reviewRepository.findByUserIdOrderByCreatedAtDesc(userId, safePageRequest(page, size));
         return enrichReviews(reviews, userId);
+    }
+
+    private PageRequest safePageRequest(int page, int size) {
+        return PageRequest.of(Math.max(page, 0), Math.max(1, Math.min(size, MAX_PAGE_SIZE)));
     }
 
     private Page<ReviewResponse> enrichReviews(Page<Review> reviews, Long currentUserId) {
