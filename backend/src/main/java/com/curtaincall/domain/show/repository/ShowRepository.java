@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDate;
 
 public interface ShowRepository extends JpaRepository<Show, Long>, ShowRepositoryCustom {
 
@@ -33,6 +34,15 @@ public interface ShowRepository extends JpaRepository<Show, Long>, ShowRepositor
 
     @Query("SELECT s FROM Show s JOIN FETCH s.theater WHERE s.status = 'ONGOING' AND s.popularityRank < 999 ORDER BY s.popularityRank ASC")
     List<Show> findPopularOngoing(Pageable pageable);
+
+    @Query("SELECT s FROM Show s LEFT JOIN FETCH s.theater WHERE s.status = 'ONGOING' AND s.endDate >= CURRENT_DATE ORDER BY s.endDate ASC")
+    List<Show> findEndingSoon(Pageable pageable);
+
+    @Query("SELECT s FROM Show s LEFT JOIN FETCH s.theater WHERE s.startDate BETWEEN :startDate AND :endDate ORDER BY s.startDate ASC")
+    List<Show> findOpeningBetween(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate, Pageable pageable);
+
+    @Query("SELECT s FROM Show s LEFT JOIN FETCH s.theater WHERE s.id IN :ids")
+    List<Show> findAllByIdInWithTheater(@Param("ids") List<Long> ids);
 
     List<Show> findByStatus(Show.Status status);
 }

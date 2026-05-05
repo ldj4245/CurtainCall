@@ -1,12 +1,11 @@
 import { useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { BookOpen, CalendarDays, ChevronRight, Flame, MapPin, PenSquare, Star, Users } from 'lucide-react'
+import { BookOpen, CalendarDays, ChevronRight, MapPin, PenSquare, Star, Users } from 'lucide-react'
 import { diaryApi } from '../../api/diary'
 import { showsApi } from '../../api/shows'
 import DiaryFormModal from '../../components/diary/DiaryFormModal'
 import StarRating from '../../components/common/StarRating'
-import RecentCompanions from '../../components/companion/RecentCompanions'
 import ShowCard from '../../components/show/ShowCard'
 import { useAuthStore } from '../../store/authStore'
 import type { DiaryEntry, Show } from '../../types'
@@ -17,14 +16,9 @@ export default function HomePage() {
   const [showDiaryForm, setShowDiaryForm] = useState(false)
   const [editEntry, setEditEntry] = useState<DiaryEntry | undefined>()
 
-  const { data: ongoingShows, isLoading } = useQuery({
-    queryKey: ['shows', 'ongoing'],
-    queryFn: () => showsApi.getOngoing(8),
-  })
-
-  const { data: popularShows } = useQuery({
-    queryKey: ['shows', 'popular', 'home'],
-    queryFn: () => showsApi.getPopular(8),
+  const { data: homeSections, isLoading: isHomeSectionsLoading } = useQuery({
+    queryKey: ['shows', 'home-sections'],
+    queryFn: () => showsApi.getHomeSections(8),
   })
 
   const { data: stats } = useQuery({
@@ -45,9 +39,8 @@ export default function HomePage() {
   const totalCount = stats?.totalCount ?? 0
   const averageRating = stats?.averageRating ? stats.averageRating.toFixed(1) : '-'
   const topShow = stats?.topShows?.[0]?.showTitle ?? '아직 없음'
-  const rankedShows = popularShows?.length ? popularShows : ongoingShows ?? []
+  const rankedShows = homeSections?.popular ?? []
   const featuredShow = rankedShows.find((show) => show.posterUrl) ?? rankedShows[0]
-  const recordShows = (ongoingShows ?? []).slice(0, 4)
 
   return (
     <div className="min-h-screen bg-warm-50/50">
@@ -104,49 +97,37 @@ export default function HomePage() {
       </section>
 
       <section className="px-4 py-10 md:py-12">
-        <div className="mx-auto grid max-w-6xl gap-5 lg:grid-cols-[380px_minmax(0,1fr)]">
-          <RankingPanel shows={rankedShows} />
-          <RecordReadyShows shows={recordShows} isLoading={isLoading} />
-        </div>
-      </section>
-
-      <section className="bg-warm-50 px-4 py-12">
-        <div className="mx-auto max-w-6xl">
-          <RecentCompanions />
-        </div>
-      </section>
-
-      <section className="bg-white px-4 py-12">
-        <div className="mx-auto max-w-6xl">
-          <div className="mb-8 flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">지금 공연 중인 작품</h2>
-            <Link
-              to="/shows?status=ONGOING"
-              className="flex items-center gap-1 text-sm font-medium text-gray-500 transition-colors hover:text-brand"
-            >
-              전체 보기 <ChevronRight size={16} />
-            </Link>
-          </div>
-
-          {isLoading ? (
-            <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4">
-              {Array.from({ length: 8 }).map((_, index) => (
-                <div key={index} className="animate-pulse">
-                  <div className="aspect-[3/4] rounded-2xl bg-warm-100" />
-                  <div className="mt-3 space-y-2">
-                    <div className="h-4 w-3/4 rounded bg-warm-100" />
-                    <div className="h-3 w-1/2 rounded bg-warm-100" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4">
-              {ongoingShows?.map((show) => (
-                <ShowCard key={show.id} show={show} />
-              ))}
-            </div>
-          )}
+        <div className="mx-auto max-w-6xl space-y-12">
+          <CuratedShowSection
+            eyebrow="KOPIS 기준"
+            title="KOPIS 인기 공연"
+            description="박스오피스 흐름을 기준으로 지금 많이 찾는 공연입니다."
+            shows={homeSections?.popular ?? []}
+            isLoading={isHomeSectionsLoading}
+          />
+          <CuratedShowSection
+            eyebrow="마감 임박"
+            title="곧 끝나는 공연"
+            description="놓치기 전에 확인해볼 만한 공연입니다."
+            shows={homeSections?.endingSoon ?? []}
+            isLoading={isHomeSectionsLoading}
+            badge={(show) => getDaysLeftLabel(show.endDate)}
+          />
+          <CuratedShowSection
+            eyebrow="새로 시작"
+            title="이번 달 개막"
+            description="이번 달 새롭게 막을 올리는 공연입니다."
+            shows={homeSections?.openingThisMonth ?? []}
+            isLoading={isHomeSectionsLoading}
+          />
+          <CuratedShowSection
+            eyebrow="CurtainCall 기록"
+            title="기록 많은 공연"
+            description="사용자들이 관극 기록을 많이 남긴 공연입니다."
+            shows={homeSections?.mostRecorded ?? []}
+            isLoading={isHomeSectionsLoading}
+            badge={(show) => (show.diaryCount ? `기록 ${show.diaryCount}개` : undefined)}
+          />
         </div>
       </section>
 
@@ -326,73 +307,68 @@ function QuickRecordCard({
   )
 }
 
-function RankingPanel({ shows }: { shows: Show[] }) {
+function CuratedShowSection({
+  eyebrow,
+  title,
+  description,
+  shows,
+  isLoading,
+  badge,
+}: {
+  eyebrow: string
+  title: string
+  description: string
+  shows: Show[]
+  isLoading: boolean
+  badge?: (show: Show) => string | undefined
+}) {
   return (
-    <div className="rounded-[28px] border border-gray-100 bg-white p-5 shadow-card-sm md:p-6">
-      <div className="mb-5 flex items-center justify-between gap-3">
-        <div>
-          <p className="text-sm font-semibold text-brand">랭킹</p>
-          <h2 className="text-xl font-bold tracking-tight text-gray-900">이번 주 인기 공연</h2>
-        </div>
-        <Flame className="h-5 w-5 text-orange-500" />
-      </div>
-
-      <div className="space-y-1">
-        {shows.slice(0, 6).map((show, index) => (
-          <Link
-            key={show.id}
-            to={`/shows/${show.id}`}
-            className="group flex items-center gap-3 rounded-2xl px-2 py-2 transition-colors hover:bg-warm-50"
-          >
-            <span className="w-7 shrink-0 text-center text-sm font-black text-gray-900">{index + 1}</span>
-            {show.posterUrl ? (
-              <img src={show.posterUrl} alt={show.title} className="h-14 w-10 shrink-0 rounded-lg object-cover" loading="lazy" />
-            ) : (
-              <div className="h-14 w-10 shrink-0 rounded-lg bg-warm-100" />
-            )}
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-gray-900 group-hover:text-brand">{show.title}</p>
-              <p className="mt-1 truncate text-xs text-gray-500">{show.theaterName || show.genreDisplayName}</p>
-            </div>
-            <ChevronRight size={15} className="text-gray-300" />
-          </Link>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function RecordReadyShows({ shows, isLoading }: { shows: Show[]; isLoading: boolean }) {
-  return (
-    <div className="rounded-[28px] border border-gray-100 bg-white p-5 shadow-card-sm md:p-6">
+    <section>
       <div className="mb-5 flex items-end justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold text-brand">공연 발견</p>
-          <h2 className="text-xl font-bold tracking-tight text-gray-900">지금 기록으로 이어질 공연</h2>
-          <p className="mt-1 text-sm text-gray-500">상세 화면에서 기록, 동행, 후기를 바로 확인할 수 있습니다.</p>
+          <p className="text-sm font-semibold text-brand">{eyebrow}</p>
+          <h2 className="text-2xl font-bold tracking-tight text-gray-900">{title}</h2>
+          <p className="mt-1 text-sm text-gray-500">{description}</p>
         </div>
-        <Link to="/shows?status=ONGOING" className="hidden items-center gap-1 text-sm font-semibold text-gray-400 hover:text-brand md:flex">
-          더 보기 <ChevronRight size={16} />
+        <Link to="/shows" className="hidden items-center gap-1 text-sm font-semibold text-gray-400 hover:text-brand sm:flex">
+          전체 보기 <ChevronRight size={16} />
         </Link>
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, index) => (
+        <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, index) => (
             <div key={index} className="animate-pulse">
               <div className="aspect-[3/4] rounded-2xl bg-warm-100" />
-              <div className="mt-3 h-4 w-3/4 rounded bg-warm-100" />
+              <div className="mt-3 space-y-2">
+                <div className="h-4 w-3/4 rounded bg-warm-100" />
+                <div className="h-3 w-1/2 rounded bg-warm-100" />
+              </div>
             </div>
           ))}
         </div>
+      ) : shows.length > 0 ? (
+        <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4">
+          {shows.map((show) => {
+            const badgeText = badge?.(show)
+            return (
+              <div key={show.id} className="relative">
+                {badgeText ? (
+                  <div className="absolute left-3 top-3 z-10 rounded-lg bg-brand px-2.5 py-1 text-xs font-bold text-white shadow-sm">
+                    {badgeText}
+                  </div>
+                ) : null}
+                <ShowCard show={show} />
+              </div>
+            )
+          })}
+        </div>
       ) : (
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          {shows.map((show) => (
-            <ShowCard key={show.id} show={show} />
-          ))}
+        <div className="rounded-2xl border border-dashed border-gray-200 bg-white px-4 py-10 text-center text-sm text-gray-500">
+          아직 보여줄 공연이 없습니다.
         </div>
       )}
-    </div>
+    </section>
   )
 }
 
@@ -403,6 +379,20 @@ function MetricCard({ label, value }: { label: string; value: string }) {
       <p className="mt-2 text-lg font-semibold text-gray-900">{value}</p>
     </div>
   )
+}
+
+function getDaysLeftLabel(endDate?: string) {
+  if (!endDate) return undefined
+
+  const today = new Date()
+  const end = new Date(`${endDate}T00:00:00`)
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+  const diffMs = end.getTime() - todayStart.getTime()
+  const daysLeft = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+
+  if (daysLeft < 0) return undefined
+  if (daysLeft === 0) return '오늘 종료'
+  return `D-${daysLeft}`
 }
 
 function SimpleStep({

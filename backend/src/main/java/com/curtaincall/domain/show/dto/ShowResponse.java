@@ -34,6 +34,7 @@ public class ShowResponse {
     private List<String> introImages;
     private Double averageScore;
     private Long reviewCount;
+    private Long diaryCount;
 
     public static ShowResponse from(Show show) {
         return ShowResponse.builder()
@@ -56,6 +57,7 @@ public class ShowResponse {
                 .statusDisplayName(show.getStatus().getDisplayName())
                 .ageLimit(show.getAgeLimit())
                 .introImages(parseIntroImages(show.getIntroImages()))
+                .diaryCount(null)
                 .build();
     }
 
@@ -83,6 +85,35 @@ public class ShowResponse {
                 .introImages(response.introImages)
                 .averageScore(averageScore)
                 .reviewCount(reviewCount)
+                .diaryCount(response.diaryCount)
+                .build();
+    }
+
+    public static ShowResponse fromWithDiaryCount(Show show, Long diaryCount) {
+        ShowResponse response = from(show);
+        return ShowResponse.builder()
+                .id(response.id)
+                .kopisId(response.kopisId)
+                .title(response.title)
+                .genre(response.genre)
+                .genreDisplayName(response.genreDisplayName)
+                .startDate(response.startDate)
+                .endDate(response.endDate)
+                .theaterId(response.theaterId)
+                .theaterName(response.theaterName)
+                .theaterRegion(response.theaterRegion)
+                .posterUrl(response.posterUrl)
+                .castInfo(response.castInfo)
+                .castList(response.castList)
+                .priceInfo(response.priceInfo)
+                .runtime(response.runtime)
+                .status(response.status)
+                .statusDisplayName(response.statusDisplayName)
+                .ageLimit(response.ageLimit)
+                .introImages(response.introImages)
+                .averageScore(response.averageScore)
+                .reviewCount(response.reviewCount)
+                .diaryCount(diaryCount)
                 .build();
     }
 

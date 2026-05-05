@@ -28,6 +28,14 @@ export interface Show {
   introImages?: string[]
   averageScore?: number
   reviewCount?: number
+  diaryCount?: number
+}
+
+export interface ShowHomeSections {
+  popular: Show[]
+  endingSoon: Show[]
+  openingThisMonth: Show[]
+  mostRecorded: Show[]
 }
 
 export interface Theater {

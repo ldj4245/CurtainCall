@@ -1,7 +1,9 @@
 package com.curtaincall.domain.show.service;
 
+import com.curtaincall.domain.diary.repository.DiaryEntryRepository;
 import com.curtaincall.domain.review.repository.ReviewRepository;
 import com.curtaincall.domain.show.dto.ShowAutocompleteResponse;
+import com.curtaincall.domain.show.dto.ShowHomeSectionsResponse;
 import com.curtaincall.domain.show.dto.ShowResponse;
 import com.curtaincall.domain.show.entity.Show;
 import com.curtaincall.domain.show.repository.ShowRepository;
@@ -14,7 +16,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.cache.annotation.Cacheable;
 
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +34,7 @@ public class ShowService {
 
     private final ShowRepository showRepository;
     private final ReviewRepository reviewRepository;
+    private final DiaryEntryRepository diaryEntryRepository;
 
     @Cacheable(value = "showsSearch", key = "{#keyword, #genre, #status, #region, #page, #size}")
     public Page<ShowResponse> searchShows(String keyword, String genre, String status, String region, int page,
@@ -65,6 +74,24 @@ public class ShowService {
                 .stream().map(ShowResponse::from).toList();
     }
 
+    @Cacheable(value = "homeShowSections", key = "#limit")
+    public ShowHomeSectionsResponse getHomeSections(int limit) {
+        int size = safeSize(limit, MAX_HOME_LIMIT);
+        Pageable pageable = PageRequest.of(0, size);
+        YearMonth thisMonth = YearMonth.now();
+        LocalDate monthStart = thisMonth.atDay(1);
+        LocalDate monthEnd = thisMonth.atEndOfMonth();
+
+        return ShowHomeSectionsResponse.builder()
+                .popular(showRepository.findPopularOngoing(pageable).stream().map(ShowResponse::from).toList())
+                .endingSoon(showRepository.findEndingSoon(pageable).stream().map(ShowResponse::from).toList())
+                .openingThisMonth(showRepository.findOpeningBetween(monthStart, monthEnd, pageable).stream()
+                        .map(ShowResponse::from)
+                        .toList())
+                .mostRecorded(getMostRecordedShows(pageable))
+                .build();
+    }
+
     public List<ShowAutocompleteResponse> autocomplete(String keyword) {
         if (keyword == null || keyword.isBlank()) return List.of();
         return showRepository.findByTitleContaining(keyword.trim(), PageRequest.of(0, 8))
@@ -87,5 +114,31 @@ public class ShowService {
 
     private int safeSize(int size, int maxSize) {
         return Math.max(1, Math.min(size, maxSize));
+    }
+
+    private List<ShowResponse> getMostRecordedShows(Pageable pageable) {
+        List<DiaryEntryRepository.ShowRecordCount> recordCounts = diaryEntryRepository.findMostRecordedShowIds(pageable);
+        if (recordCounts.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> showIds = recordCounts.stream()
+                .map(DiaryEntryRepository.ShowRecordCount::getShowId)
+                .toList();
+        Map<Long, Show> showsById = showRepository.findAllByIdInWithTheater(showIds)
+                .stream()
+                .collect(Collectors.toMap(Show::getId, Function.identity()));
+        Map<Long, Long> countsByShowId = recordCounts.stream()
+                .collect(Collectors.toMap(
+                        DiaryEntryRepository.ShowRecordCount::getShowId,
+                        DiaryEntryRepository.ShowRecordCount::getRecordCount,
+                        (left, right) -> left,
+                        LinkedHashMap::new));
+
+        return showIds.stream()
+                .map(showsById::get)
+                .filter(show -> show != null)
+                .map(show -> ShowResponse.fromWithDiaryCount(show, countsByShowId.getOrDefault(show.getId(), 0L)))
+                .toList();
     }
 }

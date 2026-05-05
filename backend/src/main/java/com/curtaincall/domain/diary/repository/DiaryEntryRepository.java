@@ -39,4 +39,13 @@ public interface DiaryEntryRepository extends JpaRepository<DiaryEntry, Long>, D
 
     @Query("SELECT d FROM DiaryEntry d JOIN FETCH d.show s LEFT JOIN FETCH s.theater WHERE d.user.id = :userId AND d.watchedDate BETWEEN :startDate AND :endDate ORDER BY d.watchedDate ASC")
     List<DiaryEntry> findByUserIdAndWatchedDateBetween(@Param("userId") Long userId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+
+    @Query("SELECT d.show.id AS showId, COUNT(d.id) AS recordCount " +
+            "FROM DiaryEntry d GROUP BY d.show.id ORDER BY COUNT(d.id) DESC")
+    List<ShowRecordCount> findMostRecordedShowIds(Pageable pageable);
+
+    interface ShowRecordCount {
+        Long getShowId();
+        Long getRecordCount();
+    }
 }

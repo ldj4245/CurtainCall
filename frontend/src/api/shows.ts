@@ -1,5 +1,5 @@
 import api from './axios'
-import type { Show, PageResponse } from '../types'
+import type { Show, ShowHomeSections, PageResponse } from '../types'
 
 interface ShowSearchParams {
   keyword?: string
@@ -30,6 +30,9 @@ export const showsApi = {
 
   getPopular: (limit = 8) =>
     api.get<Show[]>('/shows/popular', { params: { limit } }).then((r) => r.data),
+
+  getHomeSections: (limit = 8) =>
+    api.get<ShowHomeSections>('/shows/home-sections', { params: { limit } }).then((r) => r.data),
 
   autocomplete: (q: string) =>
     api.get<ShowAutocomplete[]>('/shows/autocomplete', { params: { q } }).then((r) => r.data),

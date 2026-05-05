@@ -3,6 +3,7 @@ package com.curtaincall.domain.show.controller;
 import com.curtaincall.domain.diary.dto.DiarySnippetResponse;
 import com.curtaincall.domain.diary.service.DiaryService;
 import com.curtaincall.domain.show.dto.ShowAutocompleteResponse;
+import com.curtaincall.domain.show.dto.ShowHomeSectionsResponse;
 import com.curtaincall.domain.show.dto.ShowResponse;
 import com.curtaincall.domain.show.service.ShowService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -60,6 +61,13 @@ public class ShowController {
     public ResponseEntity<List<ShowResponse>> getPopularShows(
             @RequestParam(defaultValue = "8") int limit) {
         return ResponseEntity.ok(showService.getPopularShows(limit));
+    }
+
+    @Operation(summary = "홈 큐레이션 섹션", description = "KOPIS 인기 공연, 곧 끝나는 공연, 이번 달 개막, 기록 많은 공연을 조회합니다.")
+    @GetMapping("/home-sections")
+    public ResponseEntity<ShowHomeSectionsResponse> getHomeSections(
+            @RequestParam(defaultValue = "8") int limit) {
+        return ResponseEntity.ok(showService.getHomeSections(limit));
     }
 
     @Operation(summary = "공연별 공개 관극 기록 요약")
