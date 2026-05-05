@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Users, User, RefreshCw } from 'lucide-react'
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { castingApi, type CastingRole } from '../../api/casting'
 
 interface Props {
@@ -72,10 +73,12 @@ export default function CastingBoard({ showId }: Props) {
                         </p>
                         <div className="flex flex-wrap gap-2.5">
                             {role.actors.map((actor, aIdx) => (
-                                <div
+                                <Link
                                     key={aIdx}
+                                    to={`/shows?keyword=${encodeURIComponent(actor.name)}`}
                                     className="flex items-center gap-2.5 rounded-xl border border-gray-100 bg-warm-50 
                              px-3.5 py-2.5 hover:border-brand-200 hover:bg-brand-50 transition-all"
+                                    title={`${actor.name} 출연 공연 보기`}
                                 >
                                     {actor.imageUrl ? (
                                         <img
@@ -89,7 +92,7 @@ export default function CastingBoard({ showId }: Props) {
                                         </div>
                                     )}
                                     <span className="text-sm font-medium text-gray-800">{actor.name}</span>
-                                </div>
+                                </Link>
                             ))}
                         </div>
                     </div>
