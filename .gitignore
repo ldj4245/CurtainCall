@@ -1,8 +1,9 @@
-ㅇ# Environments
+# Environments
 .env
 
 # IDEs
 .idea/
+.cursor/
 *.iws
 *.iml
 *.ipr

@@ -172,13 +172,17 @@ export default function ShowDetailPage() {
   return (
     <div className="bg-white pb-24 md:pb-0">
       <div className="mx-auto max-w-6xl px-4 py-8 md:py-12">
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[340px_minmax(0,1fr)]">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
           <aside className="space-y-4 lg:sticky lg:top-24 lg:h-fit">
-            <div className="overflow-hidden rounded-2xl shadow-card-md">
+            <div className="overflow-hidden rounded-2xl border border-gray-100 bg-warm-50 shadow-card-md">
               {show.posterUrl ? (
-                <img src={show.posterUrl} alt={show.title} className="aspect-[3/4] w-full object-cover" />
+                <img
+                  src={show.posterUrl}
+                  alt={show.title}
+                  className="max-h-[420px] w-full object-contain"
+                />
               ) : (
-                <div className="flex aspect-[3/4] w-full flex-col items-center justify-center gap-2 bg-warm-100 text-gray-400">
+                <div className="flex h-[360px] w-full flex-col items-center justify-center gap-2 bg-warm-100 text-gray-400">
                   <ImageOff size={24} />
                   <p className="text-xs font-medium">포스터 준비 중</p>
                 </div>
@@ -238,13 +242,22 @@ export default function ShowDetailPage() {
           </aside>
 
           <section className="space-y-6">
-            <div className="card p-6 md:p-8">
+            <div className="card p-5 md:p-7">
               <div className="mb-4 flex flex-wrap items-center gap-2">
                 <span className={statusBadgeClass}>{show.statusDisplayName}</span>
                 <span className={genreBadgeClass}>{show.genreDisplayName}</span>
               </div>
 
               <h1 className="text-3xl font-bold tracking-tight text-gray-900 md:text-4xl">{show.title}</h1>
+
+              <div className="mt-5 grid gap-3 md:grid-cols-2">
+                <SummaryItem icon={<MapPin size={15} />} label="공연장" value={show.theaterName || '정보 없음'} />
+                <SummaryItem
+                  icon={<CalendarDays size={15} />}
+                  label="공연 기간"
+                  value={show.startDate ? `${show.startDate} ~ ${show.endDate || '미정'}` : '정보 없음'}
+                />
+              </div>
 
               <div className="mt-4 flex items-center gap-2">
                 {show.averageScore !== undefined && show.averageScore !== null ? (
@@ -537,8 +550,28 @@ function InfoCard({
   )
 }
 
+function SummaryItem({
+  icon,
+  label,
+  value,
+}: {
+  icon: ReactNode
+  label: string
+  value: string
+}) {
+  return (
+    <div className="flex items-start gap-2 rounded-xl border border-gray-100 bg-warm-50 px-4 py-3">
+      <span className="mt-0.5 text-gray-400">{icon}</span>
+      <div className="min-w-0">
+        <p className="text-xs font-medium text-gray-400">{label}</p>
+        <p className="mt-1 truncate text-sm font-semibold text-gray-900">{value}</p>
+      </div>
+    </div>
+  )
+}
+
 function PriceInfoCard({ priceInfo }: { priceInfo?: string }) {
-  const lines = priceInfo ? priceInfo.split(',').map((item) => item.trim()).filter(Boolean) : []
+  const lines = priceInfo ? priceInfo.split(/,(?!\d{3}원)/).map((item) => item.trim()).filter(Boolean) : []
 
   return (
     <div className="rounded-xl border border-gray-100 bg-warm-50 px-4 py-3">
@@ -550,7 +583,7 @@ function PriceInfoCard({ priceInfo }: { priceInfo?: string }) {
           </span>
           <div className="space-y-0.5">
             {lines.map((line) => (
-              <p key={line} className="text-sm text-gray-800">
+              <p key={line} className="whitespace-nowrap text-sm text-gray-800">
                 {line}
               </p>
             ))}
