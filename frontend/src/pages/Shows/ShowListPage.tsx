@@ -108,20 +108,11 @@ export default function ShowListPage() {
   const selectedFilterCount = Number(Boolean(genre)) + Number(Boolean(status)) + Number(Boolean(region))
 
   return (
-    <div className="app-page">
-      <div className="app-container py-6 md:py-10">
-      <section className="mb-6 rounded-[32px] border border-gray-100 bg-white p-5 md:p-7">
-        <p className="section-eyebrow">Shows</p>
-        <div className="mt-2 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-          <div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-gray-950 md:text-4xl">공연 탐색</h1>
-            <p className="section-copy">공연명, 장르, 상태를 골라 지금 볼 작품을 찾아보세요.</p>
-          </div>
-          <p className="hidden text-sm font-semibold text-gray-400 md:block">KOPIS 공연 정보 기준</p>
-        </div>
-      </section>
+    <div className="max-w-6xl mx-auto px-4 py-10">
+      <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">공연 탐색</h1>
+      <p className="text-sm text-gray-400 mb-8">관심 장르와 상태를 선택해 공연을 찾아보세요.</p>
 
-      <div className="sticky top-[4.5rem] z-30 -mx-4 mb-5 bg-warm-50/95 px-4 pb-3 pt-2 backdrop-blur-md sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:pb-0 sm:pt-0 sm:backdrop-blur-0">
+      <div className="sticky top-16 z-30 bg-white/95 backdrop-blur-md -mx-4 px-4 pt-2 pb-3 mb-5 sm:static sm:bg-transparent sm:backdrop-blur-0 sm:mx-0 sm:px-0 sm:pt-0 sm:pb-0">
         <form onSubmit={handleSearch} className="flex gap-3 mb-3 sm:mb-6">
           <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
@@ -152,7 +143,7 @@ export default function ShowListPage() {
         </div>
       </div>
 
-      <div className="mb-8 hidden flex-wrap items-center gap-x-4 gap-y-2 rounded-[28px] border border-gray-100 bg-white p-4 sm:flex">
+      <div className="hidden sm:flex flex-wrap items-center gap-x-4 gap-y-2 mb-8">
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold text-gray-400 shrink-0">장르</span>
           {GENRES.map(({ value, label }) => (
@@ -302,10 +293,10 @@ export default function ShowListPage() {
         </div>
       ) : data && data.content.length > 0 ? (
         <>
-          <p className="mb-5 text-sm text-gray-400">
+          <p className="text-sm text-gray-400 mb-5">
             총 <span className="font-semibold text-gray-900">{data.totalElements}</span>개의 공연
           </p>
-          <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
             {data.content.map((show) => (
               <ShowCard key={show.id} show={show} />
             ))}
@@ -325,7 +316,6 @@ export default function ShowListPage() {
           <p className="text-sm text-gray-400 mt-1">다른 검색어나 필터를 시도해보세요</p>
         </div>
       )}
-      </div>
     </div>
   )
 }

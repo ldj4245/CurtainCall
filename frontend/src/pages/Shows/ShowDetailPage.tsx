@@ -170,11 +170,11 @@ export default function ShowDetailPage() {
   const isOngoing = show.status === 'ONGOING'
 
   return (
-    <div className="app-page pb-24 md:pb-0">
-      <div className="app-container py-6 md:py-10">
+    <div className="bg-white pb-24 md:pb-0">
+      <div className="mx-auto max-w-6xl px-4 py-8 md:py-12">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
           <aside className="space-y-4 lg:sticky lg:top-24 lg:h-fit">
-            <div className="overflow-hidden rounded-[28px] border border-gray-100 bg-white shadow-card-md">
+            <div className="overflow-hidden rounded-2xl border border-gray-100 bg-warm-50 shadow-card-md">
               {show.posterUrl ? (
                 <img
                   src={show.posterUrl}
@@ -190,7 +190,7 @@ export default function ShowDetailPage() {
             </div>
 
             <div className="card hidden p-4 lg:block">
-              <p className="section-eyebrow mb-3">내 활동</p>
+              <p className="mb-3 text-xs font-semibold tracking-wide text-gray-400">내 활동</p>
               <div className="grid gap-2">
                 <button
                   onClick={() => {
@@ -201,7 +201,7 @@ export default function ShowDetailPage() {
                     toggleFav.mutate()
                   }}
                   disabled={isAuthenticated && toggleFav.isPending}
-                  className={`inline-flex items-center justify-center gap-2 rounded-2xl border px-4 py-2.5 text-sm font-semibold transition-all ${
+                  className={`inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-all ${
                     favStatus?.isFavorited
                       ? 'border-brand-200 bg-brand-50 text-brand hover:bg-brand-100'
                       : 'border-gray-200 bg-white text-gray-700 hover:bg-warm-50'
@@ -243,13 +243,12 @@ export default function ShowDetailPage() {
 
           <section className="space-y-6">
             <div className="card p-5 md:p-7">
-              <p className="section-eyebrow mb-3">Show Detail</p>
               <div className="mb-4 flex flex-wrap items-center gap-2">
                 <span className={statusBadgeClass}>{show.statusDisplayName}</span>
                 <span className={genreBadgeClass}>{show.genreDisplayName}</span>
               </div>
 
-              <h1 className="text-3xl font-extrabold tracking-tight text-gray-950 md:text-5xl">{show.title}</h1>
+              <h1 className="text-3xl font-bold tracking-tight text-gray-900 md:text-4xl">{show.title}</h1>
 
               <div className="mt-5 grid gap-3 md:grid-cols-2">
                 <SummaryItem icon={<MapPin size={15} />} label="공연장" value={show.theaterName || '정보 없음'} />
@@ -264,7 +263,7 @@ export default function ShowDetailPage() {
                 {show.averageScore !== undefined && show.averageScore !== null ? (
                   <>
                     <StarRating value={Math.round(show.averageScore)} readonly size="sm" />
-                    <span className="text-lg font-bold text-gray-950">{show.averageScore.toFixed(1)}</span>
+                    <span className="text-lg font-semibold text-gray-900">{show.averageScore.toFixed(1)}</span>
                     <span className="text-sm text-gray-400">({show.reviewCount ?? 0}개 후기)</span>
                   </>
                 ) : (
@@ -292,8 +291,7 @@ export default function ShowDetailPage() {
             </div>
 
             <div className="card p-6 md:p-8">
-              <p className="section-eyebrow">Information</p>
-              <h2 className="mt-1 text-xl font-extrabold text-gray-950">공연 정보</h2>
+              <h2 className="text-lg font-semibold text-gray-900">공연 정보</h2>
               <div className="mt-4 grid gap-3 md:grid-cols-2">
                 <InfoCard icon={<MapPin size={15} />} label="공연장" value={show.theaterName || '정보 없음'} />
                 <InfoCard
@@ -368,8 +366,7 @@ export default function ShowDetailPage() {
                   className="flex w-full items-center justify-between gap-3 text-left"
                 >
                   <div>
-                    <p className="section-eyebrow">Live</p>
-                    <h2 className="mt-1 text-lg font-extrabold text-gray-950">오늘 관람 이야기</h2>
+                    <h2 className="text-lg font-semibold text-gray-900">오늘 관람 이야기</h2>
                     <p className="mt-1 text-sm text-gray-500">
                       공연을 보고 있는 관람객끼리 짧게 이야기를 나눌 수 있습니다.
                     </p>
@@ -388,7 +385,7 @@ export default function ShowDetailPage() {
         </div>
       </div>
 
-      <div className="fixed inset-x-0 bottom-16 z-30 border-t border-gray-200 bg-white/95 px-4 py-3 backdrop-blur md:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-gray-200 bg-white/95 px-4 py-3 backdrop-blur md:hidden">
         <div className="mx-auto grid max-w-6xl grid-cols-3 gap-2">
           <button onClick={() => openDiaryModal('quick')} className="btn-primary justify-center px-3 py-2.5 text-sm">
             기록

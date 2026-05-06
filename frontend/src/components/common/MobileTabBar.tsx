@@ -36,8 +36,8 @@ export default function MobileTabBar() {
   ]
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-gray-100 bg-white/95 backdrop-blur-md supports-[backdrop-filter]:bg-white/85 sm:hidden">
-      <ul className="grid grid-cols-5 px-1">
+    <nav className="sm:hidden fixed bottom-0 inset-x-0 z-50 border-t border-gray-100 bg-white/95 backdrop-blur-md supports-[backdrop-filter]:bg-white/85">
+      <ul className="grid grid-cols-5">
         {tabs.map(({ to, state, label, icon: Icon, active }) => (
           <li key={label}>
             <Link
@@ -51,16 +51,14 @@ export default function MobileTabBar() {
                 toast('로그인 후 이용할 수 있어요.')
                 navigate('/login', { state: loginLinkState })
               }}
-              className={`relative flex h-16 flex-col items-center justify-center gap-1 text-[11px] transition-colors ${active ? 'font-bold text-brand' : 'text-gray-400'
+              className={`relative flex h-16 flex-col items-center justify-center gap-1 text-xs transition-colors ${active ? 'text-brand font-semibold' : 'text-gray-400'
                 }`}
             >
               <span
-                className={`absolute top-1 h-1 w-1 rounded-full transition-opacity ${active ? 'bg-brand opacity-100' : 'opacity-0'
+                className={`absolute top-0 h-0.5 w-8 rounded-full transition-opacity ${active ? 'bg-brand opacity-100' : 'opacity-0'
                   }`}
               />
-              <span className={`flex h-8 w-8 items-center justify-center rounded-2xl ${active ? 'bg-brand-50' : ''}`}>
-                <Icon size={18} />
-              </span>
+              <Icon size={18} />
               <span>{label}</span>
             </Link>
           </li>

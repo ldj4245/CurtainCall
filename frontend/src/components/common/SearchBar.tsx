@@ -85,9 +85,9 @@ export default function SearchBar() {
   }
 
   return (
-    <div ref={containerRef} className="relative w-full">
+    <div ref={containerRef} className="relative w-full max-w-sm">
       <form onSubmit={handleSubmit}>
-        <div className="flex h-11 items-center gap-2 rounded-full border border-gray-200 bg-warm-50 px-4 transition-all focus-within:border-brand/40 focus-within:bg-white focus-within:ring-2 focus-within:ring-brand/10">
+        <div className="flex items-center gap-2 h-9 px-3 rounded-full border border-gray-200 bg-gray-50 focus-within:bg-white focus-within:border-brand/40 focus-within:ring-2 focus-within:ring-brand/10 transition-all">
           <Search size={15} className="text-gray-400 flex-shrink-0" />
           <input
             type="text"
@@ -95,14 +95,14 @@ export default function SearchBar() {
             onChange={handleChange}
             onKeyDown={handleKeyDown}
             onFocus={() => results.length > 0 && setOpen(true)}
-            placeholder="공연명, 배우 검색"
+            placeholder="공연 검색..."
             className="flex-1 bg-transparent text-sm text-gray-800 placeholder-gray-400 outline-none min-w-0"
           />
         </div>
       </form>
 
       {open && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-card-lg">
+        <div className="absolute top-full mt-1.5 left-0 right-0 bg-white rounded-xl border border-gray-100 shadow-lg z-50 overflow-hidden">
           {results.map((show, idx) => (
             <button
               key={show.id}

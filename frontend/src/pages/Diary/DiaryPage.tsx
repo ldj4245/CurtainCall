@@ -47,14 +47,11 @@ export default function DiaryPage() {
   const daysSinceRecent = getDaysSinceWatched(recentEntry)
 
   return (
-    <div className="app-page">
-      <div className="mx-auto max-w-5xl px-4 py-6 md:py-10">
-      <div className="mb-6 rounded-[32px] border border-gray-100 bg-white p-5 md:p-7">
-        <div className="flex items-start justify-between gap-3">
+    <div className="mx-auto max-w-5xl px-4 py-6">
+      <div className="mb-6 flex items-start justify-between gap-3">
         <div>
-          <p className="section-eyebrow">내 기록</p>
-          <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-gray-950">관극 다이어리</h1>
-          <p className="section-copy">
+          <h1 className="text-2xl font-bold text-gray-900">관극 다이어리</h1>
+          <p className="mt-1 text-sm text-gray-500">
             최근 기록과 통계를 한곳에서 보고, 새 기록을 바로 남길 수 있습니다.
           </p>
         </div>
@@ -80,7 +77,6 @@ export default function DiaryPage() {
             <span>새 기록</span>
           </button>
         </div>
-      </div>
       </div>
 
       {reminder ? (
@@ -108,7 +104,7 @@ export default function DiaryPage() {
         />
       </div>
 
-      <div className="mb-5 flex gap-0.5 rounded-2xl bg-warm-100 p-1">
+      <div className="mb-5 flex gap-0.5 rounded-xl bg-warm-100 p-1">
         {[
           { key: 'list', label: '목록', icon: <List size={14} /> },
           { key: 'calendar', label: '캘린더', icon: <CalendarDays size={14} /> },
@@ -210,7 +206,6 @@ export default function DiaryPage() {
           onClose={() => setShowShareCard(false)}
         />
       ) : null}
-      </div>
     </div>
   )
 }
