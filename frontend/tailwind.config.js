@@ -34,6 +34,7 @@ export default {
           50: '#faf9f7',
           100: '#f5f3f0',
           200: '#ece8e3',
+          300: '#ded6cd',
         },
       },
       fontFamily: {
@@ -41,11 +42,13 @@ export default {
       },
       borderRadius: {
         card: '16px',
+        app: '28px',
       },
       boxShadow: {
         'card-sm': '0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06)',
         'card-md': '0 4px 12px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)',
         'card-lg': '0 8px 24px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04)',
+        'app-soft': '0 16px 40px rgba(85, 27, 53, 0.08)',
       },
       keyframes: {
         'fade-in': {

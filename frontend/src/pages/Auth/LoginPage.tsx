@@ -49,17 +49,12 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex bg-white font-sans">
+    <div className="flex min-h-screen bg-warm-50 font-sans">
       {/* Left Side: Brand Imagery (Hidden on mobile) */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-brand">
+      <div className="relative hidden overflow-hidden bg-brand-900 lg:flex lg:w-1/2">
         {/* Abstract/Dark sophisticated background for a premium feel */}
-        <div className="absolute inset-0 bg-gradient-to-br from-brand-dark via-brand to-rose-900 opacity-90 mix-blend-multiply" />
-        <img
-          src="https://images.pexels.com/photos/713149/pexels-photo-713149.jpeg?auto=compress&cs=tinysrgb&w=1920"
-          alt="Theater Stage"
-          className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-40"
-        />
-        <div className="relative z-10 w-full p-16 flex flex-col justify-between">
+        <div className="absolute inset-8 rounded-[36px] border border-white/10 bg-white/5" />
+        <div className="relative z-10 flex w-full flex-col justify-between p-16">
           <div>
             <Link to="/" className="inline-flex items-center gap-2 text-white/80 hover:text-white transition group">
               <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
@@ -67,31 +62,31 @@ export default function LoginPage() {
             </Link>
           </div>
           <div className="mb-24">
-            <h1 className="text-5xl font-bold text-white mb-6 leading-tight tracking-tight">
-              무대의 감동을<br />나눌 시간입니다.
+            <h1 className="mb-6 text-5xl font-extrabold leading-tight tracking-tight text-white">
+              기록은<br />로그인 후 이어집니다.
             </h1>
-            <p className="text-lg text-white/70 font-light max-w-md leading-relaxed">
-              CurtainCall에 오신 것을 환영합니다. 당신의 첫 번째 관극 기록부터 맞춤형 추천까지, 모든 여정이 여기서 시작됩니다.
+            <p className="max-w-md text-lg leading-relaxed text-white/70">
+              최근 기록과 찜한 공연, 동행 채팅을 이어서 볼 수 있습니다.
             </p>
           </div>
         </div>
       </div>
 
       {/* Right Side: Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-12 lg:p-16 relative bg-white/50 xl:bg-white inset-shadow-sm">
+      <div className="relative flex w-full items-center justify-center p-8 sm:p-12 lg:w-1/2 lg:p-16">
         {/* Mobile only back button */}
         <Link to="/" className="lg:hidden absolute top-8 left-8 text-gray-500 hover:text-gray-900">
           <ArrowLeft size={24} />
         </Link>
 
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-md rounded-[32px] border border-gray-100 bg-white p-6 shadow-card-md sm:p-8">
           {/* Logo / Header */}
           <div className="mb-10 lg:mb-12 text-center lg:text-left">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-brand text-white mb-6 shadow-lg shadow-brand/30">
+            <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-brand text-white">
               <Ticket size={22} />
             </div>
-            <h2 className="text-3xl font-bold text-gray-900 tracking-tight">다시 오셨군요!</h2>
-            <p className="mt-2 text-gray-500 text-sm">계정에 로그인하고 나만의 기록을 남겨보세요.</p>
+            <h2 className="text-3xl font-extrabold tracking-tight text-gray-950">로그인</h2>
+            <p className="mt-2 text-gray-500 text-sm">저장해 둔 공연과 기록을 이어서 봅니다.</p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
@@ -131,7 +126,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full mt-2 py-4 bg-gray-900 hover:bg-gray-800 text-white rounded-xl font-semibold shadow-xl shadow-gray-900/10 transition-all hover:-translate-y-0.5 disabled:opacity-70 disabled:hover:translate-y-0"
+              className="btn-primary mt-2 w-full py-4 disabled:opacity-70"
             >
               {isLoading ? '로그인 중...' : '이메일로 로그인'}
             </button>
@@ -161,7 +156,7 @@ export default function LoginPage() {
 
           <p className="mt-10 text-center text-sm text-gray-500">
             아직 계정이 없으신가요?{' '}
-            <Link to="/signup" className="font-bold text-brand hover:text-brand-dark hover:underline underline-offset-4 transition-colors">
+            <Link to="/signup" className="font-bold text-brand hover:text-brand-700 hover:underline underline-offset-4 transition-colors">
               회원가입하기
             </Link>
           </p>

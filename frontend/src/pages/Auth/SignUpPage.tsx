@@ -53,17 +53,12 @@ export default function SignUpPage() {
     }
 
     return (
-        <div className="min-h-screen flex bg-white font-sans">
+        <div className="flex min-h-screen bg-warm-50 font-sans">
             {/* Left Side: Brand Imagery (Hidden on mobile) */}
-            <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-brand">
+            <div className="relative hidden overflow-hidden bg-brand-900 lg:flex lg:w-1/2">
                 {/* Abstract/Dark sophisticated background for a premium feel */}
-                <div className="absolute inset-0 bg-gradient-to-br from-brand-dark via-brand to-rose-900 opacity-90 mix-blend-multiply" />
-                <img
-                    src="https://images.pexels.com/photos/1105666/pexels-photo-1105666.jpeg?auto=compress&cs=tinysrgb&w=1920"
-                    alt="Theater Seats"
-                    className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-40"
-                />
-                <div className="relative z-10 w-full p-16 flex flex-col justify-between">
+                <div className="absolute inset-8 rounded-[36px] border border-white/10 bg-white/5" />
+                <div className="relative z-10 flex w-full flex-col justify-between p-16">
                     <div>
                         <Link to="/" className="inline-flex items-center gap-2 text-white/80 hover:text-white transition group">
                             <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
@@ -71,31 +66,31 @@ export default function SignUpPage() {
                         </Link>
                     </div>
                     <div className="mb-24">
-                        <h1 className="text-5xl font-bold text-white mb-6 leading-tight tracking-tight">
-                            당신만의 무대,<br />지금 시작됩니다.
+                        <h1 className="mb-6 text-5xl font-extrabold leading-tight tracking-tight text-white">
+                            공연 기록,<br />가볍게 시작하세요.
                         </h1>
-                        <p className="text-lg text-white/70 font-light max-w-md leading-relaxed">
-                            수많은 공연의 감동을 선명하게 기록하세요. CurtainCall이 당신의 완벽한 관극 메이트가 되어 드립니다.
+                        <p className="max-w-md text-lg leading-relaxed text-white/70">
+                            공연을 찾고, 관람일과 별점부터 저장할 수 있습니다.
                         </p>
                     </div>
                 </div>
             </div>
 
             {/* Right Side: Signup Form */}
-            <div className="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-12 lg:p-16 relative bg-white/50 xl:bg-white inset-shadow-sm overflow-y-auto min-h-screen">
+            <div className="relative flex min-h-screen w-full items-center justify-center overflow-y-auto p-8 sm:p-12 lg:w-1/2 lg:p-16">
                 {/* Mobile only back button */}
                 <Link to="/" className="lg:hidden absolute top-8 left-8 text-gray-500 hover:text-gray-900">
                     <ArrowLeft size={24} />
                 </Link>
 
-                <div className="w-full max-w-md my-auto">
+                <div className="my-auto w-full max-w-md rounded-[32px] border border-gray-100 bg-white p-6 shadow-card-md sm:p-8">
                     {/* Logo / Header */}
                     <div className="mb-10 text-center lg:text-left">
-                        <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-brand text-white mb-6 shadow-lg shadow-brand/30">
+                        <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-brand text-white">
                             <Ticket size={22} />
                         </div>
-                        <h2 className="text-3xl font-bold text-gray-900 tracking-tight">회원가입</h2>
-                        <p className="mt-2 text-gray-500 text-sm">3분 만에 가입하고 공연 기록을 시작하세요.</p>
+                        <h2 className="text-3xl font-extrabold tracking-tight text-gray-950">회원가입</h2>
+                        <p className="mt-2 text-gray-500 text-sm">이메일로 가입하고 첫 기록을 남겨보세요.</p>
                     </div>
 
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
@@ -179,7 +174,7 @@ export default function SignUpPage() {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full mt-4 py-4 bg-gray-900 hover:bg-gray-800 text-white rounded-xl font-semibold shadow-xl shadow-gray-900/10 transition-all hover:-translate-y-0.5 disabled:opacity-70 disabled:hover:translate-y-0"
+                            className="btn-primary mt-4 w-full py-4 disabled:opacity-70"
                         >
                             {isLoading ? '가입 처리 중...' : '회원가입하기'}
                         </button>
@@ -187,7 +182,7 @@ export default function SignUpPage() {
 
                     <p className="mt-10 text-center text-sm text-gray-500">
                         이미 계정이 있으신가요?{' '}
-                        <Link to="/login" className="font-bold text-brand hover:text-brand-dark hover:underline underline-offset-4 transition-colors">
+                        <Link to="/login" className="font-bold text-brand hover:text-brand-700 hover:underline underline-offset-4 transition-colors">
                             로그인하기
                         </Link>
                     </p>

@@ -1,7 +1,19 @@
 import { useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { BookOpen, CalendarDays, ChevronRight, MapPin, PenSquare, Star, Users } from 'lucide-react'
+import {
+  BookOpen,
+  CalendarDays,
+  ChevronRight,
+  Flame,
+  MapPin,
+  PenSquare,
+  Search,
+  Star,
+  Ticket,
+  Trophy,
+  Users,
+} from 'lucide-react'
 import { diaryApi } from '../../api/diary'
 import { showsApi } from '../../api/shows'
 import DiaryFormModal from '../../components/diary/DiaryFormModal'
@@ -43,29 +55,31 @@ export default function HomePage() {
   const featuredShow = rankedShows.find((show) => show.posterUrl) ?? rankedShows[0]
 
   return (
-    <div className="min-h-screen bg-warm-50/50">
-      <section className="border-b border-gray-100 bg-white">
-        <div className="mx-auto max-w-6xl px-4 py-8 md:py-12">
-          <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+    <div className="app-page">
+      <section className="bg-white">
+        <div className="app-container py-5 md:py-8">
+          <div className="mb-5 flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm font-semibold text-brand">
-                {isAuthenticated ? `${user?.nickname ?? '사용자'}님의 관극 홈` : '공연을 찾고 기록하는 곳'}
+              <p className="section-eyebrow">
+                {isAuthenticated ? `${user?.nickname ?? '사용자'}님의 기록 홈` : '이번 주 공연'}
               </p>
-              <h1 className="mt-2 text-3xl font-bold tracking-tight text-gray-900 md:text-5xl">
-                오늘 볼 공연을 고르고,
-                <br className="hidden md:block" /> 본 공연은 남겨두세요.
+              <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-gray-950 md:text-4xl">
+                지금 볼 만한 공연부터 확인하세요.
               </h1>
             </div>
-            <Link
-              to="/shows"
-              className="inline-flex items-center gap-1 text-sm font-semibold text-gray-500 transition-colors hover:text-brand"
-            >
-              공연 전체 보기 <ChevronRight size={16} />
+            <Link to="/shows" className="hidden items-center gap-1 text-sm font-bold text-gray-500 hover:text-brand sm:flex">
+              전체 보기 <ChevronRight size={16} />
             </Link>
           </div>
 
-          <div className="grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_380px]">
-            <FeaturedShowCard show={featuredShow} />
+          <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+            <FeaturedShowCard show={featuredShow} rankedShows={rankedShows.slice(0, 3)} />
+            <RankingPanel shows={rankedShows.slice(0, 7)} />
+          </div>
+
+          <QuickMenu />
+
+          <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
             <QuickRecordCard
               isAuthenticated={isAuthenticated}
               recentEntry={recentEntry}
@@ -79,36 +93,36 @@ export default function HomePage() {
                 setShowDiaryForm(true)
               }}
             />
+
+            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+              <MetricCard label="이번 달 관극" value={`${thisMonthCount}회`} />
+              <MetricCard label="총 기록 수" value={`${totalCount}개`} />
+              <MetricCard label="평균 별점" value={averageRating} />
+            </div>
           </div>
 
           {reminder ? (
-            <div className="mt-5 rounded-2xl border border-brand-100 bg-brand-50 px-4 py-4">
-              <p className="text-sm font-semibold text-gray-900">{reminder.title}</p>
+            <div className="mt-4 rounded-[24px] border border-brand-100 bg-brand-50 px-4 py-4">
+              <p className="text-sm font-bold text-gray-950">{reminder.title}</p>
               <p className="mt-1 text-sm text-gray-600">{reminder.description}</p>
             </div>
           ) : null}
-
-          <div className="mt-5 grid gap-3 sm:grid-cols-3">
-            <MetricCard label="이번 달 관극" value={`${thisMonthCount}회`} />
-            <MetricCard label="총 기록 수" value={`${totalCount}개`} />
-            <MetricCard label="평균 별점" value={averageRating} />
-          </div>
         </div>
       </section>
 
-      <section className="px-4 py-10 md:py-12">
+      <section className="px-4 py-8 md:py-12">
         <div className="mx-auto max-w-6xl space-y-12">
           <CuratedShowSection
             eyebrow="KOPIS 기준"
             title="KOPIS 인기 공연"
-            description="박스오피스 흐름을 기준으로 지금 많이 찾는 공연입니다."
+            description="예매 흐름이 좋은 공연을 모았습니다."
             shows={homeSections?.popular ?? []}
             isLoading={isHomeSectionsLoading}
           />
           <CuratedShowSection
             eyebrow="마감 임박"
             title="곧 끝나는 공연"
-            description="놓치기 전에 확인해볼 만한 공연입니다."
+            description="종료 전에 확인할 공연입니다."
             shows={homeSections?.endingSoon ?? []}
             isLoading={isHomeSectionsLoading}
             badge={(show) => getDaysLeftLabel(show.endDate)}
@@ -116,14 +130,14 @@ export default function HomePage() {
           <CuratedShowSection
             eyebrow="새로 시작"
             title="이번 달 개막"
-            description="이번 달 새롭게 막을 올리는 공연입니다."
+            description="이번 달 새로 시작하는 공연입니다."
             shows={homeSections?.openingThisMonth ?? []}
             isLoading={isHomeSectionsLoading}
           />
           <CuratedShowSection
             eyebrow="CurtainCall 기록"
             title="기록 많은 공연"
-            description="사용자들이 관극 기록을 많이 남긴 공연입니다."
+            description="기록이 많이 쌓인 공연입니다."
             shows={homeSections?.mostRecorded ?? []}
             isLoading={isHomeSectionsLoading}
             badge={(show) => (show.diaryCount ? `기록 ${show.diaryCount}개` : undefined)}
@@ -148,12 +162,12 @@ export default function HomePage() {
   )
 }
 
-function FeaturedShowCard({ show }: { show?: Show }) {
+function FeaturedShowCard({ show, rankedShows }: { show?: Show; rankedShows: Show[] }) {
   if (!show) {
     return (
       <div className="rounded-[28px] border border-gray-100 bg-warm-50 p-6">
-        <p className="text-sm font-semibold text-brand">오늘의 공연</p>
-        <h2 className="mt-3 text-2xl font-bold text-gray-900">공연 데이터를 불러오는 중입니다.</h2>
+        <p className="section-eyebrow">추천 공연</p>
+        <h2 className="mt-3 text-2xl font-bold text-gray-900">공연을 불러오는 중입니다.</h2>
       </div>
     )
   }
@@ -161,9 +175,9 @@ function FeaturedShowCard({ show }: { show?: Show }) {
   return (
     <Link
       to={`/shows/${show.id}`}
-      className="group grid overflow-hidden rounded-[28px] border border-gray-100 bg-gray-950 text-white shadow-card-md transition-all duration-300 hover:-translate-y-0.5 hover:shadow-card-md md:grid-cols-[260px_minmax(0,1fr)]"
+      className="group relative grid min-h-[360px] overflow-hidden rounded-[32px] bg-gray-950 text-white shadow-app-soft transition-all duration-300 hover:-translate-y-0.5 md:grid-cols-[minmax(0,1fr)_230px]"
     >
-      <div className="relative bg-gray-900">
+      <div className="relative order-2 h-full bg-gray-900 md:order-none">
         {show.posterUrl ? (
           <img
             src={show.posterUrl}
@@ -175,18 +189,17 @@ function FeaturedShowCard({ show }: { show?: Show }) {
             포스터 준비 중
           </div>
         )}
-        <div className="absolute left-4 top-4 rounded-full bg-white/95 px-3 py-1 text-xs font-bold text-gray-900">
-          오늘 많이 찾는 공연
-        </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-gray-950/50 to-transparent md:hidden" />
       </div>
 
       <div className="flex min-w-0 flex-col justify-between p-6 md:p-8">
         <div>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/60">추천 공연</p>
           <div className="flex flex-wrap gap-2">
             <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white/80">{show.statusDisplayName}</span>
             <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white/80">{show.genreDisplayName}</span>
           </div>
-          <h2 className="mt-5 line-clamp-3 text-3xl font-bold leading-tight tracking-tight md:text-4xl">{show.title}</h2>
+          <h2 className="mt-5 line-clamp-3 text-3xl font-extrabold leading-tight tracking-tight md:text-5xl">{show.title}</h2>
 
           <div className="mt-5 space-y-2 text-sm text-white/70">
             {show.theaterName ? (
@@ -206,6 +219,16 @@ function FeaturedShowCard({ show }: { show?: Show }) {
           </div>
         </div>
 
+        {rankedShows.length > 1 ? (
+          <div className="mt-8 hidden gap-2 md:flex">
+            {rankedShows.map((rankedShow, index) => (
+              <span key={rankedShow.id} className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-white/70">
+                {index + 1}. {rankedShow.title}
+              </span>
+            ))}
+          </div>
+        ) : null}
+
         <div className="mt-8 flex items-center justify-between border-t border-white/10 pt-5">
           <div className="flex items-center gap-2 text-sm text-white/70">
             <Star size={15} className="fill-gold text-gold" />
@@ -217,6 +240,67 @@ function FeaturedShowCard({ show }: { show?: Show }) {
         </div>
       </div>
     </Link>
+  )
+}
+
+function RankingPanel({ shows }: { shows: Show[] }) {
+  return (
+    <aside className="rounded-[32px] border border-gray-100 bg-white p-5">
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <p className="section-eyebrow">인기 순위</p>
+          <h2 className="text-xl font-extrabold text-gray-950">지금 많이 찾는 공연</h2>
+        </div>
+        <Trophy className="h-5 w-5 text-gold" />
+      </div>
+
+      <div className="space-y-1">
+        {shows.length > 0 ? (
+          shows.map((show, index) => (
+            <Link
+              key={show.id}
+              to={`/shows/${show.id}`}
+              className="flex items-center gap-3 rounded-2xl px-2 py-2 transition-colors hover:bg-warm-50"
+            >
+              <span className="w-5 text-center text-sm font-extrabold text-brand">{index + 1}</span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-bold text-gray-950">{show.title}</p>
+                <p className="truncate text-xs text-gray-400">{show.theaterName || show.genreDisplayName}</p>
+              </div>
+              <ChevronRight size={15} className="text-gray-300" />
+            </Link>
+          ))
+        ) : (
+          <p className="rounded-2xl bg-warm-50 px-4 py-8 text-center text-sm text-gray-500">
+            공연을 불러오는 중입니다.
+          </p>
+        )}
+      </div>
+    </aside>
+  )
+}
+
+function QuickMenu() {
+  const menus = [
+    { to: '/shows?status=ONGOING', label: '공연 중', icon: <Ticket size={22} /> },
+    { to: '/shows', label: '인기 공연', icon: <Flame size={22} /> },
+    { to: '/shows?status=UPCOMING', label: '개막 예정', icon: <CalendarDays size={22} /> },
+    { to: '/shows', label: '공연 검색', icon: <Search size={22} /> },
+    { to: '/diary', label: '내 기록', icon: <BookOpen size={22} /> },
+    { to: '/chat', label: '동행', icon: <Users size={22} /> },
+  ]
+
+  return (
+    <div className="scrollbar-none mt-6 overflow-x-auto">
+      <div className="flex min-w-max gap-2 sm:grid sm:min-w-0 sm:grid-cols-6">
+        {menus.map((menu) => (
+          <Link key={menu.label} to={menu.to} className="quick-menu-item group">
+            <span className="quick-menu-icon">{menu.icon}</span>
+            <span>{menu.label}</span>
+          </Link>
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -237,10 +321,10 @@ function QuickRecordCard({
     <div className="rounded-[28px] border border-gray-100 bg-white p-5 shadow-card-sm md:p-6">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold text-brand">빠른 기록</p>
-          <h2 className="mt-1 text-xl font-bold text-gray-900">관극 후 바로 남기기</h2>
+          <p className="section-eyebrow">내 기록</p>
+          <h2 className="mt-1 text-xl font-extrabold text-gray-950">오늘 기록하기</h2>
         </div>
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-50 text-brand">
+        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand text-white">
           <PenSquare size={20} />
         </div>
       </div>
@@ -250,7 +334,7 @@ function QuickRecordCard({
           {recentEntry ? (
             <div className="rounded-2xl border border-gray-100 bg-warm-50 p-4">
               <p className="text-xs font-semibold text-gray-400">최근 기록</p>
-              <p className="mt-2 line-clamp-2 font-semibold text-gray-900">{recentEntry.showTitle}</p>
+              <p className="mt-2 line-clamp-2 font-bold text-gray-950">{recentEntry.showTitle}</p>
               <div className="mt-3 flex items-center gap-2">
                 <StarRating value={recentEntry.rating} readonly size="sm" />
                 <span className="text-sm font-semibold text-gray-700">{recentEntry.rating.toFixed(1)}</span>
@@ -267,7 +351,7 @@ function QuickRecordCard({
 
           <div className="mt-4 rounded-2xl border border-gray-100 px-4 py-3">
             <p className="text-xs text-gray-400">가장 많이 본 작품</p>
-            <p className="mt-1 truncate text-sm font-semibold text-gray-900">{topShowTitle}</p>
+            <p className="mt-1 truncate text-sm font-bold text-gray-950">{topShowTitle}</p>
           </div>
 
           <div className="mt-4 grid gap-2">
@@ -324,11 +408,11 @@ function CuratedShowSection({
 }) {
   return (
     <section>
-      <div className="mb-5 flex items-end justify-between gap-4">
+      <div className="section-heading mb-5">
         <div>
-          <p className="text-sm font-semibold text-brand">{eyebrow}</p>
-          <h2 className="text-2xl font-bold tracking-tight text-gray-900">{title}</h2>
-          <p className="mt-1 text-sm text-gray-500">{description}</p>
+          <p className="section-eyebrow">{eyebrow}</p>
+          <h2 className="text-2xl font-extrabold tracking-tight text-gray-950">{title}</h2>
+          <p className="section-copy">{description}</p>
         </div>
         <Link to="/shows" className="hidden items-center gap-1 text-sm font-semibold text-gray-400 hover:text-brand sm:flex">
           전체 보기 <ChevronRight size={16} />
@@ -336,9 +420,9 @@ function CuratedShowSection({
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4">
+        <div className="horizontal-shelf">
           {Array.from({ length: 8 }).map((_, index) => (
-            <div key={index} className="animate-pulse">
+            <div key={index} className="shelf-item animate-pulse">
               <div className="aspect-[3/4] rounded-2xl bg-warm-100" />
               <div className="mt-3 space-y-2">
                 <div className="h-4 w-3/4 rounded bg-warm-100" />
@@ -348,13 +432,13 @@ function CuratedShowSection({
           ))}
         </div>
       ) : shows.length > 0 ? (
-        <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4">
+        <div className="horizontal-shelf">
           {shows.map((show) => {
             const badgeText = badge?.(show)
             return (
-              <div key={show.id} className="relative">
+              <div key={show.id} className="shelf-item relative">
                 {badgeText ? (
-                  <div className="absolute left-3 top-3 z-10 rounded-lg bg-brand px-2.5 py-1 text-xs font-bold text-white shadow-sm">
+                  <div className="absolute left-3 top-3 z-10 rounded-xl bg-brand px-2.5 py-1 text-xs font-bold text-white shadow-sm">
                     {badgeText}
                   </div>
                 ) : null}
@@ -374,9 +458,9 @@ function CuratedShowSection({
 
 function MetricCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white px-4 py-4">
+    <div className="rounded-[24px] border border-gray-100 bg-white px-4 py-4">
       <p className="text-xs text-gray-400">{label}</p>
-      <p className="mt-2 text-lg font-semibold text-gray-900">{value}</p>
+      <p className="mt-2 text-lg font-extrabold text-gray-950">{value}</p>
     </div>
   )
 }
