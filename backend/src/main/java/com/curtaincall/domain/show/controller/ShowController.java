@@ -37,7 +37,7 @@ public class ShowController {
     }
 
     @Operation(summary = "공연 상세 조회")
-    @GetMapping("/{id}")
+    @GetMapping("/{id:[0-9]+}")
     public ResponseEntity<ShowResponse> getShow(@PathVariable Long id) {
         return ResponseEntity.ok(showService.getShow(id));
     }
