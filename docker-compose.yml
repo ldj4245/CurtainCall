@@ -5,11 +5,13 @@ services:
     image: mysql:8.0
     container_name: curtaincall-mysql
     environment:
-      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: curtaincall
-      MYSQL_USER: curtaincall
-      MYSQL_PASSWORD: curtaincall123
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       MYSQL_ROOT_HOST: '%'
+    ports:
+      - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql

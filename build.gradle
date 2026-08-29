@@ -1,0 +1,4 @@
+// Root Gradle build file for Heroku deployment
+tasks.register('stage') {
+    dependsOn ':backend:bootJar'
+}

@@ -39,11 +39,13 @@ public class ImageUploadService {
             @Value("${storage.do-spaces.cdn-url}") String cdnUrl) {
         this.bucket = bucket;
         this.cdnUrl = cdnUrl;
+        String validAccessKey = (accessKey != null && !accessKey.isBlank()) ? accessKey : "dummy-access-key";
+        String validSecretKey = (secretKey != null && !secretKey.isBlank()) ? secretKey : "dummy-secret-key";
         this.s3Client = S3Client.builder()
                 .endpointOverride(URI.create(endpoint))
-                .region(Region.of(region))
+                .region(Region.of(region != null && !region.isBlank() ? region : "sgp1"))
                 .credentialsProvider(StaticCredentialsProvider.create(
-                        AwsBasicCredentials.create(accessKey, secretKey)))
+                        AwsBasicCredentials.create(validAccessKey, validSecretKey)))
                 .build();
     }
 

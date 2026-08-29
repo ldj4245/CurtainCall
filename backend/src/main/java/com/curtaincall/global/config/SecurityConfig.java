@@ -47,16 +47,18 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/", "/index.html", "/manifest.json", "/curtain.svg", "/favicon.ico", "/assets/**", "/*.png", "/*.svg", "/*.ico", "/error").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/shows", "/shows/**", "/diary", "/diary/**", "/mypage", "/mypage/**", "/chat", "/chat/**", "/login", "/signup").permitAll()
                         .requestMatchers("/swagger-ui/**", "/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/sync/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/shows/**", "/api/theaters/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/shows/{showId}/reviews/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/shows/**", "/api/theaters/**", "/api/casting/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/shows/*/reviews/**", "/api/shows/*/casting/**", "/api/shows/*/diary-snippets/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/shows/*/casting/refresh").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/companions/recent").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/shows/{showId}/companions").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/shows/*/companions").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/sync/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> {
