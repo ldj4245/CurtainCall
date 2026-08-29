@@ -71,6 +71,10 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
+bootJar {
+    archiveFileName = 'app.jar'
+}
+
 // QueryDSL Q클래스 생성 경로
 def querydslDir = "$buildDir/generated/querydsl"
 
