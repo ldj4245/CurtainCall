@@ -1,107 +1,31 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Users, User, RefreshCw } from 'lucide-react'
+import { RefreshCw, User, Users } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { castingApi, type CastingRole } from '../../api/casting'
 
-interface Props {
-    showId: number
-}
+interface Props { showId: number }
 
 export default function CastingBoard({ showId }: Props) {
-    const queryClient = useQueryClient()
-    const [isRefreshing, setIsRefreshing] = useState(false)
-    const { data: casting, isLoading } = useQuery({
-        queryKey: ['casting', showId],
-        queryFn: () => castingApi.getByShow(showId),
-    })
+  const queryClient = useQueryClient()
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const { data: casting, isLoading } = useQuery({ queryKey: ['casting', showId], queryFn: () => castingApi.getByShow(showId) })
+  const refresh = async () => {
+    setIsRefreshing(true)
+    try { await castingApi.refresh(showId); await queryClient.invalidateQueries({ queryKey: ['casting', showId] }) }
+    catch (error) { console.error('캐스팅 새로고침 실패', error) }
+    finally { setIsRefreshing(false) }
+  }
 
-    const handleRefresh = async () => {
-        setIsRefreshing(true)
-        try {
-            await castingApi.refresh(showId)
-            await queryClient.invalidateQueries({ queryKey: ['casting', showId] })
-        } catch (e) {
-            console.error('캐스팅 새로고침 실패', e)
-        } finally {
-            setIsRefreshing(false)
-        }
-    }
+  if (isLoading) return <div className="surface animate-pulse p-5"><div className="h-4 w-24 bg-[#eef0f3]" /><div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3">{Array.from({ length: 6 }).map((_, index) => <div key={index} className="h-12 bg-[#eef0f3]" />)}</div></div>
+  if (!casting?.length) return null
 
-    if (isLoading) {
-        return (
-            <div className="card p-6 animate-pulse space-y-4">
-                <div className="h-6 bg-warm-100 rounded w-1/4" />
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {Array.from({ length: 6 }).map((_, i) => (
-                        <div key={i} className="h-20 bg-warm-100 rounded-xl" />
-                    ))}
-                </div>
-            </div>
-        )
-    }
-
-    if (!casting || casting.length === 0) return null
-
-    return (
-        <div className="card p-6 md:p-8">
-            <div className="flex items-center justify-between mb-5">
-                <h2 className="section-title flex items-center gap-2 mb-0">
-                    <Users size={20} className="text-brand" />
-                    배역별 출연진
-                    <span className="text-gray-400 text-base font-normal">
-                        ({casting.reduce((acc: number, r: CastingRole) => acc + r.actors.length, 0)}명)
-                    </span>
-                </h2>
-                <button
-                    onClick={handleRefresh}
-                    disabled={isRefreshing}
-                    className="text-xs text-gray-400 hover:text-brand transition-colors flex items-center gap-1"
-                    title="캐스팅 정보 새로고침"
-                >
-                    <RefreshCw size={12} className={isRefreshing ? 'animate-spin' : ''} />
-                    새로고침
-                </button>
-            </div>
-
-            <div className="space-y-5">
-                {casting.map((role: CastingRole, idx: number) => (
-                    <div key={idx}>
-                        <p className="text-sm font-semibold text-gray-500 mb-2.5 flex items-center gap-1.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-brand inline-block" />
-                            {role.roleName}
-                        </p>
-                        <div className="flex flex-wrap gap-2.5">
-                            {role.actors.map((actor, aIdx) => (
-                                <Link
-                                    key={aIdx}
-                                    to={`/shows?keyword=${encodeURIComponent(actor.name)}`}
-                                    className="flex items-center gap-2.5 rounded-xl border border-gray-100 bg-warm-50 
-                             px-3.5 py-2.5 hover:border-brand-200 hover:bg-brand-50 transition-all"
-                                    title={`${actor.name} 출연 공연 보기`}
-                                >
-                                    {actor.imageUrl ? (
-                                        <img
-                                            src={actor.imageUrl}
-                                            alt={actor.name}
-                                            className="w-9 h-9 rounded-full object-cover border border-gray-200"
-                                        />
-                                    ) : (
-                                        <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-gray-400">
-                                            <User size={16} />
-                                        </div>
-                                    )}
-                                    <span className="text-sm font-medium text-gray-800">{actor.name}</span>
-                                </Link>
-                            ))}
-                        </div>
-                    </div>
-                ))}
-            </div>
-
-            <p className="mt-4 text-xs text-gray-300 text-right">
-                출처: PlayDB
-            </p>
-        </div>
-    )
+  const totalActors = casting.reduce((total: number, role: CastingRole) => total + role.actors.length, 0)
+  return (
+    <section className="surface p-5 sm:p-6">
+      <header className="flex items-end justify-between border-b border-[#e5e8ee] pb-4"><div><p className="page-kicker">Casting</p><h2 className="mt-1 flex items-center gap-2 text-[19px] font-semibold tracking-[-0.04em] text-[#172033]"><Users size={17} /> 배역별 출연진 <span className="text-[13px] font-normal text-[#98a2b3]">{totalActors}명</span></h2></div><button onClick={refresh} disabled={isRefreshing} className="btn-quiet text-[12px]"><RefreshCw size={13} className={isRefreshing ? 'animate-spin' : ''} /> 새로고침</button></header>
+      <div className="divide-y divide-[#e5e8ee]">{casting.map((role: CastingRole, roleIndex) => <div key={`${role.roleName}-${roleIndex}`} className="py-5"><p className="meta-label mb-3">{role.roleName}</p><div className="flex flex-wrap gap-2">{role.actors.map((actor, actorIndex) => <Link key={`${actor.name}-${actorIndex}`} to={`/shows?keyword=${encodeURIComponent(actor.name)}`} className="flex items-center gap-2 border border-[#e5e8ee] bg-[#fafafb] px-2.5 py-2 transition hover:border-[#a9b1bf] hover:bg-white"><span className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-[#eef0f3] text-[#98a2b3]">{actor.imageUrl ? <img src={actor.imageUrl} alt={actor.name} className="h-full w-full object-cover" /> : <User size={13} />}</span><span className="text-[12px] font-semibold text-[#172033]">{actor.name}</span></Link>)}</div></div>)}</div>
+      <p className="mt-1 text-right text-[11px] text-[#98a2b3]">출처: PlayDB</p>
+    </section>
+  )
 }

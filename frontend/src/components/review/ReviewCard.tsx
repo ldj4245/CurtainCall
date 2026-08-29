@@ -53,14 +53,14 @@ function CommentItem({
   return (
     <div>
       <div className="flex gap-2 group">
-        <div className="w-7 h-7 rounded-full bg-warm-200 overflow-hidden shrink-0 mt-0.5">
+        <div className="w-7 h-7 rounded-full bg-gray-100 overflow-hidden shrink-0 mt-0.5 border border-gray-200">
           {comment.userProfileImage && (
             <img src={comment.userProfileImage} alt="" className="w-full h-full object-cover" />
           )}
         </div>
-        <div className="flex-1 bg-warm-50 rounded-xl px-3 py-2">
+        <div className="flex-1 bg-gray-50 rounded-md px-3 py-2 border border-gray-200">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-gray-700">{comment.userNickname}</span>
+            <span className="text-[12px] font-semibold text-gray-700">{comment.userNickname}</span>
             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
               <button
                 onClick={() => {
@@ -70,7 +70,7 @@ function CommentItem({
                   }
                   setShowReplyInput(!showReplyInput)
                 }}
-                className="text-xs text-gray-400 hover:text-brand transition-colors px-1"
+                className="text-[11px] text-gray-400 hover:text-gray-900 transition-colors px-1"
               >
                 답글
               </button>
@@ -85,7 +85,7 @@ function CommentItem({
               )}
             </div>
           </div>
-          <p className="text-sm text-gray-600 mt-0.5">{comment.content}</p>
+          <p className="text-[13px] text-gray-600 mt-0.5">{comment.content}</p>
         </div>
       </div>
 
@@ -97,7 +97,7 @@ function CommentItem({
             value={replyText}
             onChange={(e) => setReplyText(e.target.value)}
             placeholder={`${comment.userNickname}에게 답글...`}
-            className="flex-1 input-field text-sm py-1.5"
+            className="h-8 text-[13px] bg-gray-50 border border-gray-200 rounded-md px-2 focus:outline-none focus:border-gray-400 flex-1"
             autoFocus
             onKeyDown={(e) => {
               if (e.key === 'Enter' && replyText.trim()) replyMutation.mutate()
@@ -106,7 +106,7 @@ function CommentItem({
           />
           <button
             onClick={() => { if (replyText.trim()) replyMutation.mutate() }}
-            className="btn-primary text-xs px-3 py-1.5 shrink-0"
+            className="bg-gray-900 text-white rounded-md text-[12px] font-semibold h-8 px-3 inline-flex items-center justify-center shrink-0"
           >
             등록
           </button>
@@ -118,14 +118,14 @@ function CommentItem({
           {comment.replies.map((reply) => (
             <div key={reply.id} className="flex gap-2 group">
               <CornerDownRight size={14} className="text-gray-300 mt-2 shrink-0" />
-              <div className="w-6 h-6 rounded-full bg-warm-100 overflow-hidden shrink-0 mt-0.5">
+              <div className="w-6 h-6 rounded-full bg-gray-100 overflow-hidden shrink-0 mt-0.5 border border-gray-200">
                 {reply.userProfileImage && (
                   <img src={reply.userProfileImage} alt="" className="w-full h-full object-cover" />
                 )}
               </div>
-              <div className="flex-1 bg-warm-50 rounded-xl px-3 py-2">
+              <div className="flex-1 bg-gray-50 rounded-md px-3 py-2 border border-gray-200">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-gray-700">{reply.userNickname}</span>
+                  <span className="text-[11px] font-semibold text-gray-700">{reply.userNickname}</span>
                   {currentUserId === reply.userId && (
                     <button
                       onClick={() => setDeleteTargetId(reply.id)}
@@ -136,7 +136,7 @@ function CommentItem({
                     </button>
                   )}
                 </div>
-                <p className="text-sm text-gray-600 mt-0.5">{reply.content}</p>
+                <p className="text-[13px] text-gray-600 mt-0.5">{reply.content}</p>
               </div>
             </div>
           ))}
@@ -229,19 +229,19 @@ export default function ReviewCard({ review, onUpdated }: Props) {
   })
 
   return (
-    <div className="card p-5">
+    <div className="border border-gray-200 rounded-md bg-white p-5 shadow-none">
       <div className="flex items-start justify-between gap-2 mb-3">
         <div className="flex items-center gap-2">
           {review.userProfileImage && (
-            <img src={review.userProfileImage} alt={review.userNickname} className="w-8 h-8 rounded-full object-cover" />
+            <img src={review.userProfileImage} alt={review.userNickname} className="w-8 h-8 rounded-full object-cover border border-gray-200" />
           )}
           <div>
-            <span className="text-sm font-medium text-gray-900">{review.userNickname}</span>
-            <p className="text-xs text-gray-400">{review.createdAt?.slice(0, 10)}</p>
+            <span className="text-[13px] font-medium text-gray-900">{review.userNickname}</span>
+            <p className="text-[11px] text-gray-400">{review.createdAt?.slice(0, 10)}</p>
           </div>
         </div>
-        <div className="flex items-center gap-1 text-sm font-bold text-gold">
-          <Star size={13} className="fill-gold" />
+        <div className="flex items-center gap-1 text-[13px] font-bold text-gray-900">
+          <Star size={13} className="text-gray-900" />
           {review.averageScore.toFixed(1)}
         </div>
       </div>
@@ -253,7 +253,7 @@ export default function ReviewCard({ review, onUpdated }: Props) {
           { label: '연출', score: review.directionScore },
           { label: '음향', score: review.soundScore },
         ].map(({ label, score }) => (
-          <div key={label} className="flex items-center gap-1 text-xs text-gray-500">
+          <div key={label} className="flex items-center gap-1 text-[11px] text-gray-500">
             <span>{label}</span>
             <StarRating value={score} readonly size="sm" />
           </div>
@@ -261,15 +261,15 @@ export default function ReviewCard({ review, onUpdated }: Props) {
       </div>
 
       {review.hasSpoiler && !showSpoiler ? (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
-          <div className="flex items-center gap-2 text-amber-700 text-sm">
+        <div className="bg-gray-50 border border-gray-200 rounded-md p-3 mb-3">
+          <div className="flex items-center gap-2 text-gray-700 text-[13px]">
             <AlertTriangle size={14} />
             <span>스포일러가 포함된 리뷰입니다.</span>
             <button onClick={() => setShowSpoiler(true)} className="underline font-medium">보기</button>
           </div>
         </div>
       ) : (
-        <p className="text-sm text-gray-700 leading-relaxed mb-3">{review.content}</p>
+        <p className="text-[13px] text-gray-700 leading-relaxed mb-3">{review.content}</p>
       )}
 
       <div className="flex items-center justify-between">
@@ -282,14 +282,14 @@ export default function ReviewCard({ review, onUpdated }: Props) {
               }
               likeMutation.mutate()
             }}
-            className={`flex items-center gap-1.5 text-sm transition-colors ${review.isLiked ? 'text-brand' : 'text-gray-400 hover:text-brand'}`}
+            className={`flex items-center gap-1.5 text-[12px] transition-colors ${review.isLiked ? 'text-gray-900' : 'text-gray-400 hover:text-gray-900'}`}
           >
-            <Heart size={14} className={review.isLiked ? 'fill-brand' : ''} />
+            <Heart size={14} className={review.isLiked ? 'fill-gray-900' : ''} />
             {review.likeCount}
           </button>
           <button
             onClick={() => setShowComments(!showComments)}
-            className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 transition-colors"
+            className="flex items-center gap-1.5 text-[12px] text-gray-400 hover:text-gray-600 transition-colors"
           >
             <MessageCircle size={14} />
             {review.commentCount}
@@ -310,7 +310,7 @@ export default function ReviewCard({ review, onUpdated }: Props) {
                 setEditContent(review.content)
                 setEditHasSpoiler(review.hasSpoiler)
               }}
-              className="text-gray-300 hover:text-brand transition-colors"
+              className="text-gray-300 hover:text-gray-900 transition-colors"
             >
               <Pencil size={14} />
             </button>
@@ -335,7 +335,7 @@ export default function ReviewCard({ review, onUpdated }: Props) {
               { key: 'soundScore' as const, label: '음향' },
             ].map(({ key, label }) => (
               <div key={key} className="text-center">
-                <p className="text-xs text-gray-500 mb-1">{label}</p>
+                <p className="text-[11px] text-gray-500 mb-1">{label}</p>
                 <StarRating
                   value={editScores[key]}
                   onChange={(v) => setEditScores((s) => ({ ...s, [key]: v }))}
@@ -348,24 +348,24 @@ export default function ReviewCard({ review, onUpdated }: Props) {
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
             rows={3}
-            className="input-field resize-none w-full mb-3"
+            className="min-h-[80px] py-2 text-[13px] bg-gray-50 border border-gray-200 rounded-md px-3 focus:outline-none focus:border-gray-400 w-full resize-none mb-3"
           />
           <div className="flex items-center justify-between">
-            <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+            <label className="flex items-center gap-2 text-[13px] text-gray-600 cursor-pointer">
               <input
                 type="checkbox"
                 checked={editHasSpoiler}
                 onChange={(e) => setEditHasSpoiler(e.target.checked)}
-                className="accent-brand"
+                className="accent-gray-900"
               />
               스포일러 포함
             </label>
             <div className="flex gap-2">
-              <button onClick={() => setIsEditing(false)} className="btn-secondary text-sm px-3 py-1.5">취소</button>
+              <button onClick={() => setIsEditing(false)} className="border border-gray-200 text-gray-600 rounded-md text-[13px] h-9 px-4 bg-white inline-flex items-center justify-center">취소</button>
               <button
                 onClick={() => editMutation.mutate()}
                 disabled={editMutation.isPending || editContent.trim().length < 10}
-                className="btn-primary text-sm px-3 py-1.5"
+                className="bg-gray-900 text-white rounded-md text-[13px] font-semibold h-9 px-4 inline-flex items-center justify-center"
               >
                 {editMutation.isPending ? '수정 중...' : '수정 완료'}
               </button>
@@ -392,20 +392,20 @@ export default function ReviewCard({ review, onUpdated }: Props) {
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
                 placeholder="댓글 달기..."
-                className="input-field text-sm py-2"
+                className="h-9 text-[13px] bg-gray-50 border border-gray-200 rounded-md px-3 focus:outline-none focus:border-gray-400 w-full"
                 onKeyDown={(e) => { if (e.key === 'Enter' && commentText.trim()) commentMutation.mutate() }}
               />
               <button
                 onClick={() => { if (commentText.trim()) commentMutation.mutate() }}
-                className="btn-primary text-sm px-3 py-2 shrink-0"
+                className="bg-gray-900 text-white rounded-md text-[13px] font-semibold h-9 px-4 inline-flex items-center justify-center shrink-0"
               >
                 등록
               </button>
             </div>
           ) : (
-            <div className="rounded-xl border border-gray-100 bg-warm-50 p-3">
-              <p className="text-sm text-gray-600">댓글 작성은 로그인 후 이용할 수 있어요.</p>
-              <button onClick={requireLogin} className="btn-secondary text-sm mt-2">
+            <div className="rounded-md border border-gray-200 bg-gray-50 p-3">
+              <p className="text-[13px] text-gray-600">댓글 작성은 로그인 후 이용할 수 있어요.</p>
+              <button onClick={requireLogin} className="border border-gray-200 text-gray-600 rounded-md text-[12px] h-8 px-3 bg-white inline-flex items-center justify-center mt-2">
                 로그인하고 댓글 쓰기
               </button>
             </div>

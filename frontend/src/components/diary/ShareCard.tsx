@@ -1,7 +1,7 @@
-import { useRef, useState } from 'react'
+import { forwardRef, useRef, useState, type ReactNode } from 'react'
 import { toPng } from 'html-to-image'
-import { X, Download, Share2, Star } from 'lucide-react'
-import type { DiaryStats, DiaryEntry } from '../../types'
+import { Download, Image as ImageIcon, Share2, X } from 'lucide-react'
+import type { DiaryEntry, DiaryStats } from '../../types'
 import toast from 'react-hot-toast'
 
 interface Props {
@@ -10,108 +10,105 @@ interface Props {
   onClose: () => void
 }
 
+type CardType = 'record' | 'month' | 'moment'
+
+const cardOptions: Array<{ id: CardType; label: string }> = [
+  { id: 'record', label: '최근 기록' },
+  { id: 'month', label: '이번 달' },
+  { id: 'moment', label: '한 장의 장면' },
+]
+
 export default function ShareCard({ stats, recentEntry, onClose }: Props) {
   const cardRef = useRef<HTMLDivElement>(null)
+  const [cardType, setCardType] = useState<CardType>('record')
   const [isGenerating, setIsGenerating] = useState(false)
-  const [cardType, setCardType] = useState<'stats' | 'entry'>('stats')
+  const monthLabel = new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: 'long' }).format(new Date())
 
-  const today = new Date()
-  const monthStr = `${today.getFullYear()}년 ${today.getMonth() + 1}월`
+  const createImage = async () => {
+    if (!cardRef.current) return null
+    return toPng(cardRef.current, {
+      pixelRatio: 3,
+      cacheBust: true,
+      backgroundColor: '#fbfbfb',
+    })
+  }
 
   const downloadCard = async () => {
-    if (!cardRef.current) return
     setIsGenerating(true)
     try {
-      const dataUrl = await toPng(cardRef.current, { pixelRatio: 3, cacheBust: true })
+      const dataUrl = await createImage()
+      if (!dataUrl) return
       const link = document.createElement('a')
       link.download = `curtaincall-${cardType}-${Date.now()}.png`
       link.href = dataUrl
       link.click()
-      toast.success('카드가 저장되었습니다!')
+      toast.success('이미지를 저장했습니다.')
     } catch {
-      toast.error('이미지 생성에 실패했습니다.')
+      toast.error('이미지를 만들지 못했습니다.')
     } finally {
       setIsGenerating(false)
     }
   }
 
   const shareCard = async () => {
-    if (!cardRef.current) return
     if (!navigator.share) {
       toast.error('이 브라우저에서는 공유 기능을 지원하지 않습니다.')
       return
     }
     setIsGenerating(true)
     try {
-      const dataUrl = await toPng(cardRef.current, { pixelRatio: 3, cacheBust: true })
-      const res = await fetch(dataUrl)
-      const blob = await res.blob()
-      const file = new File([blob], 'curtaincall.png', { type: 'image/png' })
-      await navigator.share({ files: [file], title: 'CurtainCall 관극 기록' })
+      const dataUrl = await createImage()
+      if (!dataUrl) return
+      const blob = await (await fetch(dataUrl)).blob()
+      await navigator.share({
+        files: [new File([blob], 'curtaincall-record.png', { type: 'image/png' })],
+        title: 'CurtainCall 관극 기록',
+      })
     } catch {
-      toast.error('공유에 실패했습니다.')
+      toast.error('공유하지 못했습니다.')
     } finally {
       setIsGenerating(false)
     }
   }
 
   return (
-    <div
-      className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
-      onClick={onClose}
-    >
-      <div
-        className="bg-white rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <h2 className="text-lg font-bold text-gray-900">관극 카드 공유</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
-            <X size={20} />
-          </button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <div className="w-full max-w-md overflow-hidden border border-line-lightest bg-white shadow-none" onClick={(event) => event.stopPropagation()}>
+        <div className="flex items-center justify-between border-b border-line-lightest px-5 py-4">
+          <div>
+            <p className="text-[10px] text-ink-lightest">Share your archive</p>
+            <h2 className="mt-1 text-[17px] font-semibold tracking-[-0.03em] text-ink-base">관극 기록 카드</h2>
+          </div>
+          <button onClick={onClose} className="p-1 text-ink-light" aria-label="닫기"><X size={18} /></button>
         </div>
 
-        <div className="flex gap-1 p-3 bg-gray-50 border-b border-gray-100">
-          {[
-            { id: 'stats', label: '이달의 통계' },
-            { id: 'entry', label: '최근 관극' },
-          ].map(({ id, label }) => (
+        <div className="flex gap-1 border-b border-line-lightest px-4 pt-3">
+          {cardOptions.map((option) => (
             <button
-              key={id}
-              onClick={() => setCardType(id as 'stats' | 'entry')}
-              className={`flex-1 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                cardType === id ? 'bg-white text-brand shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              key={option.id}
+              onClick={() => setCardType(option.id)}
+              className={`relative flex-1 px-2 py-2.5 text-[12px] font-medium transition-colors ${
+                cardType === option.id ? 'text-ink-base' : 'text-ink-lighter hover:text-ink-muted'
               }`}
             >
-              {label}
+              {option.label}
+              {cardType === option.id ? <span className="absolute inset-x-2 bottom-0 h-0.5 bg-ink-base" /> : null}
             </button>
           ))}
         </div>
 
-        <div className="p-4 flex justify-center">
-          {cardType === 'stats' ? (
-            <StatsCard ref={cardRef} stats={stats} monthStr={monthStr} />
-          ) : (
-            <EntryCard ref={cardRef} entry={recentEntry} />
-          )}
+        <div className="flex justify-center bg-surface-background p-6">
+          {cardType === 'record' ? <RecordCard ref={cardRef} entry={recentEntry} /> : null}
+          {cardType === 'month' ? <MonthCard ref={cardRef} stats={stats} monthLabel={monthLabel} /> : null}
+          {cardType === 'moment' ? <MomentCard ref={cardRef} entry={recentEntry} /> : null}
         </div>
 
-        <div className="flex gap-2 p-4 border-t border-gray-100">
-          <button
-            onClick={downloadCard}
-            disabled={isGenerating}
-            className="flex-1 flex items-center justify-center gap-2 btn-secondary text-sm py-2.5"
-          >
-            <Download size={16} />
-            저장
+        <div className="grid grid-cols-2 gap-2 border-t border-line-lightest p-4">
+          <button onClick={downloadCard} disabled={isGenerating} className="flex h-[39px] items-center justify-center gap-1 border border-line-base bg-white text-[12px] text-ink-muted">
+            <Download size={15} /> 저장
           </button>
-          <button
-            onClick={shareCard}
-            disabled={isGenerating}
-            className="flex-1 flex items-center justify-center gap-2 btn-primary text-sm py-2.5"
-          >
-            <Share2 size={16} />
-            {isGenerating ? '생성 중...' : '공유'}
+          <button onClick={shareCard} disabled={isGenerating} className="flex h-[39px] items-center justify-center gap-1 bg-brand text-[12px] font-semibold text-white">
+            <Share2 size={15} /> {isGenerating ? '생성 중' : '공유'}
           </button>
         </div>
       </div>
@@ -119,123 +116,72 @@ export default function ShareCard({ stats, recentEntry, onClose }: Props) {
   )
 }
 
-import { forwardRef } from 'react'
+const CardFrame = forwardRef<HTMLDivElement, { children: ReactNode }>(({ children }, ref) => (
+  <div ref={ref} className="flex h-[390px] w-[280px] flex-col border border-line-base bg-surface-alt p-6 text-ink-base">
+    <div className="flex items-center justify-between border-b border-line-base pb-3">
+      <span className="text-[11px] font-semibold tracking-[0.12em] text-ink-base">CURTAINCALL</span>
+      <span className="text-[10px] text-ink-lighter">THEATRE ARCHIVE</span>
+    </div>
+    {children}
+  </div>
+))
+CardFrame.displayName = 'CardFrame'
 
-const StatsCard = forwardRef<HTMLDivElement, { stats?: DiaryStats; monthStr: string }>(
-  ({ stats, monthStr }, ref) => {
-    const currentMonthKey = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`
-    const thisMonthCount = stats?.monthlyCount?.[currentMonthKey] ?? 0
+const RecordCard = forwardRef<HTMLDivElement, { entry?: DiaryEntry }>(({ entry }, ref) => (
+  <CardFrame ref={ref}>
+    {entry?.showPosterUrl ? (
+      <img src={entry.showPosterUrl} alt="" className="mt-5 h-[158px] w-full object-cover" />
+    ) : (
+      <div className="mt-5 flex h-[158px] items-center justify-center bg-surface-background text-ink-lighter"><ImageIcon size={23} /></div>
+    )}
+    <p className="mt-5 text-[11px] font-medium text-brand">{entry?.watchedDate || '관극 기록'}</p>
+    <h3 className="mt-2 line-clamp-2 text-[21px] font-semibold leading-[1.22] tracking-[-0.05em]">{entry?.showTitle || '다음 관극의 장면을 기록해 보세요.'}</h3>
+    <div className="mt-auto flex items-end justify-between border-t border-line-base pt-3 text-[11px] text-ink-muted">
+      <span>{entry?.theaterName || 'CurtainCall'}</span>
+      {entry ? <span className="font-semibold text-ink-base">★ {entry.rating}.0</span> : null}
+    </div>
+  </CardFrame>
+))
+RecordCard.displayName = 'RecordCard'
 
-    return (
-      <div
-        ref={ref}
-        className="w-72 bg-gradient-to-br from-[#1a0a2e] to-[#3d1a5e] rounded-3xl p-6 text-white relative overflow-hidden"
-        style={{ fontFamily: 'inherit' }}
-      >
-        <div className="absolute top-0 right-0 w-40 h-40 bg-brand/20 rounded-full -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-32 h-32 bg-gold/10 rounded-full translate-y-1/2 -translate-x-1/2" />
-
-        <div className="relative z-10">
-          <div className="flex items-center gap-1.5 mb-5">
-            <div className="w-6 h-6 bg-brand rounded-full flex items-center justify-center">
-              <span className="text-white text-xs font-bold">C</span>
-            </div>
-            <span className="text-white/80 text-sm font-medium">CurtainCall</span>
-          </div>
-
-          <p className="text-white/60 text-xs mb-1">{monthStr}</p>
-          <h2 className="text-2xl font-bold mb-5">이달의 관극 기록</h2>
-
-          <div className="grid grid-cols-3 gap-2 mb-5">
-            {[
-              { label: '이번 달', value: `${thisMonthCount}회` },
-              { label: '총 관람', value: `${stats?.totalCount ?? 0}회` },
-              { label: '평균 평점', value: `${(stats?.averageRating ?? 0).toFixed(1)}★` },
-            ].map(({ label, value }) => (
-              <div key={label} className="bg-white/10 rounded-xl p-2.5 text-center">
-                <p className="text-white/60 text-[10px] mb-0.5">{label}</p>
-                <p className="text-white font-bold text-sm">{value}</p>
-              </div>
-            ))}
-          </div>
-
-          {stats?.topShows && stats.topShows.length > 0 && (
-            <div>
-              <p className="text-white/60 text-xs mb-2">많이 본 공연</p>
-              <div className="space-y-1.5">
-                {stats.topShows.slice(0, 3).map((show, i) => (
-                  <div key={show.showId} className="flex items-center gap-2">
-                    <span className="text-white/40 text-xs w-4">{i + 1}</span>
-                    <span className="text-white text-xs flex-1 truncate">{show.showTitle}</span>
-                    <span className="text-brand-300 text-xs">{show.count}회</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="mt-5 pt-4 border-t border-white/10 text-center">
-            <p className="text-white/40 text-[10px]">curtaincall.app</p>
-          </div>
-        </div>
-      </div>
-    )
-  }
-)
-StatsCard.displayName = 'StatsCard'
-
-const EntryCard = forwardRef<HTMLDivElement, { entry?: DiaryEntry }>(({ entry }, ref) => {
-  if (!entry) {
-    return (
-      <div ref={ref} className="w-72 h-96 bg-gray-100 rounded-3xl flex items-center justify-center">
-        <p className="text-gray-400 text-sm">관극 기록이 없습니다.</p>
-      </div>
-    )
-  }
-
-  const bgImage = entry.representativeImageUrl
-
+const MonthCard = forwardRef<HTMLDivElement, { stats?: DiaryStats; monthLabel: string }>(({ stats, monthLabel }, ref) => {
+  const monthKey = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`
+  const count = stats?.monthlyCount?.[monthKey] ?? 0
   return (
-    <div
-      ref={ref}
-      className="w-72 relative overflow-hidden rounded-3xl"
-      style={{ fontFamily: 'inherit' }}
-    >
-      <div className="aspect-[3/4] relative">
-        {bgImage ? (
-          <img src={bgImage} alt={entry.showTitle} className="w-full h-full object-cover" />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-[#1a0a2e] to-[#3d1a5e]" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+    <CardFrame ref={ref}>
+      <p className="mt-7 text-[12px] text-ink-muted">{monthLabel}</p>
+      <h3 className="mt-2 text-[28px] font-semibold leading-[1.2] tracking-[-0.055em]">이번 달,<br />무대와 만난 날들</h3>
+      <div className="mt-8 grid grid-cols-2 gap-px bg-line-base">
+        <Metric label="관극" value={`${count}회`} />
+        <Metric label="누적 기록" value={`${stats?.totalCount ?? 0}건`} />
+        <Metric label="평균 평점" value={stats?.averageRating ? stats.averageRating.toFixed(1) : '—'} />
+        <Metric label="관람 지출" value={stats?.totalSpent ? `${Math.round(stats.totalSpent / 10000)}만` : '—'} />
       </div>
+      <p className="mt-auto text-[11px] leading-5 text-ink-muted">CurtainCall에서 쌓아가는<br />나만의 관극 아카이브</p>
+    </CardFrame>
+  )
+})
+MonthCard.displayName = 'MonthCard'
 
-      <div className="absolute bottom-0 left-0 right-0 p-5">
-        <div className="flex items-center gap-1 mb-2">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Star
-              key={i}
-              size={12}
-              className={i < entry.rating ? 'text-yellow-400 fill-yellow-400' : 'text-white/30'}
-            />
-          ))}
-        </div>
-        <h3 className="text-white font-bold text-xl leading-tight mb-1">{entry.showTitle}</h3>
-        <p className="text-white/70 text-sm">{entry.watchedDate}</p>
-        {entry.theaterName && (
-          <p className="text-white/50 text-xs mt-0.5">{entry.theaterName}</p>
-        )}
-        {entry.comment && (
-          <p className="text-white/80 text-xs mt-3 leading-relaxed line-clamp-2 italic">"{entry.comment}"</p>
-        )}
-        <div className="mt-4 flex items-center gap-1.5">
-          <div className="w-4 h-4 bg-brand rounded-full flex items-center justify-center">
-            <span className="text-white text-[8px] font-bold">C</span>
-          </div>
-          <span className="text-white/50 text-[10px]">CurtainCall</span>
+function Metric({ label, value }: { label: string; value: string }) {
+  return <div className="bg-surface-alt px-3 py-3"><p className="text-[10px] text-ink-lighter">{label}</p><p className="mt-1 text-[15px] font-semibold tracking-[-0.03em]">{value}</p></div>
+}
+
+const MomentCard = forwardRef<HTMLDivElement, { entry?: DiaryEntry }>(({ entry }, ref) => {
+  const image = entry?.representativeImageUrl || entry?.photoUrls?.[0] || entry?.showPosterUrl
+  return (
+    <div ref={ref} className="relative h-[390px] w-[280px] overflow-hidden bg-ink-darkest text-white">
+      {image ? <img src={image} alt="" className="absolute inset-0 h-full w-full object-cover opacity-70" /> : null}
+      <div className="absolute inset-0 bg-gradient-to-t from-ink-darkest via-ink-darkest/25 to-ink-darkest/20" />
+      <div className="relative flex h-full flex-col p-6">
+        <div className="flex items-center justify-between text-[10px] tracking-[0.12em] text-white/75"><span>CURTAINCALL</span><span>ONE MOMENT</span></div>
+        <div className="mt-auto">
+          <p className="text-[11px] text-white/70">{entry?.watchedDate || '관극의 한 장면'}</p>
+          <h3 className="mt-2 text-[25px] font-semibold leading-[1.22] tracking-[-0.05em]">{entry?.showTitle || '기억하고 싶은 순간'}</h3>
+          {entry?.comment ? <p className="mt-4 line-clamp-3 border-l border-white/50 pl-3 text-[12px] leading-5 text-white/80">{entry.comment}</p> : null}
         </div>
       </div>
     </div>
   )
 })
-EntryCard.displayName = 'EntryCard'
+MomentCard.displayName = 'MomentCard'

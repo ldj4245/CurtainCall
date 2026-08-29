@@ -1,0 +1,18 @@
+{
+  "name": "CurtainCall - 뮤덕 관극 플랫폼",
+  "short_name": "커튼콜",
+  "description": "공연을 보고, 나만의 관극 기록을 남기는 뮤덕 필수 플랫폼",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#12161f",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/curtain.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

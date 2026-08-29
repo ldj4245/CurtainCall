@@ -34,11 +34,12 @@ export default function OAuth2Callback() {
   }, [logout, navigate, setAccessToken, setUser])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white">
+    <main className="page-shell flex min-h-screen items-center justify-center bg-white">
       <div className="text-center">
-        <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-2 border-gray-200 border-t-gray-900" />
-        <p className="text-gray-600 text-sm">로그인 정보를 확인하고 있습니다...</p>
+        <div className="mx-auto mb-5 h-9 w-9 animate-spin rounded-full border-2 border-[#e5e8ee] border-t-[#172033]" />
+        <p className="page-kicker">Signing you in</p>
+        <p className="mt-2 text-[14px] text-[#697386]">로그인 정보를 확인하고 있습니다.</p>
       </div>
-    </div>
+    </main>
   )
 }

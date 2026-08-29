@@ -26,31 +26,35 @@ export default function DiaryCalendar() {
   const entryMap = buildEntryMap(entries)
 
   return (
-    <div className="bg-white rounded-2xl shadow-card-sm border border-gray-100 overflow-hidden">
-      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-50">
+    <div className="border border-line-lightest bg-white mt-5">
+      <div className="flex items-center justify-between border-b border-line-lightest px-4 py-4">
         <button
           onClick={prevMonth}
-          className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-brand hover:bg-brand-50 transition-colors"
+          className="text-ink-lighter"
+          aria-label="이전 달"
         >
           <ChevronLeft size={18} />
         </button>
-        <h2 className="text-base font-bold text-gray-900">
+        <div className="text-center">
+          <h2 className="text-[17px] font-semibold text-ink-base">
           {year}년 {month + 1}월
-        </h2>
+          </h2>
+        </div>
         <button
           onClick={nextMonth}
-          className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-brand hover:bg-brand-50 transition-colors"
+          className="text-ink-lighter"
+          aria-label="다음 달"
         >
           <ChevronRight size={18} />
         </button>
       </div>
 
-      <div className="grid grid-cols-7 border-b border-gray-50">
+      <div className="grid grid-cols-7 border-b border-line-lightest">
         {WEEKDAYS.map((day, i) => (
           <div
             key={day}
-            className={`py-2 text-center text-xs font-semibold ${
-              i === 0 ? 'text-brand' : i === 6 ? 'text-blue-400' : 'text-gray-400'
+            className={`py-3 text-center text-[11px] font-semibold ${
+              i === 0 ? 'text-brand' : i === 6 ? 'text-ink-light' : 'text-ink-muted'
             }`}
           >
             {day}
@@ -62,16 +66,13 @@ export default function DiaryCalendar() {
         {days.map((day, idx) => {
           const key = day ? `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}` : `empty-${idx}`
           const dayEntries = day ? (entryMap[key] ?? []) : []
-          const isToday = day !== null && isCurrentDay(year, month, day)
-          const isSunday = idx % 7 === 0
-          const isSaturday = idx % 7 === 6
           const firstEntry = dayEntries[0]
 
           return (
             <div
               key={key}
-              className={`relative border-b border-r border-gray-50 aspect-square overflow-hidden ${
-                day ? 'cursor-default' : 'bg-gray-50/30'
+              className={`relative aspect-square overflow-hidden border-b border-r border-line-lightest ${
+                day ? 'cursor-default bg-white' : 'bg-surface-background'
               }`}
             >
               {day && firstEntry?.representativeImageUrl && (
@@ -86,21 +87,16 @@ export default function DiaryCalendar() {
                     className="w-full h-full object-cover"
                     loading="lazy"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20" />
-                  {dayEntries.length > 1 && (
-                    <div className="absolute bottom-1 right-1 bg-brand rounded-full w-4 h-4 flex items-center justify-center">
-                      <span className="text-white text-[9px] font-bold">+{dayEntries.length - 1}</span>
-                    </div>
-                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-ink-darkest/65 via-transparent to-transparent" />
                 </button>
               )}
 
               {day && !firstEntry?.representativeImageUrl && dayEntries.length > 0 && (
                 <button
-                  className="absolute inset-0 w-full h-full flex flex-col items-center justify-end pb-1.5 bg-brand-50/60"
+                  className="absolute inset-0 flex h-full w-full flex-col items-center justify-end bg-surface-muted pb-1.5"
                   onClick={() => navigate(`/shows/${firstEntry.showId}`)}
                 >
-                  <span className="text-[9px] text-brand font-medium text-center px-0.5 leading-tight line-clamp-2">
+                  <span className="line-clamp-2 px-0.5 text-center text-[9px] font-medium leading-tight text-ink-base">
                     {firstEntry.showTitle}
                   </span>
                 </button>
@@ -110,23 +106,13 @@ export default function DiaryCalendar() {
                 <div className="absolute top-1 left-1.5 z-10">
                   <span
                     className={`text-[11px] font-semibold leading-none ${
-                      isToday
-                        ? 'w-5 h-5 flex items-center justify-center bg-brand text-white rounded-full text-[10px]'
-                        : isSunday
-                        ? 'text-brand'
-                        : isSaturday
-                        ? 'text-blue-400'
-                        : dayEntries.length > 0
-                        ? 'text-white drop-shadow-sm'
-                        : 'text-gray-700'
+                      dayEntries.length > 0 ? (firstEntry?.representativeImageUrl ? 'text-white' : 'text-brand') : 'text-ink-muted'
                     }`}
                   >
                     {day}
                   </span>
                 </div>
               )}
-
-              {!day && <div className="w-full h-full bg-warm-50/50" />}
             </div>
           )
         })}
@@ -157,9 +143,4 @@ function buildEntryMap(entries: DiaryEntry[]): Record<string, DiaryEntry[]> {
     map[key].push(entry)
   }
   return map
-}
-
-function isCurrentDay(year: number, month: number, day: number): boolean {
-  const today = new Date()
-  return today.getFullYear() === year && today.getMonth() === month && today.getDate() === day
 }

@@ -71,7 +71,7 @@ export default function CompanionList({ showId }: CompanionListProps) {
     if (isLoading) {
         return (
             <div className="flex justify-center py-10">
-                <Loader2 className="w-6 h-6 animate-spin text-brand" />
+                <Loader2 className="h-6 w-6 animate-spin text-[#8993a4]" />
             </div>
         );
     }
@@ -79,20 +79,20 @@ export default function CompanionList({ showId }: CompanionListProps) {
     const posts = data?.content || [];
 
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
+        <div className="space-y-5">
+            <div className="flex items-end justify-between gap-4">
                 <div>
-                    <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                        <HeartHandshake className="w-5 h-5 text-brand" />
+                    <h2 className="flex items-center gap-2 text-[20px] font-semibold tracking-[-0.035em] text-[#172033]">
+                        <HeartHandshake className="h-5 w-5 text-[#9b3155]" />
                         함께 관극
                     </h2>
-                    <p className="text-sm text-gray-500 mt-1">이 공연을 함께 볼 동행을 찾아보세요!</p>
+                    <p className="mt-1 text-[13px] text-[#697386]">이 공연을 함께 볼 동행을 찾아보세요.</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
+                    <label className="flex cursor-pointer select-none items-center gap-1.5 text-[12px] text-[#697386]">
                         <input
                             type="checkbox"
-                            className="rounded border-gray-300 text-brand focus:ring-brand"
+                            className="rounded-sm border-[#cfd5df] text-[#172033] focus:ring-[#172033]"
                             checked={onlyOpen}
                             onChange={(e) => setOnlyOpen(e.target.checked)}
                         />
@@ -103,7 +103,7 @@ export default function CompanionList({ showId }: CompanionListProps) {
                             if (!isAuthenticated) return toast.error('로그인이 필요합니다.');
                             setShowForm(true);
                         }}
-                        className="btn-primary px-4 py-2 text-sm"
+                        className="btn-primary h-9"
                     >
                         모집글 작성
                     </button>
@@ -111,9 +111,9 @@ export default function CompanionList({ showId }: CompanionListProps) {
             </div>
 
             {posts.length === 0 ? (
-                <div className="card p-10 text-center text-gray-500 bg-gray-50/50">
-                    아직 등록된 동행 모집글이 없습니다.<br />
-                    첫 번째 동행을 모집해보세요!
+                <div className="empty-state">
+                    <div className="empty-state-icon"><HeartHandshake size={18} /></div>
+                    <p className="text-[13px] text-[#697386]">등록된 동행 모집이 없습니다.<br />첫 번째 동행을 찾아보세요.</p>
                 </div>
             ) : (
                 <div className="grid gap-4 md:grid-cols-2">
@@ -137,14 +137,14 @@ export default function CompanionList({ showId }: CompanionListProps) {
             )}
 
             {data && data.totalPages > 1 && (
-                <div className="flex justify-center gap-2 mt-6">
+                <div className="flex justify-center gap-1 mt-6">
                     {Array.from({ length: Math.min(5, data.totalPages) }).map((_, i) => (
                         <button
                             key={i}
                             onClick={() => setPage(i)}
-                            className={`w-8 h-8 rounded-full text-sm font-medium transition-colors ${page === i
-                                ? 'bg-brand text-white'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            className={`h-8 w-8 text-[12px] font-semibold transition-colors ${page === i
+                                ? 'bg-[#172033] text-white'
+                                : 'text-[#697386] hover:bg-[#f4f5f7]'
                                 }`}
                         >
                             {i + 1}
@@ -195,58 +195,58 @@ function CompanionCard({
     const formattedDate = format(parseISO(post.performanceDate), 'yyyy년 M월 d일(E)', { locale: ko });
 
     return (
-        <div className="card p-5 hover:shadow-card-md transition-shadow relative group">
+        <article className="group relative border border-[#e5e8ee] bg-white p-5 transition-colors hover:border-[#cfd5df]">
             <div className="flex justify-between items-start mb-3">
                 <div className="flex items-center gap-2">
-                    <span className={`px-2.5 py-1 text-xs font-bold rounded-full ${isOpen
-                        ? 'bg-brand-50 text-brand border border-brand-100'
-                        : 'bg-gray-100 text-gray-500 border border-gray-200'
+                    <span className={`px-2 py-1 text-[10px] font-semibold ${isOpen
+                        ? 'bg-[#f8eff3] text-[#9b3155]'
+                        : 'bg-[#f1f3f5] text-[#697386]'
                         }`}>
                         {isOpen ? '모집 중' : post.status === 'CLOSED' ? '모집 마감' : '기간 만료'}
                     </span>
-                    <span className="text-xs text-gray-400 font-medium">
+                    <span className="text-[11px] font-medium text-[#8993a4]">
                         {format(parseISO(post.createdAt), 'MM.dd HH:mm')}
                     </span>
                 </div>
                 {isAuthor && (
                     <div className="flex gap-2">
                         {isOpen && (
-                            <button onClick={onClose} className="text-xs text-brand hover:underline font-medium">
+                            <button onClick={onClose} className="text-[11px] font-medium text-[#697386] hover:text-[#172033]">
                                 마감하기
                             </button>
                         )}
-                        <button onClick={onDelete} className="text-xs text-red-500 hover:underline font-medium">
+                        <button onClick={onDelete} className="text-[11px] font-medium text-[#c53b4b] hover:text-[#aa2f40]">
                             삭제
                         </button>
                     </div>
                 )}
             </div>
 
-            <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-1">{post.title}</h3>
-            <p className="text-sm text-gray-600 mb-4 line-clamp-2 min-h-[40px] whitespace-pre-wrap">{post.content}</p>
+            <h3 className="mb-2 line-clamp-1 text-[16px] font-semibold tracking-[-0.025em] text-[#172033]">{post.title}</h3>
+            <p className="mb-5 min-h-[40px] line-clamp-2 whitespace-pre-wrap text-[13px] leading-5 text-[#697386]">{post.content}</p>
 
-            <div className="space-y-2 mb-5">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Calendar className="w-4 h-4 text-gray-400" />
+            <div className="space-y-1.5 mb-5">
+                <div className="flex items-center gap-1.5 text-[12px] text-[#697386]">
+                    <Calendar className="h-3.5 w-3.5 text-[#8993a4]" />
                     <span>{formattedDate}</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Clock className="w-4 h-4 text-gray-400" />
+                <div className="flex items-center gap-1.5 text-[12px] text-[#697386]">
+                    <Clock className="h-3.5 w-3.5 text-[#8993a4]" />
                     <span>{post.performanceTime}</span>
                 </div>
                 {post.seatInfo && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <MapPin className="w-4 h-4 text-gray-400" />
+                    <div className="flex items-center gap-1.5 text-[12px] text-[#697386]">
+                        <MapPin className="h-3.5 w-3.5 text-[#8993a4]" />
                         <span>{post.seatInfo}</span>
                     </div>
                 )}
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Users className="w-4 h-4 text-gray-400" />
+                <div className="flex items-center gap-1.5 text-[12px] text-[#697386]">
+                    <Users className="h-3.5 w-3.5 text-[#8993a4]" />
                     <div className="flex items-center gap-1.5 w-full">
                         <span className="font-medium">{post.currentMembers} / {post.maxMembers}명</span>
-                        <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden ml-2">
+                        <div className="ml-2 h-1 flex-1 overflow-hidden bg-[#eef0f3]">
                             <div
-                                className={`h-full rounded-full transition-all ${post.currentMembers >= post.maxMembers || !isOpen ? 'bg-gray-400' : 'bg-brand'}`}
+                                className={`h-full transition-all ${post.currentMembers >= post.maxMembers || !isOpen ? 'bg-[#aeb7c5]' : 'bg-[#9b3155]'}`}
                                 style={{ width: `${(post.currentMembers / post.maxMembers) * 100}%` }}
                             />
                         </div>
@@ -254,25 +254,25 @@ function CompanionCard({
                 </div>
             </div>
 
-            <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between border-t border-[#eef0f3] pt-4">
+                <div className="flex items-center gap-1.5">
                     {post.authorProfileImage ? (
-                        <img src={post.authorProfileImage} alt="" className="w-6 h-6 rounded-full object-cover" />
+                        <img src={post.authorProfileImage} alt="" className="h-5 w-5 rounded-full object-cover" />
                     ) : (
-                        <div className="w-6 h-6 rounded-full bg-brand-100 text-brand flex items-center justify-center text-xs font-bold">
+                        <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#f1f3f5] text-[10px] font-bold text-[#536076]">
                             {post.authorNickname.charAt(0)}
                         </div>
                     )}
-                    <span className="text-xs font-medium text-gray-700">{post.authorNickname}</span>
+                    <span className="text-[12px] font-medium text-[#536076]">{post.authorNickname}</span>
                 </div>
 
                 <div className="flex items-center gap-2">
                     {canAccessChat && (
                         <button
                             onClick={() => navigate(`/chat/${post.chatRoomId}`)}
-                            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-50 text-brand border border-brand-100 hover:bg-brand-100 transition-colors"
+                            className="btn-secondary h-8 px-2.5 text-[12px]"
                         >
-                            <MessageSquare className="w-3.5 h-3.5" />
+                            <MessageSquare className="w-3 h-3" />
                             채팅
                         </button>
                     )}
@@ -281,7 +281,7 @@ function CompanionCard({
                             <button
                                 onClick={onCancel}
                                 disabled={isLoading}
-                                className="text-xs font-semibold px-4 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+                                className="btn-secondary h-8 px-3 text-[12px]"
                             >
                                 참여 취소
                             </button>
@@ -289,9 +289,9 @@ function CompanionCard({
                             <button
                                 onClick={onJoin}
                                 disabled={!isOpen || isLoading}
-                                className={`text-xs font-semibold px-4 py-1.5 rounded-lg transition-colors ${isOpen
-                                    ? 'bg-brand text-white hover:bg-brand-600'
-                                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                className={`inline-flex h-8 items-center justify-center px-3 text-[12px] font-semibold transition-colors ${isOpen
+                                    ? 'bg-[#172033] text-white hover:bg-[#273247]'
+                                    : 'border border-[#e5e8ee] bg-white text-[#98a2b3] cursor-not-allowed'
                                     }`}
                             >
                                 {isOpen ? '동행 참여' : '마감됨'}
@@ -300,6 +300,6 @@ function CompanionCard({
                     )}
                 </div>
             </div>
-        </div>
+        </article>
     );
 }

@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation, Outlet } from 'react-router-dom'
 import { useEffect, lazy, Suspense } from 'react'
 import { useAuthStore } from './store/authStore'
 import { authApi } from './api/auth'
@@ -16,11 +16,37 @@ const LoginPage = lazy(() => import('./pages/Auth/LoginPage'))
 const SignUpPage = lazy(() => import('./pages/Auth/SignUpPage'))
 const OAuth2Callback = lazy(() => import('./pages/Auth/OAuth2Callback'))
 const NotFoundPage = lazy(() => import('./pages/NotFound/NotFoundPage'))
+const DesignMockupPage = lazy(() => import('./pages/Mockup/DesignMockupPage'))
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore()
   const location = useLocation()
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" state={{ from: location }} replace />
+}
+
+function MainLayout() {
+  return (
+    <div className="min-h-screen bg-[#0d1117] flex justify-center selection:bg-brand selection:text-white">
+      {/* 중앙 모바일 웹앱 프레임 (460px) */}
+      <div className="w-full max-w-[460px] min-h-screen bg-surface-base relative flex flex-col shadow-[0_0_50px_rgba(0,0,0,0.6)] sm:border-x sm:border-slate-800/80">
+        <Navbar />
+        <main className="flex-1 pb-20 overflow-x-hidden">
+          <Outlet />
+        </main>
+        <MobileTabBar />
+      </div>
+    </div>
+  )
+}
+
+function AuthLayout() {
+  return (
+    <div className="min-h-screen bg-[#0d1117] flex justify-center">
+      <div className="w-full max-w-[460px] min-h-screen bg-surface-base relative flex flex-col shadow-[0_0_50px_rgba(0,0,0,0.6)] sm:border-x sm:border-slate-800/80">
+        <Outlet />
+      </div>
+    </div>
+  )
 }
 
 export default function App() {
@@ -33,71 +59,60 @@ export default function App() {
   }, [isAuthenticated, accessToken, setUser])
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Suspense fallback={
-        <div className="min-h-screen flex items-center justify-center bg-white">
-          <div className="animate-spin rounded-full h-10 w-10 border-2 border-brand-100 border-t-brand"></div>
-        </div>
-      }>
-        <Routes>
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[#0d1117]">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-700 border-t-brand" />
+      </div>
+    }>
+      <Routes>
+        {/* 인증 라우트 */}
+        <Route element={<AuthLayout />}>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignUpPage />} />
           <Route path="/oauth2/callback" element={<OAuth2Callback />} />
+        </Route>
+        <Route path="/mockup" element={<DesignMockupPage />} />
+
+        {/* 메인 웹앱 라우트 */}
+        <Route element={<MainLayout />}>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/shows" element={<ShowListPage />} />
+          <Route path="/shows/:id" element={<ShowDetailPage />} />
           <Route
-            path="/*"
+            path="/diary"
             element={
-              <>
-                <Navbar />
-                <main className="flex-1 pb-20 sm:pb-0">
-                  <Routes>
-                    <Route path="/" element={<HomePage />} />
-                    <Route path="/shows" element={<ShowListPage />} />
-                    <Route path="/shows/:id" element={<ShowDetailPage />} />
-                    <Route
-                      path="/diary"
-                      element={
-                        <ProtectedRoute>
-                          <DiaryPage />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/my"
-                      element={
-                        <ProtectedRoute>
-                          <MyPage />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/chat"
-                      element={
-                        <ProtectedRoute>
-                          <ChatListPage />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/chat/:roomId"
-                      element={
-                        <ProtectedRoute>
-                          <ChatRoomPage />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route path="*" element={<NotFoundPage />} />
-                  </Routes>
-                </main>
-                <MobileTabBar />
-                <footer className="hidden sm:block border-t border-gray-100 bg-warm-50 text-gray-400 py-8 px-4 text-center text-sm">
-                  <p className="font-medium text-gray-600">CurtainCall <span className="text-brand">—</span> 공연 아카이브 플랫폼</p>
-                  <p className="mt-1">공연 정보는 KOPIS(공연예술통합전산망)에서 제공됩니다.</p>
-                </footer>
-              </>
+              <ProtectedRoute>
+                <DiaryPage />
+              </ProtectedRoute>
             }
           />
-        </Routes>
-      </Suspense>
-    </div>
+          <Route
+            path="/my"
+            element={
+              <ProtectedRoute>
+                <MyPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/chat"
+            element={
+              <ProtectedRoute>
+                <ChatListPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/chat/:roomId"
+            element={
+              <ProtectedRoute>
+                <ChatRoomPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="*" element={<NotFoundPage />} />
+        </Route>
+      </Routes>
+    </Suspense>
   )
 }

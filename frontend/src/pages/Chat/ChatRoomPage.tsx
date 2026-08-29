@@ -86,52 +86,53 @@ export default function ChatRoomPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand" />
+      <div className="flex h-screen items-center justify-center bg-[#f2f2f1]">
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#ededed] border-t-[#333]" />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <div className="flex h-screen flex-col bg-[#fbfbfb]">
       {/* Header */}
-      <div className="bg-white border-b px-4 py-3 flex items-center gap-3 shadow-sm">
+      <div className="flex items-center gap-3 border-b border-[#ededed] bg-white px-4 py-3 sm:px-8">
         <button
           onClick={() => navigate('/chat')}
-          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+          className="text-[#555] hover:text-[#333]"
+          aria-label="동행 메시지 목록으로"
         >
-          <ArrowLeft className="w-5 h-5 text-gray-600" />
+          <ArrowLeft size={18} />
         </button>
 
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-gray-900 truncate">
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[14px] font-semibold text-[#333]">
             {currentRoom?.companionPostTitle ?? '채팅방'}
           </p>
           {currentRoom && (
-            <p className="text-xs text-gray-400 truncate">{currentRoom.showTitle} · {currentRoom.performanceDate}</p>
+            <p className="truncate text-[11px] text-[#777]">{currentRoom.showTitle} · {currentRoom.performanceDate}</p>
           )}
         </div>
 
         <div className="flex items-center gap-1.5">
           {connected ? (
             <>
-              <Wifi className="w-4 h-4 text-green-500" />
-              <span className="text-xs text-green-500">연결됨</span>
+              <Wifi size={12} className="text-[#9d2244]" />
+              <span className="text-[10px] text-[#555]">연결됨</span>
             </>
           ) : (
             <>
-              <WifiOff className="w-4 h-4 text-gray-400" />
-              <span className="text-xs text-gray-400">연결 중...</span>
+              <WifiOff size={12} className="text-[#999]" />
+              <span className="text-[10px] text-[#999]">연결 중</span>
             </>
           )}
         </div>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+      <div className="flex-1 space-y-4 overflow-y-auto px-4 py-5 sm:px-8">
         {messages.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-400 text-sm">아직 메시지가 없어요. 먼저 인사해보세요! 👋</p>
+          <div className="py-12 text-center">
+            <p className="text-[11px] text-[#999]">아직 대화가 없습니다. 먼저 인사를 건네보세요.</p>
           </div>
         )}
 
@@ -142,7 +143,7 @@ export default function ChatRoomPage() {
           if (isSystem) {
             return (
               <div key={msg.id ?? idx} className="flex justify-center">
-                <span className="bg-gray-200 text-gray-500 text-xs px-3 py-1 rounded-full">
+                <span className="border border-[#ededed] bg-white px-2 py-1 text-[10px] text-[#777]">
                   {msg.senderNickname}님이 {msg.type === 'ENTER' ? '입장' : '퇴장'}했습니다
                 </span>
               </div>
@@ -155,31 +156,31 @@ export default function ChatRoomPage() {
               className={`flex items-end gap-2 ${isMine ? 'flex-row-reverse' : 'flex-row'}`}
             >
               {!isMine && (
-                <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
+                <div className="flex h-7 w-7 shrink-0 overflow-hidden rounded-full bg-[#f2f2f1]">
                   {msg.senderProfileImage ? (
-                    <img src={msg.senderProfileImage} alt={msg.senderNickname} className="w-full h-full object-cover" />
+                    <img src={msg.senderProfileImage} alt={msg.senderNickname} className="h-full w-full object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-xs font-bold text-gray-500">
+                    <div className="flex h-full w-full items-center justify-center text-[10px] font-semibold text-[#555]">
                       {msg.senderNickname[0]}
                     </div>
                   )}
                 </div>
               )}
 
-              <div className={`flex flex-col gap-1 max-w-[70%] ${isMine ? 'items-end' : 'items-start'}`}>
+              <div className={`flex max-w-[70%] flex-col gap-1 ${isMine ? 'items-end' : 'items-start'}`}>
                 {!isMine && (
-                  <span className="text-xs text-gray-500 px-1">{msg.senderNickname}</span>
+                  <span className="px-1 text-[10px] text-[#777]">{msg.senderNickname}</span>
                 )}
                 <div
-                  className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                  className={`rounded-sm px-3 py-2 text-[12px] leading-relaxed ${
                     isMine
-                      ? 'bg-brand text-white rounded-br-sm'
-                      : 'bg-white text-gray-800 shadow-sm rounded-bl-sm'
+                      ? 'bg-[#333] text-white'
+                      : 'border border-[#ededed] bg-white text-[#333]'
                   }`}
                 >
                   {msg.content}
                 </div>
-                <span className="text-xs text-gray-400 px-1">{formatTime(msg.createdAt)}</span>
+                <span className="px-1 text-[9px] text-[#999]">{formatTime(msg.createdAt)}</span>
               </div>
             </div>
           );
@@ -188,23 +189,24 @@ export default function ChatRoomPage() {
       </div>
 
       {/* Input */}
-      <div className="bg-white border-t px-4 py-3">
-        <div className="flex items-center gap-3">
+      <div className="border-t border-[#ededed] bg-white px-4 py-3 sm:px-8">
+        <div className="flex items-center gap-2 mx-auto max-w-4xl">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={connected ? '메시지를 입력하세요...' : '연결 중...'}
+            placeholder={connected ? '메시지 입력' : '연결 중'}
             disabled={!connected}
-            className="flex-1 bg-gray-100 rounded-full px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand/30 disabled:opacity-50"
+            className="h-[34px] flex-1 border border-[#dedede] bg-[#fbfbfb] px-3 text-[12px] text-[#333] outline-none placeholder:text-[#999] disabled:opacity-50 focus:border-[#333]"
           />
           <button
             onClick={handleSend}
             disabled={!connected || !input.trim()}
-            className="w-10 h-10 bg-brand text-white rounded-full flex items-center justify-center hover:bg-brand/90 transition-colors disabled:opacity-40"
+            className="flex h-[34px] items-center gap-1 bg-[#9d2244] px-3.5 text-[11px] font-semibold text-white transition-opacity disabled:opacity-50"
           >
-            <Send className="w-4 h-4" />
+            <Send size={12} />
+            전송
           </button>
         </div>
       </div>

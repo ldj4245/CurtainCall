@@ -16,13 +16,13 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
   })
 
   return (
-    <div className="flex items-center justify-center gap-1 mt-10">
+    <div className="flex items-center justify-center gap-1.5 mt-8">
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 0}
-        className="p-2 rounded-lg text-gray-400 hover:text-brand disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+        className="flex h-8 w-8 items-center justify-center border border-[#dedede] bg-white text-[#777] transition-colors hover:border-[#333] hover:text-[#333] disabled:pointer-events-none disabled:opacity-30"
       >
-        <ChevronLeft size={16} />
+        <ChevronLeft size={14} />
       </button>
 
       {pages.map((page) => (
@@ -30,10 +30,10 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
           key={page}
           onClick={() => onPageChange(page)}
           className={clsx(
-            'w-8 h-8 text-sm rounded-lg font-medium transition-all duration-200',
+            'flex h-8 w-8 items-center justify-center border text-[11px] transition-colors',
             page === currentPage
-              ? 'bg-brand text-white shadow-sm'
-              : 'text-gray-500 hover:text-brand hover:bg-brand-50'
+              ? 'border-[#9d2244] bg-[#9d2244] font-semibold text-white'
+              : 'border-[#dedede] bg-white text-[#555] hover:border-[#9d2244]'
           )}
         >
           {page + 1}
@@ -43,9 +43,9 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
       <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage >= totalPages - 1}
-        className="p-2 rounded-lg text-gray-400 hover:text-brand disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+        className="flex h-8 w-8 items-center justify-center border border-[#dedede] bg-white text-[#777] transition-colors hover:border-[#333] hover:text-[#333] disabled:pointer-events-none disabled:opacity-30"
       >
-        <ChevronRight size={16} />
+        <ChevronRight size={14} />
       </button>
     </div>
   )

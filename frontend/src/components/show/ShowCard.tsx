@@ -1,63 +1,81 @@
 import { Link } from 'react-router-dom'
-import { CalendarDays, ImageOff, MapPin, Star } from 'lucide-react'
 import type { Show } from '../../types'
 
 interface ShowCardProps {
   show: Show
+  className?: string
 }
 
-const STATUS_BADGE: Record<string, string> = {
-  ONGOING: 'badge-ongoing',
-  ENDED: 'badge-ended',
-  UPCOMING: 'badge-upcoming',
+const statusMap: Record<string, { label: string; color: string }> = {
+  ONGOING: { label: '공연중', color: 'bg-brand text-white' },
+  UPCOMING: { label: '공연예정', color: 'bg-ink-darkest text-white' },
+  ENDED: { label: '종료', color: 'bg-line-base text-ink-lighter' },
 }
 
-export default function ShowCard({ show }: ShowCardProps) {
+const genreMap: Record<string, string> = {
+  MUSICAL: '뮤지컬',
+  PLAY: '연극',
+}
+
+function formatDate(dateStr: string | undefined) {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
+}
+
+export default function ShowCard({ show, className = 'aspect-[2/3]' }: ShowCardProps) {
+  const statusInfo = show.status ? statusMap[show.status] : null
+  const genreLabel = show.genre ? genreMap[show.genre] : null
+
   return (
-    <Link to={`/shows/${show.id}`} className="group block">
-      <div className="relative overflow-hidden rounded-2xl bg-warm-100 shadow-card-sm group-hover:shadow-card-md transition-all duration-300">
-        {show.posterUrl ? (
-          <img
-            src={show.posterUrl}
-            alt={show.title}
-            className="w-full aspect-[3/4] object-cover group-hover:scale-[1.03] transition-transform duration-500"
-            loading="lazy"
-          />
-        ) : (
-          <div className="w-full aspect-[3/4] flex flex-col items-center justify-center gap-2 bg-warm-100 text-gray-400">
-            <ImageOff size={24} />
-            <span className="text-xs font-medium">포스터 준비 중</span>
-          </div>
-        )}
-        <div className="absolute top-3 left-3">
-          <span className={STATUS_BADGE[show.status] || 'badge-ended'}>
-            {show.statusDisplayName}
-          </span>
+    <article className="min-w-0">
+      <Link to={`/shows/${show.id}`} className="group block">
+        {/* 포스터 */}
+        <div className={`relative overflow-hidden bg-surface-muted ${className}`}>
+          {show.posterUrl ? (
+            <img
+              src={show.posterUrl}
+              alt={show.title}
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+              loading="lazy"
+            />
+          ) : (
+            <>
+              <span className="absolute left-[19%] top-[16%] h-[52%] w-[58%] border border-ink-lightest opacity-50" />
+              <strong className="absolute bottom-[11%] left-[10%] whitespace-pre-line font-serif text-[clamp(14px,2vw,22px)] leading-[0.86] tracking-[-0.09em] text-ink-lightest opacity-60">
+                NO{'\n'}POSTER
+              </strong>
+            </>
+          )}
+          {/* 상태 뱃지 */}
+          {statusInfo && show.status !== 'ENDED' && (
+            <span className={`absolute top-2 left-2 px-1.5 py-0.5 text-[9px] font-semibold tracking-wide ${statusInfo.color}`}>
+              {statusInfo.label}
+            </span>
+          )}
         </div>
-        {show.averageScore !== undefined && show.averageScore !== null && (
-          <div className="absolute bottom-3 right-3 bg-white/95 backdrop-blur-sm text-gray-900 text-xs px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-sm">
-            <Star size={11} className="text-gold fill-gold" />
-            <span className="font-semibold">{show.averageScore.toFixed(1)}</span>
-          </div>
-        )}
-      </div>
-      <div className="pt-3 px-0.5">
-        <h3 className="font-semibold text-sm text-gray-900 line-clamp-2 leading-snug group-hover:text-brand transition-colors">
-          {show.title}
-        </h3>
-        {show.theaterName && (
-          <p className="flex items-center gap-1 text-xs text-gray-500 mt-1.5">
-            <MapPin size={11} />
-            <span className="truncate">{show.theaterName}</span>
+
+        {/* 정보 */}
+        <div className="mt-2.5">
+          {genreLabel && (
+            <p className="text-[9px] font-medium text-ink-lightest mb-0.5 tracking-wide">
+              {genreLabel}
+            </p>
+          )}
+          <h3 className="truncate text-[12px] font-semibold text-ink-base group-hover:text-brand leading-tight">
+            {show.title}
+          </h3>
+          <p className="mt-0.5 text-[10px] text-ink-lightest truncate">
+            {show.theaterName || '공연장 미정'}
           </p>
-        )}
-        {show.startDate && (
-          <p className="flex items-center gap-1 text-xs text-gray-400 mt-1">
-            <CalendarDays size={11} />
-            {show.startDate} ~ {show.endDate || ''}
-          </p>
-        )}
-      </div>
-    </Link>
+          {(show.startDate || show.endDate) && (
+            <p className="mt-0.5 text-[10px] text-ink-lightest">
+              {formatDate(show.startDate?.toString())}
+              {show.endDate && ` ~ ${formatDate(show.endDate?.toString())}`}
+            </p>
+          )}
+        </div>
+      </Link>
+    </article>
   )
 }

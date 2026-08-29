@@ -19,9 +19,9 @@ export default function DiaryGalleryView({ onEdit }: { onEdit: (entry: DiaryEntr
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+      <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
         {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="aspect-[3/4] rounded-2xl bg-gray-100 animate-pulse" />
+          <div key={i} className="aspect-[3/4] animate-pulse bg-surface-background" />
         ))}
       </div>
     )
@@ -31,7 +31,7 @@ export default function DiaryGalleryView({ onEdit }: { onEdit: (entry: DiaryEntr
 
   return (
     <>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+      <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
         {entries.map((entry) => (
           <TicketCard key={entry.id} entry={entry} onClick={() => { setSelectedEntry(entry); setPhotoIndex(0) }} />
         ))}
@@ -64,36 +64,36 @@ function TicketCard({ entry, onClick }: { entry: DiaryEntry; onClick: () => void
   return (
     <button
       onClick={onClick}
-      className="group relative aspect-[3/4] rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 text-left"
+      className="group relative aspect-[3/4] overflow-hidden bg-ink-darkest text-left"
     >
       {bgImage ? (
         <img
           src={bgImage}
           alt={entry.showTitle}
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          className="absolute inset-0 w-full h-full object-cover opacity-80"
           loading="lazy"
         />
       ) : (
-        <div className="absolute inset-0 bg-gradient-to-br from-brand-200 to-brand-400" />
+        <div className="absolute inset-0 bg-ink-dark" />
       )}
 
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-ink-darkest/95 via-ink-darkest/20 to-transparent" />
 
-      <div className="absolute top-2 right-2 flex items-center gap-0.5 bg-black/40 backdrop-blur-sm rounded-full px-2 py-0.5">
-        <Star size={10} className="text-yellow-400 fill-yellow-400" />
-        <span className="text-white text-xs font-semibold">{entry.rating}</span>
+      <div className="absolute right-2 top-2 flex items-center gap-0.5 bg-ink-darkest/80 px-2 py-1 backdrop-blur">
+        <Star size={10} className="text-white" />
+        <span className="text-white text-[11px] font-semibold">{entry.rating}</span>
       </div>
 
       <div className="absolute bottom-0 left-0 right-0 p-3">
-        <p className="text-white font-bold text-sm leading-tight line-clamp-2 mb-1">{entry.showTitle}</p>
-        <p className="text-white/70 text-xs">{watchedYear}. {watchedMonthDay}</p>
+        <p className="mb-1 line-clamp-2 text-[14px] font-semibold leading-tight tracking-[-0.02em] text-white">{entry.showTitle}</p>
+        <p className="text-[11px] text-white/70">{watchedYear}. {watchedMonthDay}</p>
         {entry.theaterName && (
-          <p className="text-white/60 text-[10px] truncate mt-0.5">{entry.theaterName}</p>
+          <p className="mt-0.5 truncate text-[10px] text-white/55">{entry.theaterName}</p>
         )}
       </div>
 
       {entry.photoUrls?.length > 1 && (
-        <div className="absolute top-2 left-2 bg-black/40 backdrop-blur-sm rounded-full px-1.5 py-0.5 flex items-center gap-0.5">
+        <div className="absolute left-2 top-2 flex items-center gap-0.5 bg-ink-darkest/80 px-1.5 py-1 backdrop-blur">
           <span className="text-white text-[10px]">+{entry.photoUrls.length}</span>
         </div>
       )}
@@ -115,14 +115,14 @@ function EntryDetailModal({ entry, photoIndex, onPhotoIndexChange, onEdit, onClo
 
   return (
     <div
-      className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl"
+        className="w-full max-w-sm overflow-hidden border border-line-lightest bg-white shadow-none"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="relative aspect-[4/3] bg-gray-100">
+        <div className="relative aspect-[4/3] bg-surface-background">
           {allPhotos.length > 0 ? (
             <img
               src={allPhotos[photoIndex]}
@@ -130,8 +130,8 @@ function EntryDetailModal({ entry, photoIndex, onPhotoIndexChange, onEdit, onClo
               className="w-full h-full object-cover"
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-brand-100 to-brand-300 flex items-center justify-center">
-              <Ticket size={40} className="text-brand-400" />
+            <div className="flex h-full w-full items-center justify-center bg-surface-background">
+              <Ticket size={40} className="text-ink-lighter" />
             </div>
           )}
 
@@ -140,14 +140,14 @@ function EntryDetailModal({ entry, photoIndex, onPhotoIndexChange, onEdit, onClo
               <button
                 onClick={() => onPhotoIndexChange(Math.max(0, photoIndex - 1))}
                 disabled={photoIndex === 0}
-                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 rounded-full p-1 text-white disabled:opacity-30"
+                className="absolute left-2 top-1/2 -translate-y-1/2 bg-ink-darkest/65 p-1.5 text-white disabled:opacity-30"
               >
                 <ChevronLeft size={16} />
               </button>
               <button
                 onClick={() => onPhotoIndexChange(Math.min(allPhotos.length - 1, photoIndex + 1))}
                 disabled={photoIndex === allPhotos.length - 1}
-                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 rounded-full p-1 text-white disabled:opacity-30"
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-ink-darkest/65 p-1.5 text-white disabled:opacity-30"
               >
                 <ChevronRight size={16} />
               </button>
@@ -161,7 +161,7 @@ function EntryDetailModal({ entry, photoIndex, onPhotoIndexChange, onEdit, onClo
 
           <button
             onClick={onClose}
-            className="absolute top-2 right-2 bg-black/40 rounded-full p-1 text-white hover:bg-black/60 transition-colors"
+            className="absolute right-2 top-2 bg-ink-darkest/65 p-1.5 text-white transition-colors hover:bg-ink-darkest"
           >
             <X size={16} />
           </button>
@@ -169,54 +169,54 @@ function EntryDetailModal({ entry, photoIndex, onPhotoIndexChange, onEdit, onClo
 
         <div className="p-5">
           <div className="flex items-start justify-between mb-3">
-            <h3 className="text-lg font-bold text-gray-900 leading-tight flex-1 mr-2">{entry.showTitle}</h3>
+            <h3 className="mr-2 flex-1 text-[17px] font-semibold leading-tight tracking-[-0.03em] text-ink-base">{entry.showTitle}</h3>
             <div className="flex items-center gap-1 shrink-0">
               {Array.from({ length: 5 }).map((_, i) => (
                 <Star
                   key={i}
-                  size={14}
-                  className={i < entry.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'}
+                  size={12}
+                  className={i < entry.rating ? 'fill-brand text-brand' : 'text-line-base'}
                 />
               ))}
             </div>
           </div>
 
-          <div className="space-y-1.5 text-sm text-gray-600">
+          <div className="space-y-1.5 text-[13px] text-ink-muted">
             <div className="flex items-center gap-2">
-              <Calendar size={13} className="text-gray-400 shrink-0" />
+              <Calendar size={12} className="shrink-0 text-ink-lighter" />
               <span>{entry.watchedDate}</span>
             </div>
             {entry.theaterName && (
               <div className="flex items-center gap-2">
-                <MapPin size={13} className="text-gray-400 shrink-0" />
+                <MapPin size={12} className="shrink-0 text-ink-lighter" />
                 <span>{entry.theaterName}</span>
               </div>
             )}
             {entry.seatInfo && (
               <div className="flex items-center gap-2">
-                <Armchair size={13} className="text-gray-400 shrink-0" />
+                <Armchair size={12} className="shrink-0 text-ink-lighter" />
                 <span>{entry.seatInfo}</span>
               </div>
             )}
             {entry.ticketPrice != null && (
               <div className="flex items-center gap-2">
-                <Ticket size={13} className="text-gray-400 shrink-0" />
+                <Ticket size={12} className="shrink-0 text-ink-lighter" />
                 <span>{entry.ticketPrice.toLocaleString()}원</span>
               </div>
             )}
           </div>
 
           {entry.castMemo && (
-            <p className="mt-3 text-xs text-gray-500 bg-warm-50 rounded-lg px-3 py-2">{entry.castMemo}</p>
+            <p className="mt-4 border-l-2 border-line-lightest pl-3 text-[13px] text-ink-muted">{entry.castMemo}</p>
           )}
 
           {entry.comment && (
-            <p className="mt-2 text-sm text-gray-700 leading-relaxed line-clamp-3">{entry.comment}</p>
+            <p className="mt-4 line-clamp-3 text-[13px] leading-6 text-ink-base">{entry.comment}</p>
           )}
 
           <button
             onClick={onEdit}
-            className="w-full mt-4 btn-secondary text-sm py-2"
+            className="mt-5 h-[39px] w-full bg-brand text-[12px] font-semibold text-white"
           >
             수정하기
           </button>

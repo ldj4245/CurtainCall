@@ -44,32 +44,32 @@ export default function CompanionForm({ showId, onClose, onSuccess }: CompanionF
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                    <h2 className="text-lg font-bold text-gray-900">동행 모집하기</h2>
-                    <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#172033]/45 p-4">
+            <div className="w-full max-w-lg overflow-hidden border border-[#e5e8ee] bg-white shadow-[0_18px_50px_rgba(23,32,51,0.18)]">
+                <div className="flex items-center justify-between border-b border-[#e5e8ee] px-5 py-4">
+                    <div><p className="page-kicker">Find a companion</p><h2 className="mt-1 text-[18px] font-semibold tracking-[-0.03em] text-[#172033]">동행 모집</h2></div>
+                    <button onClick={onClose} className="icon-button" aria-label="동행 모집 닫기">
                         <X size={20} />
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                <form onSubmit={handleSubmit} className="space-y-4 p-5">
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">제목</label>
+                        <label className="mb-1.5 block text-[12px] font-semibold text-[#536076]">제목</label>
                         <input
                             type="text"
                             className="input-field"
-                            placeholder="예: 이번주 토요일 데스노트 같이 보실 분!"
+                            placeholder="예: 이번 주 토요일 함께 관람하실 분"
                             value={formData.title}
                             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                             maxLength={100}
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1">
-                                <Calendar size={14} className="text-gray-400" />
+                            <label className="mb-1.5 flex items-center gap-1 text-[12px] font-semibold text-[#536076]">
+                                <Calendar size={13} className="text-[#8993a4]" />
                                 관람일
                             </label>
                             <input
@@ -80,8 +80,8 @@ export default function CompanionForm({ showId, onClose, onSuccess }: CompanionF
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1">
-                                <Clock size={14} className="text-gray-400" />
+                            <label className="mb-1.5 flex items-center gap-1 text-[12px] font-semibold text-[#536076]">
+                                <Clock size={13} className="text-[#8993a4]" />
                                 관람 시간
                             </label>
                             <input
@@ -94,10 +94,10 @@ export default function CompanionForm({ showId, onClose, onSuccess }: CompanionF
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1">
-                                <Users size={14} className="text-gray-400" />
+                            <label className="mb-1.5 flex items-center gap-1 text-[12px] font-semibold text-[#536076]">
+                                <Users size={13} className="text-[#8993a4]" />
                                 모집 인원 (본인 포함)
                             </label>
                             <input
@@ -110,8 +110,8 @@ export default function CompanionForm({ showId, onClose, onSuccess }: CompanionF
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1">
-                                <MapPin size={14} className="text-gray-400" />
+                            <label className="mb-1.5 flex items-center gap-1 text-[12px] font-semibold text-[#536076]">
+                                <MapPin size={13} className="text-[#8993a4]" />
                                 좌석 정보 (선택)
                             </label>
                             <input
@@ -126,29 +126,29 @@ export default function CompanionForm({ showId, onClose, onSuccess }: CompanionF
                     </div>
 
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">상세 내용</label>
+                        <label className="mb-1.5 block text-[12px] font-semibold text-[#536076]">상세 내용</label>
                         <textarea
-                            className="input-field min-h-[120px] resize-none"
-                            placeholder="만날 장소, 시간, 관람 후 뒷풀이 여부 등 상세한 내용을 적어주세요."
+                            className="min-h-[112px] w-full resize-none rounded-md border border-[#d9dee7] bg-[#fafafb] px-3.5 py-3 text-[13px] leading-6 text-[#172033] placeholder:text-[#98a2b3] focus:border-[#aeb7c5] focus:bg-white focus:outline-none"
+                            placeholder="만날 장소, 시간 등 동행에게 필요한 내용을 적어 주세요."
                             value={formData.content}
                             onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                         />
                     </div>
 
-                    <div className="pt-4 flex gap-3">
+                    <div className="flex gap-2 border-t border-[#e5e8ee] pt-4">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-semibold bg-white hover:bg-gray-50 transition-colors"
+                            className="btn-secondary flex-1"
                         >
                             취소
                         </button>
                         <button
                             type="submit"
                             disabled={createMutation.isPending}
-                            className="flex-1 px-4 py-2.5 rounded-xl bg-brand text-white font-semibold hover:bg-brand-600 transition-colors flex justify-center items-center"
+                            className="btn-primary flex-1"
                         >
-                            {createMutation.isPending ? <Loader2 size={20} className="animate-spin" /> : '등록하기'}
+                            {createMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : '등록하기'}
                         </button>
                     </div>
                 </form>

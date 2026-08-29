@@ -79,15 +79,15 @@ export default function SearchBar() {
   }, [])
 
   const statusLabel = (status: string | null) => {
-    if (status === 'ONGOING') return <span className="text-xs text-green-500">공연 중</span>
-    if (status === 'UPCOMING') return <span className="text-xs text-blue-400">예정</span>
-    return <span className="text-xs text-gray-400">종료</span>
+    if (status === 'ONGOING') return <span className="text-[13px] text-gray-500">공연 중</span>
+    if (status === 'UPCOMING') return <span className="text-[13px] text-gray-400">예정</span>
+    return <span className="text-[13px] text-gray-400">종료</span>
   }
 
   return (
     <div ref={containerRef} className="relative w-full max-w-sm">
       <form onSubmit={handleSubmit}>
-        <div className="flex items-center gap-2 h-9 px-3 rounded-full border border-gray-200 bg-gray-50 focus-within:bg-white focus-within:border-brand/40 focus-within:ring-2 focus-within:ring-brand/10 transition-all">
+        <div className="flex items-center gap-2 h-10 px-3 rounded-md border border-gray-200 bg-gray-50 focus-within:bg-white focus-within:border-gray-400 transition-all">
           <Search size={15} className="text-gray-400 flex-shrink-0" />
           <input
             type="text"
@@ -96,32 +96,32 @@ export default function SearchBar() {
             onKeyDown={handleKeyDown}
             onFocus={() => results.length > 0 && setOpen(true)}
             placeholder="공연 검색..."
-            className="flex-1 bg-transparent text-sm text-gray-800 placeholder-gray-400 outline-none min-w-0"
+            className="flex-1 bg-transparent text-[13px] text-gray-900 placeholder-gray-400 outline-none min-w-0"
           />
         </div>
       </form>
 
       {open && (
-        <div className="absolute top-full mt-1.5 left-0 right-0 bg-white rounded-xl border border-gray-100 shadow-lg z-50 overflow-hidden">
+        <div className="absolute top-full mt-1.5 left-0 right-0 bg-white rounded-md border border-gray-100 shadow-none z-50 overflow-hidden">
           {results.map((show, idx) => (
             <button
               key={show.id}
               onMouseDown={() => handleSelect(show)}
               className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors ${
-                idx === activeIdx ? 'bg-brand-50' : 'hover:bg-gray-50'
+                idx === activeIdx ? 'bg-gray-50' : 'hover:bg-gray-50'
               }`}
             >
               {show.posterUrl ? (
                 <img
                   src={show.posterUrl}
                   alt={show.title}
-                  className="w-8 h-10 object-cover rounded flex-shrink-0 bg-gray-100"
+                  className="w-8 h-10 object-cover rounded-sm flex-shrink-0 bg-gray-100"
                 />
               ) : (
-                <div className="w-8 h-10 rounded bg-gray-100 flex-shrink-0" />
+                <div className="w-8 h-10 rounded-sm bg-gray-100 flex-shrink-0" />
               )}
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-gray-900 truncate font-medium">{show.title}</p>
+                <p className="text-[13px] text-gray-900 truncate font-semibold">{show.title}</p>
                 <div className="mt-0.5">{statusLabel(show.status)}</div>
               </div>
             </button>

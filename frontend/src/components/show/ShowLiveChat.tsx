@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { MessageCircle, Send, LogIn } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { showLiveApi } from '../../api/showLive';
 import { useShowLive } from '../../hooks/useShowLive';
@@ -73,25 +72,24 @@ export default function ShowLiveChat({ showId }: ShowLiveChatProps) {
   };
 
   return (
-    <div className="card overflow-hidden">
+    <div className="overflow-hidden border border-line-base bg-surface-base">
       {/* 헤더 */}
-      <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+      <div className="flex items-center justify-between border-b border-line-lightest px-4 py-3">
         <div className="flex items-center gap-2">
-          <MessageCircle className="w-5 h-5 text-brand" />
-          <h2 className="font-bold text-gray-900">오늘 관람 후기</h2>
-          <span className="text-xs text-gray-400 font-medium">{TODAY}</span>
+          <h2 className="text-[13px] font-semibold tracking-[-0.02em] text-ink-base">오늘의 한 줄 감상</h2>
+          <span className="text-[11px] font-medium text-ink-lighter">{TODAY}</span>
         </div>
         {isAuthenticated && (
           <div className="flex items-center gap-1.5">
             {connected ? (
               <>
-                <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                <span className="text-xs text-green-500">라이브</span>
+                <span className="h-1.5 w-1.5 rounded-full bg-brand" />
+                <span className="text-[11px] text-ink-muted">라이브</span>
               </>
             ) : (
               <>
-                <span className="w-1.5 h-1.5 rounded-full bg-gray-300" />
-                <span className="text-xs text-gray-400">연결 중</span>
+                <span className="h-1.5 w-1.5 rounded-full bg-ink-lightest" />
+                <span className="text-[11px] text-ink-lighter">연결 중</span>
               </>
             )}
           </div>
@@ -100,16 +98,14 @@ export default function ShowLiveChat({ showId }: ShowLiveChatProps) {
 
       {/* 비로그인 */}
       {!isAuthenticated && (
-        <div className="px-5 py-10 text-center">
-          <MessageCircle className="w-10 h-10 text-gray-200 mx-auto mb-3" />
-          <p className="text-sm text-gray-500 mb-4">
+        <div className="bg-surface-alt px-4 py-8 text-center">
+          <p className="mb-4 text-[12px] text-ink-light">
             오늘 같은 공연을 본 관객들과 실시간으로 감상을 나눠보세요
           </p>
           <Link
             to="/login"
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand text-white text-sm font-semibold rounded-xl hover:bg-brand/90 transition-colors"
+            className="inline-flex h-[34px] items-center justify-center bg-brand px-4 text-[11px] font-semibold text-white transition-colors"
           >
-            <LogIn className="w-4 h-4" />
             로그인하고 참여하기
           </Link>
         </div>
@@ -119,15 +115,15 @@ export default function ShowLiveChat({ showId }: ShowLiveChatProps) {
       {isAuthenticated && (
         <>
           {/* 메시지 목록 */}
-          <div className="h-72 overflow-y-auto px-4 py-4 space-y-3 bg-gray-50/50">
+          <div className="h-72 space-y-3 overflow-y-auto bg-surface-alt px-4 py-4">
             {isLoading ? (
               <div className="flex justify-center pt-10">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-brand" />
+                <span className="text-[12px] text-ink-lighter">불러오는 중</span>
               </div>
             ) : messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center">
-                <p className="text-sm text-gray-400">오늘 공연을 보셨나요?</p>
-                <p className="text-xs text-gray-300 mt-1">첫 번째 감상을 남겨보세요 ✨</p>
+                <p className="text-[12px] text-ink-light">오늘 공연을 보셨나요?</p>
+                <p className="mt-1 text-[11px] text-ink-lighter">첫 번째 감상을 남겨 보세요.</p>
               </div>
             ) : (
               messages.map((msg, idx) => {
@@ -138,28 +134,28 @@ export default function ShowLiveChat({ showId }: ShowLiveChatProps) {
                     className={`flex items-end gap-2 ${isMine ? 'flex-row-reverse' : 'flex-row'}`}
                   >
                     {!isMine && (
-                      <div className="w-7 h-7 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
+                      <div className="h-6 w-6 shrink-0 overflow-hidden rounded-full bg-surface-background border border-line-lightest">
                         {msg.senderProfileImage ? (
                           <img src={msg.senderProfileImage} alt="" className="w-full h-full object-cover" />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-xs font-bold text-gray-500">
+                          <div className="flex h-full w-full items-center justify-center text-[10px] font-bold text-ink-muted">
                             {msg.senderNickname[0]}
                           </div>
                         )}
                       </div>
                     )}
-                    <div className={`flex flex-col gap-1 max-w-[70%] ${isMine ? 'items-end' : 'items-start'}`}>
+                    <div className={`flex flex-col gap-1 max-w-[75%] ${isMine ? 'items-end' : 'items-start'}`}>
                       {!isMine && (
-                        <span className="text-xs text-gray-400 px-1">{msg.senderNickname}</span>
+                        <span className="px-1 text-[10px] text-ink-light">{msg.senderNickname}</span>
                       )}
-                      <div className={`px-3 py-2 rounded-2xl text-sm ${
+                      <div className={`px-3 py-2 text-[12px] ${
                         isMine
-                          ? 'bg-brand text-white rounded-br-sm'
-                          : 'bg-white text-gray-800 shadow-sm rounded-bl-sm'
+                          ? 'bg-ink-darker text-white'
+                          : 'border border-line-base bg-surface-base text-ink-base'
                       }`}>
                         {msg.content}
                       </div>
-                      <span className="text-xs text-gray-400 px-1">{formatTime(msg.createdAt)}</span>
+                      <span className="px-1 text-[10px] text-ink-lightest">{formatTime(msg.createdAt)}</span>
                     </div>
                   </div>
                 );
@@ -169,22 +165,22 @@ export default function ShowLiveChat({ showId }: ShowLiveChatProps) {
           </div>
 
           {/* 입력 */}
-          <div className="px-4 py-3 border-t border-gray-100 flex items-center gap-2">
+          <div className="flex items-center gap-2 border-t border-line-base bg-surface-base px-3 py-3">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-              placeholder={connected ? '오늘 공연 어떠셨나요?' : '연결 중...'}
+              placeholder={connected ? '감상 입력' : '연결 중'}
               disabled={!connected}
-              className="flex-1 bg-gray-100 rounded-full px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-brand/30 disabled:opacity-50"
+              className="h-[34px] flex-1 border border-line-base bg-surface-alt px-3 text-[12px] text-ink-base outline-none focus:border-brand disabled:opacity-50 transition-colors"
             />
             <button
               onClick={handleSend}
               disabled={!connected || !input.trim()}
-              className="w-9 h-9 bg-brand text-white rounded-full flex items-center justify-center hover:bg-brand/90 transition-colors disabled:opacity-40"
+              className="flex h-[34px] items-center justify-center bg-brand px-4 text-[11px] font-semibold text-white disabled:opacity-50 transition-colors"
             >
-              <Send className="w-4 h-4" />
+              전송
             </button>
           </div>
         </>
