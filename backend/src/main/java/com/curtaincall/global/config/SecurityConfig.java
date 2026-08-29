@@ -47,8 +47,8 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/index.html", "/manifest.json", "/curtain.svg", "/favicon.ico", "/assets/**", "/*.png", "/*.svg", "/*.ico", "/error").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/shows", "/shows/**", "/diary", "/diary/**", "/mypage", "/mypage/**", "/chat", "/chat/**", "/login", "/signup").permitAll()
+                        .dispatcherTypeMatchers(jakarta.servlet.DispatcherType.FORWARD, jakarta.servlet.DispatcherType.ERROR, jakarta.servlet.DispatcherType.ASYNC).permitAll()
+                        .requestMatchers(request -> !request.getRequestURI().startsWith("/api") && !request.getRequestURI().startsWith("/ws")).permitAll()
                         .requestMatchers("/swagger-ui/**", "/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
