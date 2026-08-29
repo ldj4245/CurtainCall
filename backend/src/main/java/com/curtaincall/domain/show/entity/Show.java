@@ -62,13 +62,16 @@ public class Show extends BaseTimeEntity {
     @Column(name = "intro_images", columnDefinition = "TEXT")
     private String introImages;
 
+    @Column(name = "dtguidance", columnDefinition = "TEXT")
+    private String dtguidance;
+
     @Column(name = "popularity_rank")
     @Builder.Default
     private Integer popularityRank = 999;
 
     public void update(String title, Genre genre, LocalDate startDate, LocalDate endDate,
             Theater theater, String posterUrl, String castInfo, String priceInfo,
-            String runtime, Status status, String ageLimit, String introImages) {
+            String runtime, Status status, String ageLimit, String introImages, String dtguidance) {
         this.title = title;
         this.genre = genre;
         this.startDate = startDate;
@@ -81,6 +84,13 @@ public class Show extends BaseTimeEntity {
         this.status = status;
         this.ageLimit = ageLimit;
         this.introImages = introImages;
+        this.dtguidance = dtguidance;
+    }
+
+    public void update(String title, Genre genre, LocalDate startDate, LocalDate endDate,
+            Theater theater, String posterUrl, String castInfo, String priceInfo,
+            String runtime, Status status, String ageLimit, String introImages) {
+        update(title, genre, startDate, endDate, theater, posterUrl, castInfo, priceInfo, runtime, status, ageLimit, introImages, this.dtguidance);
     }
 
     public void updatePopularityRank(int rank) {
@@ -122,6 +132,20 @@ public class Show extends BaseTimeEntity {
 
         public String getDisplayName() {
             return displayName;
+        }
+
+        public static Status determineStatus(LocalDate startDate, LocalDate endDate, String kopisStatus) {
+            LocalDate today = LocalDate.now();
+            if (endDate != null && endDate.isBefore(today)) {
+                return ENDED;
+            }
+            if (startDate != null && startDate.isAfter(today)) {
+                return UPCOMING;
+            }
+            if (startDate != null && !startDate.isAfter(today) && (endDate == null || !endDate.isBefore(today))) {
+                return ONGOING;
+            }
+            return fromKopis(kopisStatus);
         }
 
         public static Status fromKopis(String kopisStatus) {

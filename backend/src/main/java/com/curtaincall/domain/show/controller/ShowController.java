@@ -59,8 +59,9 @@ public class ShowController {
     @Operation(summary = "인기 공연 목록 (KOPIS 박스오피스 기반)")
     @GetMapping("/popular")
     public ResponseEntity<List<ShowResponse>> getPopularShows(
-            @RequestParam(defaultValue = "8") int limit) {
-        return ResponseEntity.ok(showService.getPopularShows(limit));
+            @RequestParam(defaultValue = "8") int limit,
+            @RequestParam(required = false) String genre) {
+        return ResponseEntity.ok(showService.getPopularShows(limit, genre));
     }
 
     @Operation(summary = "홈 큐레이션 섹션", description = "KOPIS 인기 공연, 곧 끝나는 공연, 이번 달 개막, 기록 많은 공연을 조회합니다.")
@@ -68,6 +69,14 @@ public class ShowController {
     public ResponseEntity<ShowHomeSectionsResponse> getHomeSections(
             @RequestParam(defaultValue = "8") int limit) {
         return ResponseEntity.ok(showService.getHomeSections(limit));
+    }
+
+    @Operation(summary = "오늘의 공연 스케줄 (시간대별 타임테이블)", description = "오늘 또는 지정된 날짜의 공연 시작 시간대별 스케줄을 조회합니다.")
+    @GetMapping("/schedule")
+    public ResponseEntity<com.curtaincall.domain.show.dto.ShowScheduleResponse> getSchedule(
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate date,
+            @RequestParam(required = false) String genre) {
+        return ResponseEntity.ok(showService.getTodaySchedule(date, genre));
     }
 
     @Operation(summary = "공연별 공개 관극 기록 요약")

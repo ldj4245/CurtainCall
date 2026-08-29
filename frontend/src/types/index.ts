@@ -17,6 +17,8 @@ export interface Show {
   theaterId?: number
   theaterName?: string
   theaterRegion?: string
+  theaterAddress?: string
+  theaterSeatScale?: number
   posterUrl?: string
   castInfo?: string
   priceInfo?: string
@@ -36,6 +38,34 @@ export interface ShowHomeSections {
   endingSoon: Show[]
   openingThisMonth: Show[]
   mostRecorded: Show[]
+}
+
+export interface ScheduleShowItem {
+  id: number
+  kopisId: string
+  title: string
+  genre?: string
+  genreDisplayName?: string
+  theaterName?: string
+  posterUrl?: string
+  runtime?: string
+  priceInfo?: string
+  castInfo?: string
+  time: string
+}
+
+export interface TimeSlot {
+  time: string
+  label: string
+  count: number
+  shows: ScheduleShowItem[]
+}
+
+export interface ShowSchedule {
+  date: string
+  dayOfWeek: string
+  totalShowsToday: number
+  timeSlots: TimeSlot[]
 }
 
 export interface Theater {
@@ -87,9 +117,12 @@ export interface DiarySnippet {
   diaryId: number
   userNickname: string
   watchedDate: string
+  seatInfo?: string
+  castMemo?: string
   rating: number
   comment?: string
   representativeImageUrl?: string
+  photoUrls?: string[]
 }
 
 export interface DiarySnippetResponse {

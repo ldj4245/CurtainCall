@@ -23,6 +23,8 @@ public class ShowResponse {
     private Long theaterId;
     private String theaterName;
     private String theaterRegion;
+    private String theaterAddress;
+    private Integer theaterSeatScale;
     private String posterUrl;
     private String castInfo;
     private List<String> castList;
@@ -48,6 +50,8 @@ public class ShowResponse {
                 .theaterId(show.getTheater() != null ? show.getTheater().getId() : null)
                 .theaterName(show.getTheater() != null ? show.getTheater().getName() : null)
                 .theaterRegion(show.getTheater() != null ? show.getTheater().getRegion() : null)
+                .theaterAddress(show.getTheater() != null ? show.getTheater().getAddress() : null)
+                .theaterSeatScale(show.getTheater() != null ? show.getTheater().getSeatScale() : null)
                 .posterUrl(show.getPosterUrl())
                 .castInfo(show.getCastInfo())
                 .castList(parseCastInfo(show.getCastInfo()))
@@ -74,6 +78,8 @@ public class ShowResponse {
                 .theaterId(response.theaterId)
                 .theaterName(response.theaterName)
                 .theaterRegion(response.theaterRegion)
+                .theaterAddress(response.theaterAddress)
+                .theaterSeatScale(response.theaterSeatScale)
                 .posterUrl(response.posterUrl)
                 .castInfo(response.castInfo)
                 .castList(response.castList)
@@ -102,6 +108,8 @@ public class ShowResponse {
                 .theaterId(response.theaterId)
                 .theaterName(response.theaterName)
                 .theaterRegion(response.theaterRegion)
+                .theaterAddress(response.theaterAddress)
+                .theaterSeatScale(response.theaterSeatScale)
                 .posterUrl(response.posterUrl)
                 .castInfo(response.castInfo)
                 .castList(response.castList)

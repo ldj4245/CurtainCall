@@ -21,4 +21,5 @@ public class KopisShowDetailDto {
     private String priceInfo;
     private String status;
     private String introImages;
+    private String dtguidance;
 }

@@ -24,6 +24,7 @@ public class KopisSyncService {
     private final KopisApiClient kopisApiClient;
     private final ShowRepository showRepository;
     private final TheaterRepository theaterRepository;
+    private final org.springframework.cache.CacheManager cacheManager;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy.MM.dd");
     private static final String[] GENRES = { "GGGA", "AAAA" }; // 뮤지컬, 연극
@@ -76,10 +77,6 @@ public class KopisSyncService {
             log.info("수동 동기화 - genre code: {}, period: {} ~ {}", genre, today.minusMonths(1), endDate);
             List<KopisShowDto> shows = kopisApiClient.fetchShows(today.minusMonths(1), endDate, genre);
             log.info("수동 동기화 - genre: {}, 조회된 공연 수: {}", genre, shows.size());
-            if (!shows.isEmpty()) {
-                log.info("첫 번째 공연 - kopisId: {}, title: {}, genre: {}",
-                        shows.get(0).getKopisId(), shows.get(0).getTitle(), shows.get(0).getGenre());
-            }
             for (KopisShowDto showDto : shows) {
                 syncShow(showDto);
             }
@@ -99,16 +96,16 @@ public class KopisSyncService {
                 log.warn("알 수 없는 장르 - kopisId: {}, genrenm: '{}', title: {}",
                         showDto.getKopisId(), detail.getGenre(), detail.getTitle());
             }
-            Show.Status status = Show.Status.fromKopis(detail.getStatus());
             LocalDate startDate = parseDate(detail.getStartDate());
             LocalDate endDate = parseDate(detail.getEndDate());
+            Show.Status status = Show.Status.determineStatus(startDate, endDate, detail.getStatus());
 
             showRepository.findByKopisId(showDto.getKopisId())
                     .ifPresentOrElse(
                             existing -> existing.update(detail.getTitle(), genre, startDate, endDate,
                                     theater, detail.getPosterUrl(), detail.getCastInfo(),
                                     detail.getPriceInfo(), detail.getRuntime(), status,
-                                    detail.getAgeLimit(), detail.getIntroImages()),
+                                    detail.getAgeLimit(), detail.getIntroImages(), detail.getDtguidance()),
                             () -> showRepository.save(Show.builder()
                                     .kopisId(showDto.getKopisId())
                                     .title(detail.getTitle())
@@ -122,6 +119,7 @@ public class KopisSyncService {
                                     .runtime(detail.getRuntime())
                                     .ageLimit(detail.getAgeLimit())
                                     .introImages(detail.getIntroImages())
+                                    .dtguidance(detail.getDtguidance())
                                     .status(status)
                                     .build()));
         } catch (Exception e) {
@@ -165,7 +163,7 @@ public class KopisSyncService {
             if (detail != null && detail.getAddress() != null) {
                 String region = detail.getRegion();
                 if (region == null || region.isBlank()) {
-                    region = detail.getAddress().split(" ")[0]; // 도로명 주소의 첫 번째 단어 (예: 서울특별시)
+                    region = detail.getAddress().split(" ")[0];
                 }
 
                 theater.update(
@@ -211,29 +209,33 @@ public class KopisSyncService {
     private void syncTheater(KopisTheaterDto dto) {
         theaterRepository.findByKopisId(dto.getKopisId())
                 .ifPresentOrElse(
-                        existing -> existing.update(dto.getName(), dto.getAddress(),
-                                dto.getSeatScale(), dto.getRegion(), dto.getCharacteristics()),
-                        () -> theaterRepository.save(Theater.builder()
-                                .kopisId(dto.getKopisId())
-                                .name(dto.getName())
-                                .address(dto.getAddress())
-                                .seatScale(dto.getSeatScale())
-                                .region(dto.getRegion())
-                                .characteristics(dto.getCharacteristics())
-                                .build()));
+                            existing -> existing.update(dto.getName(), dto.getAddress(),
+                                    dto.getSeatScale(), dto.getRegion(), dto.getCharacteristics()),
+                            () -> theaterRepository.save(Theater.builder()
+                                    .kopisId(dto.getKopisId())
+                                    .name(dto.getName())
+                                    .address(dto.getAddress())
+                                    .seatScale(dto.getSeatScale())
+                                    .region(dto.getRegion())
+                                    .characteristics(dto.getCharacteristics())
+                                    .build()));
     }
 
     private LocalDate parseDate(String dateStr) {
         if (dateStr == null || dateStr.isBlank())
             return null;
+        String clean = dateStr.trim().replace("-", ".").replace("/", ".");
         try {
-            return LocalDate.parse(dateStr, DATE_FORMATTER);
+            return LocalDate.parse(clean, DATE_FORMATTER);
         } catch (Exception e) {
-            return null;
+            try {
+                return LocalDate.parse(clean, DateTimeFormatter.ofPattern("yyyyMMdd"));
+            } catch (Exception ex) {
+                log.warn("날짜 파싱 실패: '{}'", dateStr);
+                return null;
+            }
         }
     }
-
-    private final org.springframework.cache.CacheManager cacheManager;
 
     @org.springframework.context.event.EventListener(org.springframework.boot.context.event.ApplicationReadyEvent.class)
     public void initSyncIfEmpty() {
@@ -241,7 +243,6 @@ public class KopisSyncService {
             log.info("DB가 비어있습니다. 초기 데이터를 동기화합니다 (약 3~5분 소요)...");
             syncShows();
 
-            // 캐시 명시적 초기화 (내부 호출로 인한 @CacheEvict 무시 우회)
             if (cacheManager != null) {
                 log.info("초기 동기화 완료 후 캐시를 비웁니다...");
                 String[] cacheNames = { "showsSearch", "showDetail", "ongoingShows", "popularShows" };

@@ -87,6 +87,7 @@ public class KopisApiClient {
                     .priceInfo(getText(el, "pcseguidance"))
                     .status(getText(el, "prfstate"))
                     .introImages(extractIntroImages(el))
+                    .dtguidance(getText(el, "dtguidance"))
                     .build();
         } catch (Exception e) {
             log.error("KOPIS API 공연 상세 조회 실패 - kopisId: {}, error: {}", kopisId, e.getMessage());

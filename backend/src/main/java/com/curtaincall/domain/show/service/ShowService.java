@@ -9,6 +9,7 @@ import com.curtaincall.domain.show.entity.Show;
 import com.curtaincall.domain.show.repository.ShowRepository;
 import com.curtaincall.global.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -16,14 +17,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.cache.annotation.Cacheable;
 
+import com.curtaincall.domain.show.dto.ShowScheduleResponse;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.YearMonth;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -35,6 +39,7 @@ public class ShowService {
     private final ShowRepository showRepository;
     private final ReviewRepository reviewRepository;
     private final DiaryEntryRepository diaryEntryRepository;
+    private final com.curtaincall.infra.kopis.KopisSyncService kopisSyncService;
 
     @Cacheable(value = "showsSearch", key = "{#keyword, #genre, #status, #region, #page, #size}")
     public Page<ShowResponse> searchShows(String keyword, String genre, String status, String region, int page,
@@ -47,10 +52,23 @@ public class ShowService {
                 .map(ShowResponse::from);
     }
 
-    @Cacheable(value = "showDetail", key = "#id")
+    @jakarta.persistence.PersistenceContext
+    private jakarta.persistence.EntityManager entityManager;
+
+    @Transactional
     public ShowResponse getShow(Long id) {
         Show show = showRepository.findById(id)
                 .orElseThrow(() -> BusinessException.notFound("공연을 찾을 수 없습니다."));
+
+        if (show.getStartDate() == null && show.getKopisId() != null) {
+            try {
+                kopisSyncService.syncShow(com.curtaincall.infra.kopis.KopisShowDto.builder().kopisId(show.getKopisId()).build());
+                entityManager.clear();
+                show = showRepository.findById(id).orElse(show);
+            } catch (Exception e) {
+                log.warn("공연 상세 실시간 보완 실패: {}", show.getKopisId());
+            }
+        }
 
         Double averageScore = reviewRepository.getAverageScoreByShowId(id);
         long reviewCount = reviewRepository.countByShowId(id);
@@ -67,11 +85,24 @@ public class ShowService {
                 .stream().map(ShowResponse::from).toList();
     }
 
-    @Cacheable(value = "popularShows", key = "#limit")
-    public List<ShowResponse> getPopularShows(int limit) {
+    @Cacheable(value = "popularShows", key = "{#limit, #genre}")
+    public List<ShowResponse> getPopularShows(int limit, String genre) {
         Pageable pageable = PageRequest.of(0, safeSize(limit, MAX_HOME_LIMIT));
-        return showRepository.findPopularOngoing(pageable)
-                .stream().map(ShowResponse::from).toList();
+        Show.Genre genreEnum = parseEnum(Show.Genre.class, genre);
+
+        List<Show> shows;
+        if (genreEnum != null) {
+            shows = showRepository.findPopularOngoingByGenre(genreEnum, pageable);
+            if (shows.isEmpty()) {
+                shows = showRepository.findByGenreAndStatusWithTheaterList(genreEnum, Show.Status.ONGOING, pageable);
+            }
+        } else {
+            shows = showRepository.findPopularOngoing(pageable);
+            if (shows.isEmpty()) {
+                shows = showRepository.findByStatusWithTheaterList(Show.Status.ONGOING, pageable);
+            }
+        }
+        return shows.stream().map(ShowResponse::from).toList();
     }
 
     @Cacheable(value = "homeShowSections", key = "#limit")
@@ -82,13 +113,27 @@ public class ShowService {
         LocalDate monthStart = thisMonth.atDay(1);
         LocalDate monthEnd = thisMonth.atEndOfMonth();
 
+        List<ShowResponse> popular = showRepository.findPopularOngoing(pageable).stream().map(ShowResponse::from).toList();
+        if (popular.isEmpty()) {
+            popular = showRepository.findByStatusWithTheaterList(Show.Status.ONGOING, pageable).stream().map(ShowResponse::from).toList();
+        }
+        if (popular.isEmpty()) {
+            popular = showRepository.findAllWithTheaterList(pageable).stream().map(ShowResponse::from).toList();
+        }
+
+        List<ShowResponse> endingSoon = showRepository.findEndingSoon(pageable).stream().map(ShowResponse::from).toList();
+
+        List<ShowResponse> openingThisMonth = showRepository.findOpeningBetween(monthStart, monthEnd, pageable).stream()
+                .map(ShowResponse::from)
+                .toList();
+
+        List<ShowResponse> mostRecorded = getMostRecordedShows(pageable);
+
         return ShowHomeSectionsResponse.builder()
-                .popular(showRepository.findPopularOngoing(pageable).stream().map(ShowResponse::from).toList())
-                .endingSoon(showRepository.findEndingSoon(pageable).stream().map(ShowResponse::from).toList())
-                .openingThisMonth(showRepository.findOpeningBetween(monthStart, monthEnd, pageable).stream()
-                        .map(ShowResponse::from)
-                        .toList())
-                .mostRecorded(getMostRecordedShows(pageable))
+                .popular(popular)
+                .endingSoon(endingSoon)
+                .openingThisMonth(openingThisMonth)
+                .mostRecorded(mostRecorded)
                 .build();
     }
 
@@ -140,5 +185,178 @@ public class ShowService {
                 .filter(show -> show != null)
                 .map(show -> ShowResponse.fromWithDiaryCount(show, countsByShowId.getOrDefault(show.getId(), 0L)))
                 .toList();
+    }
+
+    @Transactional
+    public ShowScheduleResponse getTodaySchedule(LocalDate targetDate, String genreStr) {
+        LocalDate date = (targetDate != null) ? targetDate : LocalDate.now();
+        Show.Genre genre = parseEnum(Show.Genre.class, genreStr);
+
+        List<Show> shows = (genre != null)
+                ? showRepository.findOngoingShowsOnDateAndGenre(date, genre)
+                : showRepository.findOngoingShowsOnDate(date);
+
+        // Ensure ongoing shows have dtguidance if missing
+        boolean updatedAny = false;
+        for (Show show : shows) {
+            if ((show.getDtguidance() == null || show.getDtguidance().isBlank()) && show.getKopisId() != null) {
+                try {
+                    kopisSyncService.syncShow(com.curtaincall.infra.kopis.KopisShowDto.builder().kopisId(show.getKopisId()).build());
+                    updatedAny = true;
+                } catch (Exception ignored) {}
+            }
+        }
+
+        if (updatedAny) {
+            entityManager.clear();
+            shows = (genre != null)
+                    ? showRepository.findOngoingShowsOnDateAndGenre(date, genre)
+                    : showRepository.findOngoingShowsOnDate(date);
+        }
+
+        Map<String, List<ShowScheduleResponse.ScheduleShowItem>> timeSlotMap = new TreeMap<>();
+        Set<Long> countedShowIds = new HashSet<>();
+
+        for (Show show : shows) {
+            List<String> times = extractTimesForDate(show.getDtguidance(), date);
+            if (!times.isEmpty()) {
+                countedShowIds.add(show.getId());
+            }
+            for (String time : times) {
+                ShowScheduleResponse.ScheduleShowItem item = ShowScheduleResponse.ScheduleShowItem.builder()
+                        .id(show.getId())
+                        .kopisId(show.getKopisId())
+                        .title(show.getTitle())
+                        .genre(show.getGenre() != null ? show.getGenre().name() : null)
+                        .genreDisplayName(show.getGenre() != null ? show.getGenre().getDisplayName() : null)
+                        .theaterName(show.getTheater() != null ? show.getTheater().getName() : null)
+                        .posterUrl(show.getPosterUrl())
+                        .runtime(show.getRuntime())
+                        .priceInfo(show.getPriceInfo())
+                        .castInfo(show.getCastInfo())
+                        .time(time)
+                        .build();
+
+                timeSlotMap.computeIfAbsent(time, k -> new ArrayList<>()).add(item);
+            }
+        }
+
+        List<ShowScheduleResponse.TimeSlot> timeSlots = new ArrayList<>();
+        for (Map.Entry<String, List<ShowScheduleResponse.ScheduleShowItem>> entry : timeSlotMap.entrySet()) {
+            String time = entry.getKey();
+            int hour = Integer.parseInt(time.split(":")[0]);
+            String label = (hour < 17) ? time + " (낮공)" : time + " (밤공)";
+
+            timeSlots.add(ShowScheduleResponse.TimeSlot.builder()
+                    .time(time)
+                    .label(label)
+                    .count(entry.getValue().size())
+                    .shows(entry.getValue())
+                    .build());
+        }
+
+        String[] dayNames = {"", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일"};
+        String dayOfWeekStr = dayNames[date.getDayOfWeek().getValue()];
+
+        return ShowScheduleResponse.builder()
+                .date(date)
+                .dayOfWeek(dayOfWeekStr)
+                .totalShowsToday(countedShowIds.size())
+                .timeSlots(timeSlots)
+                .build();
+    }
+
+    private static List<String> extractTimesForDate(String dtguidance, LocalDate date) {
+        if (dtguidance == null || dtguidance.isBlank()) {
+            return Collections.emptyList();
+        }
+
+        DayOfWeek dow = date.getDayOfWeek();
+        boolean isWeekend = (dow == DayOfWeek.SATURDAY || dow == DayOfWeek.SUNDAY);
+        String dayName = getKoreanDay(dow);
+
+        List<String> times = new ArrayList<>();
+
+        Pattern pattern = Pattern.compile("([^,/(]+?)(?:\\(([^)]+)\\)|([0-9]{1,2}:[0-9]{2}))");
+        Matcher matcher = pattern.matcher(dtguidance);
+
+        while (matcher.find()) {
+            String daySpec = matcher.group(1).trim();
+            String timeGroup = matcher.group(2) != null ? matcher.group(2) : matcher.group(3);
+
+            if (timeGroup != null && matchesDay(daySpec, dow, dayName, isWeekend)) {
+                Matcher timeMatcher = Pattern.compile("(\\d{1,2}:\\d{2})").matcher(timeGroup);
+                while (timeMatcher.find()) {
+                    String time = normalizeTime(timeMatcher.group(1));
+                    if (!times.contains(time)) {
+                        times.add(time);
+                    }
+                }
+            }
+        }
+
+        if (times.isEmpty()) {
+            if (dtguidance.contains(dayName) || (isWeekend && dtguidance.contains("주말")) || (!isWeekend && dtguidance.contains("평일"))) {
+                Matcher tm = Pattern.compile("(\\d{1,2}:\\d{2})").matcher(dtguidance);
+                while (tm.find()) {
+                    String time = normalizeTime(tm.group(1));
+                    if (!times.contains(time)) {
+                        times.add(time);
+                    }
+                }
+            }
+        }
+
+        Collections.sort(times);
+        return times;
+    }
+
+    private static boolean matchesDay(String daySpec, DayOfWeek dow, String dayName, boolean isWeekend) {
+        if (daySpec.contains(dayName)) return true;
+        if (isWeekend && daySpec.contains("주말")) return true;
+        if (!isWeekend && daySpec.contains("평일")) return true;
+
+        if (daySpec.contains("~") || daySpec.contains("-")) {
+            String[] parts = daySpec.split("[~-]");
+            if (parts.length == 2) {
+                int start = parseDayValue(parts[0]);
+                int end = parseDayValue(parts[1]);
+                int current = dow.getValue();
+                if (start > 0 && end > 0) {
+                    if (start <= end && current >= start && current <= end) return true;
+                    if (start > end && (current >= start || current <= end)) return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static int parseDayValue(String str) {
+        if (str.contains("월")) return 1;
+        if (str.contains("화")) return 2;
+        if (str.contains("수")) return 3;
+        if (str.contains("목")) return 4;
+        if (str.contains("금")) return 5;
+        if (str.contains("토")) return 6;
+        if (str.contains("일")) return 7;
+        return 0;
+    }
+
+    private static String getKoreanDay(DayOfWeek dow) {
+        return switch (dow) {
+            case MONDAY -> "월";
+            case TUESDAY -> "화";
+            case WEDNESDAY -> "수";
+            case THURSDAY -> "목";
+            case FRIDAY -> "금";
+            case SATURDAY -> "토";
+            case SUNDAY -> "일";
+        };
+    }
+
+    private static String normalizeTime(String raw) {
+        String[] parts = raw.split(":");
+        int h = Integer.parseInt(parts[0]);
+        return String.format("%02d:%s", h, parts[1]);
     }
 }
