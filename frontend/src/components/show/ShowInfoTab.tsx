@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ExternalLink, ChevronDown, ChevronUp, MapPin } from 'lucide-react'
+import toast from 'react-hot-toast'
 import type { Show } from '../../types'
 import { getBookingLinks } from '../../utils/showUtils'
 
@@ -91,13 +92,37 @@ export default function ShowInfoTab({ show }: Props) {
         <div className="space-y-2 text-[12px]">
           <p className="text-[14px] font-semibold text-ink-darker">{show.theaterName || '공연장 미정'}</p>
           {show.theaterAddress && (
-            <p className="flex items-center gap-1.5 text-ink-muted">
-              <MapPin size={13} className="text-ink-lightest shrink-0" />
-              <span>{show.theaterAddress}</span>
-            </p>
+            <div className="flex items-center justify-between gap-2 pt-1">
+              <p className="flex items-center gap-1.5 text-ink-muted min-w-0">
+                <MapPin size={13} className="text-brand shrink-0" />
+                <span className="truncate">{show.theaterAddress}</span>
+              </p>
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (show.theaterAddress) {
+                      navigator.clipboard.writeText(show.theaterAddress)
+                      toast.success('주소가 복사되었습니다.')
+                    }
+                  }}
+                  className="h-7 px-2 border border-line-base bg-white rounded text-[10px] text-ink-muted hover:text-ink-darkest transition-colors"
+                >
+                  주소 복사
+                </button>
+                <a
+                  href={`https://map.kakao.com/link/search/${encodeURIComponent(show.theaterName || show.theaterAddress)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="h-7 px-2 border border-line-base bg-white rounded text-[10px] text-ink-muted hover:text-ink-darkest transition-colors inline-flex items-center gap-0.5"
+                >
+                  지도 <ExternalLink size={9} />
+                </a>
+              </div>
+            </div>
           )}
           {show.theaterSeatScale && show.theaterSeatScale > 0 && (
-            <p className="text-[11px] text-ink-light">
+            <p className="text-[11px] text-ink-light pt-1">
               좌석 수: <strong className="font-semibold text-ink-base">{show.theaterSeatScale.toLocaleString()}석</strong>
               {show.theaterSeatScale >= 1000 ? ' (대극장)' : show.theaterSeatScale >= 300 ? ' (중극장)' : ' (소극장)'}
             </p>
@@ -139,9 +164,9 @@ export default function ShowInfoTab({ show }: Props) {
             <span className="text-[10px] text-ink-lightest">총 {introImages.length}장</span>
           </div>
 
-          <div className="space-y-4">
+          <div className={`space-y-4 relative transition-all duration-300 ${!showAllImages ? 'max-h-[550px] overflow-hidden' : ''}`}>
             {displayImages.map((url, index) => (
-              <div key={index} className="overflow-hidden border border-line-lightest bg-surface-alt">
+              <div key={index} className="overflow-hidden border border-line-lightest bg-surface-alt rounded">
                 <img
                   src={url}
                   alt={`${show.title} 상세 안내 ${index + 1}`}
@@ -150,24 +175,26 @@ export default function ShowInfoTab({ show }: Props) {
                 />
               </div>
             ))}
+            {!showAllImages && (
+              <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none" />
+            )}
           </div>
 
-          {introImages.length > 2 && (
-            <button
-              onClick={() => setShowAllImages(!showAllImages)}
-              className="mt-4 flex w-full h-[34px] items-center justify-center gap-1 border border-line-base text-[11px] text-ink-muted hover:bg-surface-alt transition-colors"
-            >
-              {showAllImages ? (
-                <>
-                  <ChevronUp size={13} /> 접기
-                </>
-              ) : (
-                <>
-                  <ChevronDown size={13} /> 펼쳐보기 ({introImages.length - 2}장 더보기)
-                </>
-              )}
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => setShowAllImages(!showAllImages)}
+            className="mt-4 flex w-full h-[36px] items-center justify-center gap-1.5 border border-line-base bg-white rounded text-[12px] font-medium text-ink-muted hover:bg-surface-alt transition-colors"
+          >
+            {showAllImages ? (
+              <>
+                <ChevronUp size={14} /> 상세 안내 접기
+              </>
+            ) : (
+              <>
+                <ChevronDown size={14} /> 상세 안내 펼쳐보기
+              </>
+            )}
+          </button>
         </div>
       )}
     </div>

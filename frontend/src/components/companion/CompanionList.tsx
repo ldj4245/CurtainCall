@@ -6,6 +6,8 @@ import { useNavigate } from 'react-router-dom';
 import { companionApi, CompanionPost } from '../../api/companion';
 import { useAuthStore } from '../../store/authStore';
 import CompanionForm from './CompanionForm';
+import Pagination from '../common/Pagination';
+import ConfirmModal from '../common/ConfirmModal';
 import { format, parseISO } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
@@ -19,6 +21,7 @@ export default function CompanionList({ showId }: CompanionListProps) {
     const [page, setPage] = useState(0);
     const [onlyOpen, setOnlyOpen] = useState(false);
     const [showForm, setShowForm] = useState(false);
+    const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
 
     const { data, isLoading } = useQuery({
         queryKey: ['companions', showId, page, onlyOpen],
@@ -103,7 +106,7 @@ export default function CompanionList({ showId }: CompanionListProps) {
                             if (!isAuthenticated) return toast.error('로그인이 필요합니다.');
                             setShowForm(true);
                         }}
-                        className="btn-primary h-9"
+                        className="h-9 px-4 bg-ink-darkest text-white text-[12px] font-semibold rounded-md hover:bg-brand transition-colors inline-flex items-center justify-center"
                     >
                         모집글 작성
                     </button>
@@ -111,9 +114,12 @@ export default function CompanionList({ showId }: CompanionListProps) {
             </div>
 
             {posts.length === 0 ? (
-                <div className="empty-state">
-                    <div className="empty-state-icon"><HeartHandshake size={18} /></div>
-                    <p className="text-[13px] text-[#697386]">등록된 동행 모집이 없습니다.<br />첫 번째 동행을 찾아보세요.</p>
+                <div className="text-center py-12 border border-line-lightest bg-white rounded-md">
+                    <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-surface-alt flex items-center justify-center text-ink-lighter">
+                        <HeartHandshake size={20} />
+                    </div>
+                    <p className="text-[13px] font-medium text-ink-muted">등록된 동행 모집이 없습니다.</p>
+                    <p className="text-[11px] text-ink-lightest mt-0.5">첫 번째 동행을 직접 모집해 보세요.</p>
                 </div>
             ) : (
                 <div className="grid gap-4 md:grid-cols-2">
@@ -125,11 +131,7 @@ export default function CompanionList({ showId }: CompanionListProps) {
                             onJoin={() => joinMutation.mutate(post.id)}
                             onCancel={() => cancelMutation.mutate(post.id)}
                             onClose={() => closeMutation.mutate(post.id)}
-                            onDelete={() => {
-                                if (window.confirm('정말 삭제하시겠습니까?')) {
-                                    deleteMutation.mutate(post.id);
-                                }
-                            }}
+                            onDelete={() => setDeleteTargetId(post.id)}
                             isLoading={joinMutation.isPending || cancelMutation.isPending}
                         />
                     ))}
@@ -137,20 +139,24 @@ export default function CompanionList({ showId }: CompanionListProps) {
             )}
 
             {data && data.totalPages > 1 && (
-                <div className="flex justify-center gap-1 mt-6">
-                    {Array.from({ length: Math.min(5, data.totalPages) }).map((_, i) => (
-                        <button
-                            key={i}
-                            onClick={() => setPage(i)}
-                            className={`h-8 w-8 text-[12px] font-semibold transition-colors ${page === i
-                                ? 'bg-[#172033] text-white'
-                                : 'text-[#697386] hover:bg-[#f4f5f7]'
-                                }`}
-                        >
-                            {i + 1}
-                        </button>
-                    ))}
+                <div className="mt-6">
+                    <Pagination currentPage={page} totalPages={data.totalPages} onPageChange={setPage} />
                 </div>
+            )}
+
+            {deleteTargetId !== null && (
+                <ConfirmModal
+                    title="동행 모집글 삭제"
+                    message="정말로 이 동행 모집글을 삭제하시겠습니까?"
+                    confirmText="삭제"
+                    cancelText="취소"
+                    variant="danger"
+                    onConfirm={() => {
+                        deleteMutation.mutate(deleteTargetId);
+                        setDeleteTargetId(null);
+                    }}
+                    onCancel={() => setDeleteTargetId(null)}
+                />
             )}
 
             {showForm && (
@@ -270,9 +276,9 @@ function CompanionCard({
                     {canAccessChat && (
                         <button
                             onClick={() => navigate(`/chat/${post.chatRoomId}`)}
-                            className="btn-secondary h-8 px-2.5 text-[12px]"
+                            className="h-8 px-2.5 border border-line-base bg-white text-ink-base rounded text-[11px] font-medium hover:bg-surface-alt transition-colors inline-flex items-center gap-1"
                         >
-                            <MessageSquare className="w-3 h-3" />
+                            <MessageSquare className="w-3 h-3 text-ink-lighter" />
                             채팅
                         </button>
                     )}
@@ -281,7 +287,7 @@ function CompanionCard({
                             <button
                                 onClick={onCancel}
                                 disabled={isLoading}
-                                className="btn-secondary h-8 px-3 text-[12px]"
+                                className="h-8 px-3 border border-line-base bg-white text-ink-muted rounded text-[11px] font-medium hover:bg-surface-alt transition-colors"
                             >
                                 참여 취소
                             </button>
@@ -289,9 +295,9 @@ function CompanionCard({
                             <button
                                 onClick={onJoin}
                                 disabled={!isOpen || isLoading}
-                                className={`inline-flex h-8 items-center justify-center px-3 text-[12px] font-semibold transition-colors ${isOpen
-                                    ? 'bg-[#172033] text-white hover:bg-[#273247]'
-                                    : 'border border-[#e5e8ee] bg-white text-[#98a2b3] cursor-not-allowed'
+                                className={`inline-flex h-8 items-center justify-center px-3 text-[11px] font-semibold rounded transition-colors ${isOpen
+                                    ? 'bg-ink-darkest text-white hover:bg-brand'
+                                    : 'border border-line-base bg-surface-base text-ink-lightest cursor-not-allowed'
                                     }`}
                             >
                                 {isOpen ? '동행 참여' : '마감됨'}

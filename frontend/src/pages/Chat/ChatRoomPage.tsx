@@ -72,6 +72,7 @@ export default function ChatRoomPage() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.nativeEvent.isComposing) return;
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -86,43 +87,43 @@ export default function ChatRoomPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#f2f2f1]">
-        <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#ededed] border-t-[#333]" />
+      <div className="flex h-[100dvh] items-center justify-center bg-surface-base">
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-line-base border-t-brand" />
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen flex-col bg-[#fbfbfb]">
+    <div className="flex h-[100dvh] flex-col bg-surface-base">
       {/* Header */}
-      <div className="flex items-center gap-3 border-b border-[#ededed] bg-white px-4 py-3 sm:px-8">
+      <div className="flex items-center gap-3 border-b border-line-lightest bg-white px-4 py-3 sm:px-6">
         <button
           onClick={() => navigate('/chat')}
-          className="text-[#555] hover:text-[#333]"
+          className="p-1 text-ink-muted hover:text-ink-darkest transition-colors"
           aria-label="동행 메시지 목록으로"
         >
           <ArrowLeft size={18} />
         </button>
 
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[14px] font-semibold text-[#333]">
+          <p className="truncate text-[14px] font-semibold text-ink-darkest">
             {currentRoom?.companionPostTitle ?? '채팅방'}
           </p>
           {currentRoom && (
-            <p className="truncate text-[11px] text-[#777]">{currentRoom.showTitle} · {currentRoom.performanceDate}</p>
+            <p className="truncate text-[11px] text-ink-muted">{currentRoom.showTitle} · {currentRoom.performanceDate}</p>
           )}
         </div>
 
         <div className="flex items-center gap-1.5">
           {connected ? (
             <>
-              <Wifi size={12} className="text-[#9d2244]" />
-              <span className="text-[10px] text-[#555]">연결됨</span>
+              <Wifi size={12} className="text-emerald-500" />
+              <span className="text-[10px] text-ink-muted">연결됨</span>
             </>
           ) : (
             <>
-              <WifiOff size={12} className="text-[#999]" />
-              <span className="text-[10px] text-[#999]">연결 중</span>
+              <WifiOff size={12} className="text-ink-lightest" />
+              <span className="text-[10px] text-ink-lightest">연결 중</span>
             </>
           )}
         </div>
@@ -189,24 +190,25 @@ export default function ChatRoomPage() {
       </div>
 
       {/* Input */}
-      <div className="border-t border-[#ededed] bg-white px-4 py-3 sm:px-8">
+      <div className="border-t border-line-lightest bg-white px-4 py-3 sm:px-6">
         <div className="flex items-center gap-2 mx-auto max-w-4xl">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={connected ? '메시지 입력' : '연결 중'}
+            placeholder={connected ? '메시지를 입력하세요...' : '연결 중...'}
             disabled={!connected}
-            className="h-[34px] flex-1 border border-[#dedede] bg-[#fbfbfb] px-3 text-[12px] text-[#333] outline-none placeholder:text-[#999] disabled:opacity-50 focus:border-[#333]"
+            className="h-9 flex-1 rounded-md border border-line-base bg-surface-base px-3 text-[13px] text-ink-base outline-none placeholder:text-ink-lighter disabled:opacity-50 focus:border-ink-darkest focus:bg-white transition-colors"
           />
           <button
+            type="button"
             onClick={handleSend}
             disabled={!connected || !input.trim()}
-            className="flex h-[34px] items-center gap-1 bg-[#9d2244] px-3.5 text-[11px] font-semibold text-white transition-opacity disabled:opacity-50"
+            className="flex h-9 items-center gap-1.5 rounded-md bg-brand px-4 text-[12px] font-semibold text-white transition-opacity disabled:opacity-40 hover:bg-brand/90 shadow-sm"
           >
-            <Send size={12} />
-            전송
+            <Send size={13} />
+            <span>전송</span>
           </button>
         </div>
       </div>

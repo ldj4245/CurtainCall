@@ -18,6 +18,16 @@ const OAuth2Callback = lazy(() => import('./pages/Auth/OAuth2Callback'))
 const NotFoundPage = lazy(() => import('./pages/NotFound/NotFoundPage'))
 const DesignMockupPage = lazy(() => import('./pages/Mockup/DesignMockupPage'))
 
+import ErrorBoundary from './components/common/ErrorBoundary'
+
+function ScrollToTop() {
+  const { pathname } = useLocation()
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [pathname])
+  return null
+}
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore()
   const location = useLocation()
@@ -59,12 +69,14 @@ export default function App() {
   }, [isAuthenticated, accessToken, setUser])
 
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-[#0d1117]">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-700 border-t-brand" />
-      </div>
-    }>
-      <Routes>
+    <ErrorBoundary>
+      <ScrollToTop />
+      <Suspense fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#0d1117]">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-700 border-t-brand" />
+        </div>
+      }>
+        <Routes>
         {/* 인증 라우트 */}
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<LoginPage />} />
@@ -114,5 +126,6 @@ export default function App() {
         </Route>
       </Routes>
     </Suspense>
+    </ErrorBoundary>
   )
 }

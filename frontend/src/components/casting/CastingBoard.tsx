@@ -22,10 +22,49 @@ export default function CastingBoard({ showId }: Props) {
 
   const totalActors = casting.reduce((total: number, role: CastingRole) => total + role.actors.length, 0)
   return (
-    <section className="surface p-5 sm:p-6">
-      <header className="flex items-end justify-between border-b border-[#e5e8ee] pb-4"><div><p className="page-kicker">Casting</p><h2 className="mt-1 flex items-center gap-2 text-[19px] font-semibold tracking-[-0.04em] text-[#172033]"><Users size={17} /> 배역별 출연진 <span className="text-[13px] font-normal text-[#98a2b3]">{totalActors}명</span></h2></div><button onClick={refresh} disabled={isRefreshing} className="btn-quiet text-[12px]"><RefreshCw size={13} className={isRefreshing ? 'animate-spin' : ''} /> 새로고침</button></header>
-      <div className="divide-y divide-[#e5e8ee]">{casting.map((role: CastingRole, roleIndex) => <div key={`${role.roleName}-${roleIndex}`} className="py-5"><p className="meta-label mb-3">{role.roleName}</p><div className="flex flex-wrap gap-2">{role.actors.map((actor, actorIndex) => <Link key={`${actor.name}-${actorIndex}`} to={`/shows?keyword=${encodeURIComponent(actor.name)}`} className="flex items-center gap-2 border border-[#e5e8ee] bg-[#fafafb] px-2.5 py-2 transition hover:border-[#a9b1bf] hover:bg-white"><span className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-[#eef0f3] text-[#98a2b3]">{actor.imageUrl ? <img src={actor.imageUrl} alt={actor.name} className="h-full w-full object-cover" /> : <User size={13} />}</span><span className="text-[12px] font-semibold text-[#172033]">{actor.name}</span></Link>)}</div></div>)}</div>
-      <p className="mt-1 text-right text-[11px] text-[#98a2b3]">출처: PlayDB</p>
+    <section className="border border-line-base bg-white p-5 sm:p-6 rounded-md">
+      <header className="flex items-end justify-between border-b border-line-lightest pb-4">
+        <div>
+          <h2 className="flex items-center gap-2 text-[16px] font-semibold tracking-tight text-ink-darkest">
+            <Users size={16} className="text-ink-lighter" /> 배역별 출연진{' '}
+            <span className="text-[12px] font-normal text-ink-lightest">({totalActors}명)</span>
+          </h2>
+        </div>
+        <button
+          onClick={refresh}
+          disabled={isRefreshing}
+          className="h-8 px-2.5 border border-line-base text-ink-muted rounded text-[11px] font-medium hover:bg-surface-alt transition-colors inline-flex items-center gap-1.5"
+        >
+          <RefreshCw size={12} className={isRefreshing ? 'animate-spin text-brand' : ''} />
+          새로고침
+        </button>
+      </header>
+      <div className="divide-y divide-line-lightest">
+        {casting.map((role: CastingRole, roleIndex) => (
+          <div key={`${role.roleName}-${roleIndex}`} className="py-4">
+            <p className="text-[11px] font-semibold text-ink-muted mb-2.5">{role.roleName}</p>
+            <div className="flex flex-wrap gap-2">
+              {role.actors.map((actor, actorIndex) => (
+                <Link
+                  key={`${actor.name}-${actorIndex}`}
+                  to={`/shows?keyword=${encodeURIComponent(actor.name)}`}
+                  className="flex items-center gap-2 border border-line-base bg-surface-base px-2.5 py-1.5 rounded transition hover:border-ink-darkest hover:bg-white"
+                >
+                  <span className="flex h-6 w-6 items-center justify-center overflow-hidden rounded-full bg-surface-muted text-ink-lightest">
+                    {actor.imageUrl ? (
+                      <img src={actor.imageUrl} alt={actor.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <User size={12} />
+                    )}
+                  </span>
+                  <span className="text-[12px] font-medium text-ink-darkest">{actor.name}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      <p className="mt-3 text-right text-[10px] text-ink-lightest">출처: PlayDB</p>
     </section>
   )
 }

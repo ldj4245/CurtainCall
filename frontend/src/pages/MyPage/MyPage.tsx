@@ -73,13 +73,20 @@ export default function MyPage() {
 
     return (
         <div className="px-4 py-4 sm:px-5">
-            <p className="text-[10px] text-ink-lightest mb-1.5">홈&nbsp; › &nbsp;<span className="text-ink-light">마이페이지</span></p>
-            <div className="mb-5 flex items-end justify-between border-b border-line-lightest pb-3">
-                <h1 className="text-[18px] font-semibold tracking-[-0.05em] text-ink-darker">마이페이지</h1>
+            <div className="mb-4 flex items-end justify-between border-b border-line-lightest pb-3">
+                <h1 className="text-[18px] font-bold tracking-[-0.04em] text-ink-darker">마이페이지</h1>
+                <button
+                    type="button"
+                    onClick={() => { void handleLogout() }}
+                    className="flex items-center gap-1 text-[11px] text-ink-muted hover:text-brand transition-colors p-1"
+                >
+                    <LogOut size={13} />
+                    <span>로그아웃</span>
+                </button>
             </div>
 
             {/* 유저 프로필 카드 */}
-            <div className="mb-6 border border-line-base bg-surface-alt/40 p-4 flex items-center justify-between">
+            <div className="mb-4 rounded-md border border-line-base bg-white p-4 flex items-center justify-between shadow-sm">
                 <div className="flex items-center gap-3">
                     <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-surface-muted border border-line-base">
                         {user?.profileImage ? (
@@ -87,19 +94,25 @@ export default function MyPage() {
                         ) : <UserIcon size={18} className="text-ink-lightest" />}
                     </div>
                     <div>
-                        <b className="block text-[13px] font-semibold text-ink-darkest">{user?.nickname}</b>
-                        <span className="text-[11px] text-ink-lightest">{user?.email}</span>
+                        <b className="block text-[14px] font-semibold text-ink-darkest">{user?.nickname}</b>
+                        <span className="text-[11px] text-ink-muted">{user?.email}</span>
                     </div>
                 </div>
-                <button
-                    type="button"
-                    onClick={() => { void handleLogout() }}
-                    className="flex items-center gap-1 text-[11px] text-ink-muted hover:text-brand transition-colors"
-                >
-                    <LogOut size={12} />
-                    로그아웃
-                </button>
             </div>
+
+            {/* 관극 다이어리 바로가기 배너 */}
+            <Link
+                to="/diary"
+                className="mb-5 block rounded-md border border-line-base bg-surface-alt/70 p-3 hover:bg-surface-alt transition-colors"
+            >
+                <div className="flex items-center justify-between">
+                    <div>
+                        <p className="text-[12px] font-semibold text-ink-darkest">나의 관극 다이어리</p>
+                        <p className="text-[11px] text-ink-muted mt-0.5">내가 남긴 티켓과 관람 통계를 확인하세요.</p>
+                    </div>
+                    <span className="text-[11px] font-medium text-brand">보러가기 ›</span>
+                </div>
+            </Link>
 
             {/* 탭 네비게이션 */}
             <div className="flex gap-6 border-b border-line-lightest pb-2.5 text-[12px]">

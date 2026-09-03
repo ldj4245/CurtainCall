@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Search, ChevronRight } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router-dom'
 import { diaryApi } from '../../api/diary'
@@ -100,28 +101,40 @@ export default function HomePage() {
   return (
     <div className="px-4 py-4 sm:px-5">
       {/* 헤더 */}
-      <div className="mb-4 pb-2.5 border-b border-line-lightest flex items-end justify-between">
-        <h1 className="text-[17px] font-bold tracking-[-0.04em] text-ink-darker">공연</h1>
-        <span className="text-[10px] text-ink-lightest">
+      <div className="mb-3 pb-2.5 border-b border-line-lightest flex items-end justify-between">
+        <h1 className="text-[18px] font-bold tracking-[-0.04em] text-ink-darker">CurtainCall</h1>
+        <span className="text-[11px] text-ink-muted">
           {new Date().getFullYear()}년 {new Date().getMonth() + 1}월 {new Date().getDate()}일
         </span>
       </div>
 
+      {/* 홈 상단 검색바 */}
+      <div className="mb-4">
+        <Link
+          to="/shows"
+          className="flex items-center gap-2.5 h-10 w-full px-3.5 rounded-md border border-line-base bg-surface-base text-[12.5px] text-ink-lighter hover:border-ink-darkest hover:text-ink-muted transition-colors shadow-sm"
+        >
+          <Search size={15} className="text-ink-lighter shrink-0" />
+          <span className="truncate">공연명, 출연 배우를 검색해 보세요</span>
+        </Link>
+      </div>
+
       {/* 나의 관극 기록 위젯 (로그인 시) */}
       {isAuthenticated && (
-        <div className="mb-5 p-3.5 border border-line-base bg-surface-alt/50 flex items-center justify-between">
-          <div>
-            <p className="text-[12px] font-semibold text-ink-darkest">
-              {user?.nickname}님의 관극 기록
+        <div className="mb-5 p-3.5 border border-line-base bg-white rounded-md flex items-center justify-between shadow-sm">
+          <Link to="/diary" className="group flex-1 min-w-0 pr-2">
+            <p className="text-[12px] font-semibold text-ink-darkest flex items-center gap-1 group-hover:text-brand transition-colors">
+              <span>{user?.nickname}님의 관극 다이어리</span>
+              <ChevronRight size={13} className="text-ink-lighter group-hover:translate-x-0.5 transition-transform" />
             </p>
             <p className="text-[11px] text-ink-muted mt-0.5">
               이번 달 <strong className="text-brand font-semibold">{thisMonthCount}회</strong> · 누적 <strong className="text-ink-darkest font-semibold">{totalCount}건</strong>
             </p>
-          </div>
+          </Link>
           <button
             type="button"
             onClick={() => setShowDiaryForm(true)}
-            className="h-7 px-2.5 bg-ink-darkest text-white text-[10px] font-semibold hover:bg-brand transition-colors"
+            className="h-8 px-3 bg-brand text-white rounded text-[11px] font-semibold hover:bg-brand/90 transition-colors shrink-0"
           >
             기록 남기기
           </button>

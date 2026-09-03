@@ -53,8 +53,8 @@ export default function MobileTabBar() {
               }}
               className={`flex h-full flex-col items-center justify-center border-t-2 text-[11px] transition-colors ${
                 active 
-                  ? 'border-[#9d2244] font-semibold text-[#242424]' 
-                  : 'border-transparent text-[#777]'
+                  ? 'border-brand font-bold text-ink-darkest' 
+                  : 'border-transparent text-ink-muted hover:text-ink-darkest'
               }`}
             >
               {label}

@@ -58,10 +58,10 @@ function CommentItem({
             <img src={comment.userProfileImage} alt="" className="w-full h-full object-cover" />
           )}
         </div>
-        <div className="flex-1 bg-gray-50 rounded-md px-3 py-2 border border-gray-200">
+        <div className="flex-1 bg-surface-alt/70 rounded-md px-3 py-2 border border-line-lightest">
           <div className="flex items-center justify-between">
-            <span className="text-[12px] font-semibold text-gray-700">{comment.userNickname}</span>
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <span className="text-[12px] font-semibold text-ink-base">{comment.userNickname}</span>
+            <div className="flex items-center gap-1.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
               <button
                 onClick={() => {
                   if (!isAuthenticated) {
@@ -70,43 +70,48 @@ function CommentItem({
                   }
                   setShowReplyInput(!showReplyInput)
                 }}
-                className="text-[11px] text-gray-400 hover:text-gray-900 transition-colors px-1"
+                className="text-[11px] text-ink-muted hover:text-ink-darkest transition-colors px-1"
               >
                 답글
               </button>
               {currentUserId === comment.userId && (
                 <button
                   onClick={() => setDeleteTargetId(comment.id)}
-                  className="text-gray-300 hover:text-red-500 transition-colors"
+                  className="text-ink-lighter hover:text-rose-600 transition-colors p-0.5"
                   disabled={deleteCommentMutation.isPending}
+                  aria-label="댓글 삭제"
                 >
                   <Trash2 size={12} />
                 </button>
               )}
             </div>
           </div>
-          <p className="text-[13px] text-gray-600 mt-0.5">{comment.content}</p>
+          <p className="text-[13px] text-ink-base mt-0.5">{comment.content}</p>
         </div>
       </div>
 
       {showReplyInput && (
         <div className="ml-9 mt-1.5 flex gap-2">
-          <CornerDownRight size={14} className="text-gray-300 mt-2 shrink-0" />
+          <CornerDownRight size={14} className="text-ink-lighter mt-2 shrink-0" />
           <input
             type="text"
             value={replyText}
             onChange={(e) => setReplyText(e.target.value)}
             placeholder={`${comment.userNickname}에게 답글...`}
-            className="h-8 text-[13px] bg-gray-50 border border-gray-200 rounded-md px-2 focus:outline-none focus:border-gray-400 flex-1"
+            className="h-8 text-[13px] bg-white border border-line-base rounded-md px-2 focus:outline-none focus:border-ink-darkest flex-1"
             autoFocus
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && replyText.trim()) replyMutation.mutate()
+              if (e.nativeEvent.isComposing) return
+              if (e.key === 'Enter' && replyText.trim()) {
+                e.preventDefault()
+                replyMutation.mutate()
+              }
               if (e.key === 'Escape') setShowReplyInput(false)
             }}
           />
           <button
             onClick={() => { if (replyText.trim()) replyMutation.mutate() }}
-            className="bg-gray-900 text-white rounded-md text-[12px] font-semibold h-8 px-3 inline-flex items-center justify-center shrink-0"
+            className="bg-ink-darkest text-white rounded-md text-[12px] font-semibold h-8 px-3 inline-flex items-center justify-center shrink-0 hover:bg-brand transition-colors"
           >
             등록
           </button>
@@ -117,26 +122,27 @@ function CommentItem({
         <div className="ml-9 mt-2 space-y-2">
           {comment.replies.map((reply) => (
             <div key={reply.id} className="flex gap-2 group">
-              <CornerDownRight size={14} className="text-gray-300 mt-2 shrink-0" />
-              <div className="w-6 h-6 rounded-full bg-gray-100 overflow-hidden shrink-0 mt-0.5 border border-gray-200">
+              <CornerDownRight size={14} className="text-ink-lighter mt-2 shrink-0" />
+              <div className="w-6 h-6 rounded-full bg-surface-alt overflow-hidden shrink-0 mt-0.5 border border-line-lightest">
                 {reply.userProfileImage && (
                   <img src={reply.userProfileImage} alt="" className="w-full h-full object-cover" />
                 )}
               </div>
-              <div className="flex-1 bg-gray-50 rounded-md px-3 py-2 border border-gray-200">
+              <div className="flex-1 bg-surface-alt/70 rounded-md px-3 py-2 border border-line-lightest">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-semibold text-gray-700">{reply.userNickname}</span>
+                  <span className="text-[11px] font-semibold text-ink-base">{reply.userNickname}</span>
                   {currentUserId === reply.userId && (
                     <button
                       onClick={() => setDeleteTargetId(reply.id)}
-                      className="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                      className="text-ink-lighter hover:text-rose-600 transition-colors opacity-100 sm:opacity-0 sm:group-hover:opacity-100 p-0.5"
                       disabled={deleteCommentMutation.isPending}
+                      aria-label="답글 삭제"
                     >
                       <Trash2 size={11} />
                     </button>
                   )}
                 </div>
-                <p className="text-[13px] text-gray-600 mt-0.5">{reply.content}</p>
+                <p className="text-[13px] text-ink-base mt-0.5">{reply.content}</p>
               </div>
             </div>
           ))}
@@ -392,12 +398,20 @@ export default function ReviewCard({ review, onUpdated }: Props) {
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
                 placeholder="댓글 달기..."
-                className="h-9 text-[13px] bg-gray-50 border border-gray-200 rounded-md px-3 focus:outline-none focus:border-gray-400 w-full"
-                onKeyDown={(e) => { if (e.key === 'Enter' && commentText.trim()) commentMutation.mutate() }}
+                className="h-9 text-[13px] bg-white border border-line-base rounded-md px-3 focus:outline-none focus:border-ink-darkest w-full text-ink-base placeholder:text-ink-lighter"
+                onKeyDown={(e) => {
+                  if (e.nativeEvent.isComposing) return
+                  if (e.key === 'Enter' && commentText.trim()) {
+                    e.preventDefault()
+                    commentMutation.mutate()
+                  }
+                }}
               />
               <button
+                type="button"
                 onClick={() => { if (commentText.trim()) commentMutation.mutate() }}
-                className="bg-gray-900 text-white rounded-md text-[13px] font-semibold h-9 px-4 inline-flex items-center justify-center shrink-0"
+                disabled={commentMutation.isPending || !commentText.trim()}
+                className="bg-ink-darkest text-white rounded-md text-[13px] font-semibold h-9 px-4 inline-flex items-center justify-center shrink-0 hover:bg-brand disabled:opacity-50 transition-colors"
               >
                 등록
               </button>

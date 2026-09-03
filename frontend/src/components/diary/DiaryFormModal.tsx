@@ -6,7 +6,6 @@ import {
   ImagePlus,
   Loader2,
   Search,
-  Trash2,
   X,
   ClipboardPaste,
 } from 'lucide-react'
@@ -207,14 +206,16 @@ export default function DiaryFormModal({
   const title = entry ? '기록 수정' : '기록 작성'
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
       <div
-        className="w-full max-w-xl border border-line-lightest bg-white shadow-none"
+        className="w-full max-w-xl border border-line-base bg-white rounded-md shadow-2xl overflow-hidden"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-line-lightest px-5 py-4">
-          <div><p className="text-[10px] text-ink-lightest">Theatre archive</p><h2 className="mt-1 text-[19px] font-semibold tracking-[-0.03em] text-ink-darker">{title}</h2></div>
-          <button onClick={onClose} className="p-1 text-ink-light" aria-label="기록 작성 닫기">
+          <div>
+            <h2 className="text-[17px] font-semibold tracking-tight text-ink-darkest">{title}</h2>
+          </div>
+          <button onClick={onClose} className="p-1 text-ink-lightest hover:text-ink-dark transition-colors" aria-label="기록 작성 닫기">
             <X size={18} />
           </button>
         </div>
@@ -433,14 +434,15 @@ export default function DiaryFormModal({
 
                   <div className="flex flex-wrap gap-2">
                     {photoUrls.map((url, index) => (
-                      <div key={url} className="group relative h-16 w-16 overflow-hidden rounded-[2px] border border-line-lightest">
+                      <div key={url} className="relative h-16 w-16 overflow-hidden rounded border border-line-base bg-surface-alt">
                         <img src={url} alt={`사진 ${index + 1}`} className="h-full w-full object-cover" />
                         <button
                           type="button"
                           onClick={() => removePhoto(index)}
-                          className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 hover:opacity-100"
+                          className="absolute top-0.5 right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-white hover:bg-rose-600 transition-colors shadow-sm"
+                          aria-label="사진 삭제"
                         >
-                          <Trash2 size={14} className="text-white" />
+                          <X size={11} />
                         </button>
                       </div>
                     ))}
@@ -450,9 +452,10 @@ export default function DiaryFormModal({
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
                         disabled={isUploading}
-                        className="flex h-16 w-16 flex-col items-center justify-center border border-dashed border-line-base text-ink-lighter hover:border-ink-light hover:text-ink-muted disabled:opacity-50"
+                        className="flex h-16 w-16 flex-col items-center justify-center rounded border border-dashed border-line-dark text-ink-muted hover:border-ink-darkest hover:text-ink-darkest disabled:opacity-50 transition-colors"
                       >
-                        {isUploading ? <Loader2 size={14} className="animate-spin" /> : <ImagePlus size={14} />}
+                        {isUploading ? <Loader2 size={14} className="animate-spin text-brand" /> : <ImagePlus size={16} />}
+                        <span className="mt-1 text-[9px]">추가</span>
                       </button>
                     )}
                   </div>
@@ -466,20 +469,28 @@ export default function DiaryFormModal({
                   />
                 </div>
 
-                <label className="flex items-center gap-2 pt-1 text-[13px] text-ink-muted">
-                  <input type="checkbox" {...register('isOpen')} className="h-3.5 w-3.5 rounded-sm border-line-base accent-brand" />
-                  공개
+                <label className="flex items-center gap-2 pt-1 text-[13px] text-ink-base select-none cursor-pointer">
+                  <input type="checkbox" {...register('isOpen')} className="h-4 w-4 rounded accent-brand" />
+                  <span>다른 관객에게 이 기록 공개</span>
                 </label>
               </div>
             )}
           </div>
 
           <div className="flex gap-2 border-t border-line-lightest pt-4">
-            <button type="button" onClick={onClose} className="h-[39px] flex-1 border border-line-base bg-white text-[12px] text-ink-muted">
+            <button
+              type="button"
+              onClick={onClose}
+              className="h-10 flex-1 border border-line-base bg-white rounded-md text-[13px] font-medium text-ink-muted hover:bg-surface-alt transition-colors inline-flex items-center justify-center"
+            >
               취소
             </button>
-            <button type="submit" disabled={mutation.isPending || isUploading} className="h-[39px] flex-1 bg-brand text-[12px] font-semibold text-white">
-              {mutation.isPending ? '저장 중' : '기록 저장'}
+            <button
+              type="submit"
+              disabled={mutation.isPending || isUploading}
+              className="h-10 flex-1 bg-brand text-white rounded-md text-[13px] font-semibold hover:bg-brand/90 transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
+            >
+              {mutation.isPending ? <Loader2 size={15} className="animate-spin" /> : entry ? '수정 완료' : '기록 저장'}
             </button>
           </div>
         </form>

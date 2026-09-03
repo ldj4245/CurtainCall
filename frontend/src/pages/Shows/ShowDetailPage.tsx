@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Heart, ImageOff, Star } from 'lucide-react'
+import { Heart, ImageOff, Star, Share2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { diaryApi } from '../../api/diary'
 import { favoritesApi } from '../../api/favorites'
@@ -147,15 +147,29 @@ export default function ShowDetailPage() {
   const isOngoing = show.status === 'ONGOING'
   const bookingLinks = getBookingLinks(show.title)
 
-  return (
-    <div className="min-h-screen bg-surface-base pb-36">
-      <div className="px-4 py-4 sm:px-5">
-        <p className="text-[10px] text-ink-lightest mb-2">
-          홈&nbsp; › &nbsp;공연 찾기&nbsp; › &nbsp;<span className="text-ink-light">{show.title}</span>
-        </p>
+  const handleShare = async () => {
+    if (!show) return
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: show.title,
+          text: `${show.title} - 커튼콜(CurtainCall)에서 확인하세요!`,
+          url: window.location.href,
+        })
+      } catch {
+        // 취소
+      }
+    } else {
+      navigator.clipboard.writeText(window.location.href)
+      toast.success('공연 링크가 복사되었습니다.')
+    }
+  }
 
+  return (
+    <div className="min-h-screen bg-surface-base pb-24">
+      <div className="px-4 py-4 sm:px-5">
         {/* 상단 공연 기본 요약 (정비율 3:4 포스터 + 깔끔한 텍스트 정렬) */}
-        <section className="mt-2 flex gap-3.5 items-start">
+        <section className="mt-1 flex gap-3.5 items-start">
           <div className="w-[110px] aspect-[3/4] shrink-0 overflow-hidden rounded bg-surface-muted border border-line-lightest shadow-sm">
             {show.posterUrl ? (
               <img
@@ -199,7 +213,7 @@ export default function ShowDetailPage() {
               )}
             </div>
 
-            {/* 평점 & 찜 버튼 */}
+            {/* 평점 & 찜 & 공유 버튼 */}
             <div className="mt-2.5 flex items-center justify-between border-t border-line-lightest pt-2">
               <div className="flex items-center gap-1 text-[12px]">
                 {show.averageScore != null && show.averageScore > 0 ? (
@@ -213,28 +227,40 @@ export default function ShowDetailPage() {
                 )}
               </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  if (!isAuthenticated) {
-                    requireLogin('찜 기능은 로그인 후 이용할 수 있습니다.')
-                    return
-                  }
-                  toggleFav.mutate()
-                }}
-                disabled={isAuthenticated && toggleFav.isPending}
-                className={`h-6 px-2 rounded border text-[10px] font-medium flex items-center gap-1 transition-colors ${
-                  favStatus?.isFavorited
-                    ? 'border-brand text-brand bg-brand/5'
-                    : 'border-line-base text-ink-muted hover:border-ink-darkest hover:text-ink-darkest'
-                }`}
-              >
-                <Heart size={10} className={favStatus?.isFavorited ? 'fill-brand text-brand' : ''} />
-                <span>{favStatus?.isFavorited ? '찜완료' : '찜'}</span>
-                {Boolean(favStatus?.favoriteCount) && (
-                  <span className="opacity-80">({favStatus?.favoriteCount})</span>
-                )}
-              </button>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={handleShare}
+                  className="h-6 px-2 rounded border border-line-base text-[10px] font-medium text-ink-muted hover:border-ink-darkest hover:text-ink-darkest flex items-center gap-1 transition-colors"
+                  title="공연 공유"
+                >
+                  <Share2 size={10} />
+                  <span>공유</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!isAuthenticated) {
+                      requireLogin('찜 기능은 로그인 후 이용할 수 있습니다.')
+                      return
+                    }
+                    toggleFav.mutate()
+                  }}
+                  disabled={isAuthenticated && toggleFav.isPending}
+                  className={`h-6 px-2 rounded border text-[10px] font-medium flex items-center gap-1 transition-colors ${
+                    favStatus?.isFavorited
+                      ? 'border-brand text-brand bg-brand/5'
+                      : 'border-line-base text-ink-muted hover:border-ink-darkest hover:text-ink-darkest'
+                  }`}
+                >
+                  <Heart size={10} className={favStatus?.isFavorited ? 'fill-brand text-brand' : ''} />
+                  <span>{favStatus?.isFavorited ? '찜완료' : '찜'}</span>
+                  {Boolean(favStatus?.favoriteCount) && (
+                    <span className="opacity-80">({favStatus?.favoriteCount})</span>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </section>

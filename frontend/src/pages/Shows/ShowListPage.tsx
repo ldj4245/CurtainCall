@@ -135,8 +135,7 @@ export default function ShowListPage() {
     <div className="min-h-screen bg-surface-base">
       <div className="px-4 py-4 sm:px-5">
         {/* 헤더 */}
-        <p className="text-[10px] text-ink-lightest mb-1.5">홈 &gt; 공연 찾기</p>
-        <div className="mb-5 border-b border-line-lightest pb-3">
+        <div className="mb-4 border-b border-line-lightest pb-3">
           <h1 className="text-[18px] font-semibold tracking-[-0.05em] text-ink-darker">
             공연 찾기
           </h1>
@@ -155,8 +154,22 @@ export default function ShowListPage() {
                 value={inputVal}
                 onChange={(e) => setInputVal(e.target.value)}
                 placeholder="공연명, 출연진 검색"
-                className="w-full h-10 pl-9 pr-4 text-[12px] bg-surface-base border border-line-base text-ink-base placeholder:text-ink-lightest focus:border-ink-base focus:outline-none transition-colors rounded"
+                className="w-full h-10 pl-9 pr-8 text-[12px] bg-surface-base border border-line-base text-ink-base placeholder:text-ink-lightest focus:border-ink-base focus:outline-none transition-colors rounded"
               />
+              {inputVal && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setInputVal('')
+                    setKeyword('')
+                    setPage(0)
+                  }}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-ink-lightest hover:text-ink-darkest transition-colors"
+                  aria-label="검색어 초기화"
+                >
+                  <X size={14} />
+                </button>
+              )}
             </div>
             <button
               type="submit"
