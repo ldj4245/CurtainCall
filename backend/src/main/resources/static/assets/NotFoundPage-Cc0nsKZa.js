@@ -1,0 +1,6 @@
+import{c as s,u as a,j as e}from"./index-8wkiDG2X.js";import{A as n}from"./arrow-left-C1vdRnz8.js";/**
+ * @license lucide-react v0.365.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const i=s("Home",[["path",{d:"m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z",key:"y5dka4"}],["polyline",{points:"9 22 9 12 15 12 15 22",key:"e2us08"}]]);function m(){const t=a();return e.jsxs("main",{className:"page-shell flex min-h-[60vh] flex-col items-center justify-center px-5 text-center",children:[e.jsx("p",{className:"page-kicker",children:"Page not found"}),e.jsx("p",{className:"mt-3 text-[72px] font-semibold leading-none tracking-[-0.08em] text-[#e5e8ee]",children:"404"}),e.jsx("h1",{className:"mt-4 text-[25px] font-semibold tracking-[-0.05em] text-[#172033]",children:"페이지를 찾을 수 없습니다"}),e.jsx("p",{className:"mt-3 max-w-sm text-[14px] leading-6 text-[#697386]",children:"요청하신 페이지가 존재하지 않거나, 이동되었을 수 있습니다."}),e.jsxs("div",{className:"mt-7 flex flex-wrap justify-center gap-2",children:[e.jsxs("button",{onClick:()=>t(-1),className:"btn-secondary",children:[e.jsx(n,{size:15})," 이전 페이지"]}),e.jsxs("button",{onClick:()=>t("/"),className:"btn-primary",children:[e.jsx(i,{size:15})," 홈으로 가기"]})]})]})}export{m as default};

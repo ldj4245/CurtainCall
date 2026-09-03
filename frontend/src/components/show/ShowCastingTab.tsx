@@ -74,32 +74,33 @@ export default function ShowCastingTab({ showId, fallbackCastInfo }: Props) {
   return (
     <div>
       {/* 헤더 */}
-      <div className="flex items-center justify-between mb-4 pb-3 border-b border-line-base">
-        <h3 className="text-[13px] font-semibold text-ink-base">
-          캐스팅 <span className="text-ink-lightest font-normal">{totalActors}</span>
-        </h3>
-        <div className="flex items-center gap-2">
-          {hasCastingData && totalActors > 4 && (
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-lightest" size={13} />
-              <input
-                type="text"
-                value={actorSearch}
-                onChange={(e) => setActorSearch(e.target.value)}
-                placeholder="배우 검색"
-                className="w-36 h-8 pl-7 pr-2 text-[11px] bg-surface-alt border border-line-base focus:border-brand outline-none"
-              />
-            </div>
-          )}
+      <div className="mb-4 pb-3 border-b border-line-base">
+        <div className="flex items-center justify-between">
+          <h3 className="text-[13px] font-semibold text-ink-base">
+            캐스팅 <span className="text-ink-lightest font-normal">{totalActors}명</span>
+          </h3>
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="h-8 px-2.5 text-[11px] text-ink-light hover:text-ink-base border border-line-base flex items-center gap-1 transition-colors"
+            className="h-7 px-2 text-[11px] text-ink-light hover:text-ink-base border border-line-base flex items-center gap-1 transition-colors rounded"
           >
-            <RefreshCw size={12} className={isRefreshing ? 'animate-spin' : ''} />
-            {isRefreshing ? '갱신 중' : '새로고침'}
+            <RefreshCw size={11} className={isRefreshing ? 'animate-spin' : ''} />
+            <span>{isRefreshing ? '갱신 중' : '정보 갱신'}</span>
           </button>
         </div>
+
+        {hasCastingData && totalActors > 4 && (
+          <div className="relative mt-2.5">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-lightest" size={13} />
+            <input
+              type="text"
+              value={actorSearch}
+              onChange={(e) => setActorSearch(e.target.value)}
+              placeholder="배역 또는 배우 이름 검색"
+              className="w-full h-8 pl-8 pr-3 text-[11px] bg-surface-alt border border-line-base focus:border-brand outline-none rounded"
+            />
+          </div>
+        )}
       </div>
 
       {/* 캐스팅 목록 */}

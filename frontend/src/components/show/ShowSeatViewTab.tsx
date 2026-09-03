@@ -38,37 +38,22 @@ export default function ShowSeatViewTab({ show, diarySnippets, onAddSeatReview }
     <div className="space-y-4">
       {/* 1. 극장 좌석 가이드 헤더 */}
       <div className="border border-line-base p-4 bg-surface-base">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-line-lightest">
+        <div className="flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold text-ink-lightest uppercase tracking-wide">
-              공연장 시야 아카이브
-            </span>
-            <h2 className="mt-1 text-[15px] font-bold text-ink-base">
-              {show.theaterName || '공연장'} 좌석 시야 후기
+            <h2 className="text-[14px] font-bold text-ink-base">
+              {show.theaterName || '공연장'} 좌석 시야
             </h2>
-            <p className="mt-0.5 text-[12px] text-ink-light">
-              실제 관객들이 관람하고 등록한 좌석별 시야 사진과 한줄평을 확인하세요.
+            <p className="text-[11px] text-ink-light mt-0.5">
+              관객이 직접 등록한 좌석별 시야 ({seatEntries.length}건)
             </p>
           </div>
 
           <button
             onClick={onAddSeatReview}
-            className="flex h-[34px] items-center justify-center bg-brand text-white text-[11px] font-semibold px-4 whitespace-nowrap transition-colors"
+            className="h-7 px-2.5 rounded bg-brand text-white text-[11px] font-semibold whitespace-nowrap transition-colors"
           >
-            시야 등록하기
+            시야 등록
           </button>
-        </div>
-
-        {/* 관람 통계 안내 */}
-        <div className="mt-4 flex flex-wrap items-center gap-4 text-[12px] text-ink-muted">
-          <div className="flex items-center gap-1.5">
-            <span className="font-semibold text-ink-base">위치:</span>
-            <span>{show.theaterRegion || '전국'} {show.theaterName}</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="font-semibold text-ink-base">등록 기록:</span>
-            <span className="font-bold text-ink-base">{seatEntries.length}건</span>
-          </div>
         </div>
       </div>
 

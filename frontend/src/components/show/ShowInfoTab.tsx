@@ -27,19 +27,19 @@ export default function ShowInfoTab({ show }: Props) {
   return (
     <div className="space-y-6">
       {/* 1. 기본 공연 정보 */}
-      <div className="border border-line-base bg-surface-base p-5 sm:p-6">
-        <h3 className="text-[13px] font-semibold text-ink-base pb-3 border-b border-line-base mb-4">
-          기본 공연 정보
+      <div className="border border-line-base bg-surface-base p-4 sm:p-5">
+        <h3 className="text-[13px] font-semibold text-ink-base pb-2.5 border-b border-line-base mb-3">
+          공연 상세 정보
         </h3>
 
-        <dl className="grid grid-cols-1 gap-y-3 sm:grid-cols-2 sm:gap-x-8 text-[12px]">
-          <div className="flex items-baseline justify-between sm:justify-start sm:gap-6 border-b border-line-lightest pb-2">
-            <dt className="text-ink-lightest min-w-[70px]">장르</dt>
+        <dl className="text-[12px] divide-y divide-line-lightest">
+          <div className="grid grid-cols-[68px_1fr] gap-2 py-2">
+            <dt className="text-ink-lightest">장르</dt>
             <dd className="font-medium text-ink-base">{show.genreDisplayName || (show.genre === 'MUSICAL' ? '뮤지컬' : '연극')}</dd>
           </div>
 
-          <div className="flex items-baseline justify-between sm:justify-start sm:gap-6 border-b border-line-lightest pb-2">
-            <dt className="text-ink-lightest min-w-[70px]">공연 상태</dt>
+          <div className="grid grid-cols-[68px_1fr] gap-2 py-2">
+            <dt className="text-ink-lightest">공연 상태</dt>
             <dd className="font-medium text-ink-base">
               <span className={show.status === 'ONGOING' ? 'text-brand font-semibold' : ''}>
                 {show.statusDisplayName || (show.status === 'ONGOING' ? '공연중' : show.status === 'UPCOMING' ? '공연예정' : '공연종료')}
@@ -47,39 +47,33 @@ export default function ShowInfoTab({ show }: Props) {
             </dd>
           </div>
 
-          <div className="flex items-baseline justify-between sm:justify-start sm:gap-6 border-b border-line-lightest pb-2">
-            <dt className="text-ink-lightest min-w-[70px]">공연 기간</dt>
+          <div className="grid grid-cols-[68px_1fr] gap-2 py-2">
+            <dt className="text-ink-lightest">공연 기간</dt>
             <dd className="font-medium text-ink-base">{periodText}</dd>
           </div>
 
-          <div className="flex items-baseline justify-between sm:justify-start sm:gap-6 border-b border-line-lightest pb-2">
-            <dt className="text-ink-lightest min-w-[70px]">공연 시간</dt>
+          <div className="grid grid-cols-[68px_1fr] gap-2 py-2">
+            <dt className="text-ink-lightest">공연 시간</dt>
             <dd className="font-medium text-ink-base">{show.runtime || '정보 없음'}</dd>
           </div>
 
-          <div className="flex items-baseline justify-between sm:justify-start sm:gap-6 border-b border-line-lightest pb-2">
-            <dt className="text-ink-lightest min-w-[70px]">관람 연령</dt>
+          <div className="grid grid-cols-[68px_1fr] gap-2 py-2">
+            <dt className="text-ink-lightest">관람 연령</dt>
             <dd className="font-medium text-ink-base">{show.ageLimit || '전체 관람가'}</dd>
           </div>
 
-          <div className="flex items-baseline justify-between sm:justify-start sm:gap-6 border-b border-line-lightest pb-2">
-            <dt className="text-ink-lightest min-w-[70px]">공연장</dt>
+          <div className="grid grid-cols-[68px_1fr] gap-2 py-2">
+            <dt className="text-ink-lightest">공연장</dt>
             <dd className="font-medium text-ink-base">{show.theaterName || '공연장 미정'}</dd>
           </div>
 
           {show.priceInfo && (
-            <div className="sm:col-span-2 flex items-baseline justify-between sm:justify-start sm:gap-6 border-b border-line-lightest pb-2">
-              <dt className="text-ink-lightest min-w-[70px]">티켓 가격</dt>
-              <dd className="font-medium text-ink-base leading-relaxed">{show.priceInfo}</dd>
+            <div className="grid grid-cols-[68px_1fr] gap-2 py-2">
+              <dt className="text-ink-lightest">티켓 가격</dt>
+              <dd className="font-medium text-ink-base leading-relaxed break-keep">{show.priceInfo}</dd>
             </div>
           )}
 
-          {show.castInfo && show.castInfo.trim() !== '' && (
-            <div className="sm:col-span-2 flex items-baseline justify-between sm:justify-start sm:gap-6 border-b border-line-lightest pb-2">
-              <dt className="text-ink-lightest min-w-[70px]">출연진</dt>
-              <dd className="font-medium text-ink-base leading-relaxed">{show.castInfo}</dd>
-            </div>
-          )}
         </dl>
       </div>
 

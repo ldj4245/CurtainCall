@@ -24,56 +24,28 @@ export default function ShowReviewsTab({
 
   return (
     <div className="space-y-8">
-      {/* 1. 관객 종합 평점 & 4대 항목별 지수 카드 */}
-      <div className="border border-line-base bg-surface-base p-5 sm:p-6">
-        <div className="grid grid-cols-1 items-center gap-6 md:grid-cols-[220px_minmax(0,1fr)]">
-          {/* 종합 평점 */}
-          <div className="text-center md:border-r md:border-line-lightest md:pr-6">
-            <p className="text-[11px] font-bold text-brand uppercase tracking-wider">Audience score</p>
-            <div className="mt-2 flex items-center justify-center gap-1.5">
-              <span className="text-[34px] font-semibold tracking-[-0.05em] text-ink-darker">
+      {/* 1. 관객 종합 평점 배너 */}
+      <div className="border border-line-base bg-surface-base p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex items-baseline gap-1">
+              <span className="text-[26px] font-bold tracking-tight text-ink-darkest">
                 {avgScore > 0 ? avgScore.toFixed(1) : '-'}
               </span>
-              <span className="mb-1 self-end text-[12px] font-medium text-ink-lighter">/ 5.0</span>
+              <span className="text-[11px] text-ink-lighter">/ 5.0</span>
             </div>
-            <p className="mt-1 text-[12px] text-ink-lighter">
-              후기 {show.reviewCount ?? 0}개
-            </p>
-            <button
-              onClick={onOpenReviewForm}
-              className="mt-5 flex w-full h-[34px] items-center justify-center bg-brand text-[11px] font-semibold text-white transition-colors"
-            >
-              후기 작성
-            </button>
+            <div className="text-[11px] border-l border-line-lightest pl-3">
+              <p className="font-semibold text-ink-darker">관람객 평점</p>
+              <p className="text-[10px] text-ink-lightest">후기 {show.reviewCount ?? 0}개</p>
+            </div>
           </div>
 
-          {/* 4대 항목별 평가 안내 */}
-          <div className="space-y-3">
-            <h3 className="text-[16px] font-semibold tracking-[-0.03em] text-ink-darker">
-              관람 포인트
-            </h3>
-            <p className="text-[12px] text-ink-light">
-              스토리, 캐스팅, 연출, 음향을 각각 기록할 수 있습니다.
-            </p>
-            <div className="grid grid-cols-2 divide-x divide-y divide-line-lightest border border-line-lightest pt-1 sm:grid-cols-4 sm:divide-y-0">
-              <div className="p-3 text-center">
-                <p className="text-[11px] font-medium text-ink-lighter">스토리</p>
-                <p className="mt-0.5 text-[12px] font-semibold text-ink-base">서사·각본</p>
-              </div>
-              <div className="p-3 text-center">
-                <p className="text-[11px] font-medium text-ink-lighter">캐스팅</p>
-                <p className="mt-0.5 text-[12px] font-semibold text-ink-base">가창·연기</p>
-              </div>
-              <div className="p-3 text-center">
-                <p className="text-[11px] font-medium text-ink-lighter">무대연출</p>
-                <p className="mt-0.5 text-[12px] font-semibold text-ink-base">조명·무대</p>
-              </div>
-              <div className="p-3 text-center">
-                <p className="text-[11px] font-medium text-ink-lighter">넘버·음향</p>
-                <p className="mt-0.5 text-[12px] font-semibold text-ink-base">사운드·곡</p>
-              </div>
-            </div>
-          </div>
+          <button
+            onClick={onOpenReviewForm}
+            className="h-7 px-2.5 rounded bg-brand text-[11px] font-semibold text-white hover:bg-brand/90 transition-colors"
+          >
+            후기 작성
+          </button>
         </div>
       </div>
 

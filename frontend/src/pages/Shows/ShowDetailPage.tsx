@@ -19,10 +19,10 @@ import { getBookingLinks } from '../../utils/showUtils'
 
 type DetailTab = 'info' | 'reviews' | 'companion'
 
-const TAB_ITEMS: { key: DetailTab; label: string }[] = [
-  { key: 'info', label: '공연 정보 & 캐스팅' },
-  { key: 'reviews', label: '관람 후기 & 시야' },
-  { key: 'companion', label: '동행 & 톡' },
+const TAB_ITEMS: { key: DetailTab; label: string; mobileLabel: string }[] = [
+  { key: 'info', label: '공연 정보 & 캐스팅', mobileLabel: '정보 & 캐스팅' },
+  { key: 'reviews', label: '관람 후기 & 시야', mobileLabel: '후기 & 시야' },
+  { key: 'companion', label: '동행 & 톡', mobileLabel: '동행 & 톡' },
 ]
 
 export default function ShowDetailPage() {
@@ -148,14 +148,15 @@ export default function ShowDetailPage() {
   const bookingLinks = getBookingLinks(show.title)
 
   return (
-    <div className="min-h-screen bg-surface-base pb-28">
+    <div className="min-h-screen bg-surface-base pb-36">
       <div className="px-4 py-4 sm:px-5">
         <p className="text-[10px] text-ink-lightest mb-2">
           홈&nbsp; › &nbsp;공연 찾기&nbsp; › &nbsp;<span className="text-ink-light">{show.title}</span>
         </p>
 
-        <section className="mt-2 grid grid-cols-[105px_1fr] gap-3.5">
-          <div className="overflow-hidden bg-surface-background h-[150px] border border-line-lightest">
+        {/* 상단 공연 기본 요약 (정비율 3:4 포스터 + 깔끔한 텍스트 정렬) */}
+        <section className="mt-2 flex gap-3.5 items-start">
+          <div className="w-[110px] aspect-[3/4] shrink-0 overflow-hidden rounded bg-surface-muted border border-line-lightest shadow-sm">
             {show.posterUrl ? (
               <img
                 src={show.posterUrl}
@@ -170,74 +171,48 @@ export default function ShowDetailPage() {
             )}
           </div>
 
-          <div className="min-w-0">
-            <span className="text-[10px] font-semibold text-brand">
-              {show.genreDisplayName} · {isOngoing ? '공연중' : show.statusDisplayName}
-            </span>
-            <h1 className="mt-0.5 text-[16px] font-semibold tracking-[-0.04em] text-ink-darker line-clamp-2">
+          <div className="min-w-0 flex-1 pt-0.5">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="px-1.5 py-0.5 rounded bg-brand/10 text-brand text-[10px] font-bold">
+                {show.genreDisplayName}
+              </span>
+              <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${isOngoing ? 'bg-ink-darkest text-white' : 'bg-gray-100 text-ink-muted'}`}>
+                {isOngoing ? '공연중' : show.statusDisplayName}
+              </span>
+            </div>
+
+            <h1 className="mt-1 text-[16px] font-bold text-ink-darkest leading-snug line-clamp-2">
               {show.title}
             </h1>
-            <p className="mt-1 text-[11px] text-ink-light">
-              {show.startDate ? `${show.startDate} ~ ${show.endDate || '미정'}` : '일정 미정'}
-            </p>
 
-            <dl className="mt-4 border-t border-line-light text-[11px]">
-              <div className="grid grid-cols-[75px_1fr] border-b border-line-lightest py-2">
-                <dt className="text-ink-lightest">공연장</dt>
-                <dd className="m-0 text-ink-muted">{show.theaterName || '-'}</dd>
-              </div>
+            <div className="mt-1.5 space-y-0.5 text-[11px] text-ink-muted">
+              <p className="font-medium text-ink-darker truncate">
+                {show.theaterName || '공연장 미정'}
+              </p>
+              <p className="text-[10px] text-ink-light truncate">
+                {show.startDate ? `${show.startDate} ~ ${show.endDate || '미정'}` : '일정 미정'}
+              </p>
               {show.runtime && (
-                <div className="grid grid-cols-[75px_1fr] border-b border-line-lightest py-2">
-                  <dt className="text-ink-lightest">관람시간</dt>
-                  <dd className="m-0 text-ink-muted">{show.runtime}</dd>
-                </div>
+                <p className="text-[10px] text-ink-lightest">
+                  러닝타임 {show.runtime} {show.ageLimit ? `· ${show.ageLimit}` : ''}
+                </p>
               )}
-              {show.ageLimit && (
-                <div className="grid grid-cols-[75px_1fr] border-b border-line-lightest py-2">
-                  <dt className="text-ink-lightest">관람연령</dt>
-                  <dd className="m-0 text-ink-muted">{show.ageLimit}</dd>
-                </div>
-              )}
-              {show.priceInfo && (
-                <div className="grid grid-cols-[75px_1fr] border-b border-line-lightest py-2">
-                  <dt className="text-ink-lightest">가격</dt>
-                  <dd className="m-0 text-ink-muted">{show.priceInfo}</dd>
-                </div>
-              )}
-              <div className="grid grid-cols-[75px_1fr] border-b border-line-lightest py-2">
-                <dt className="text-ink-lightest">평점</dt>
-                <dd className="m-0 flex items-center gap-1 text-ink-muted">
-                  {show.averageScore != null && show.averageScore > 0 ? (
-                    <>
-                      <Star size={11} className="fill-brand text-brand" />
-                      <span className="font-semibold">{show.averageScore.toFixed(1)}</span>
-                      <span>({show.reviewCount ?? 0})</span>
-                    </>
-                  ) : (
-                    '-'
-                  )}
-                </dd>
-              </div>
-            </dl>
+            </div>
 
-            <div className="mt-4 flex gap-2">
-              {bookingLinks[0] ? (
-                <a
-                  href={bookingLinks[0].url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex h-[34px] items-center justify-center bg-brand px-3.5 text-[11px] font-semibold text-white"
-                >
-                  예매처 보기
-                </a>
-              ) : null}
-              <button
-                type="button"
-                onClick={() => openDiaryModal('quick')}
-                className="h-[34px] border border-[#d9d9d9] bg-surface-base px-3.5 text-[11px] text-ink-muted"
-              >
-                관극 기록하기
-              </button>
+            {/* 평점 & 찜 버튼 */}
+            <div className="mt-2.5 flex items-center justify-between border-t border-line-lightest pt-2">
+              <div className="flex items-center gap-1 text-[12px]">
+                {show.averageScore != null && show.averageScore > 0 ? (
+                  <>
+                    <Star size={12} className="fill-amber-400 text-amber-400" />
+                    <span className="font-bold text-ink-darkest">{show.averageScore.toFixed(1)}</span>
+                    <span className="text-[10px] text-ink-lightest">({show.reviewCount ?? 0})</span>
+                  </>
+                ) : (
+                  <span className="text-[10px] text-ink-lightest">별점 등록 전</span>
+                )}
+              </div>
+
               <button
                 type="button"
                 onClick={() => {
@@ -248,43 +223,65 @@ export default function ShowDetailPage() {
                   toggleFav.mutate()
                 }}
                 disabled={isAuthenticated && toggleFav.isPending}
-                className="flex h-[34px] items-center justify-center border border-[#d9d9d9] bg-surface-base px-3.5 text-[11px] text-ink-muted"
+                className={`h-6 px-2 rounded border text-[10px] font-medium flex items-center gap-1 transition-colors ${
+                  favStatus?.isFavorited
+                    ? 'border-brand text-brand bg-brand/5'
+                    : 'border-line-base text-ink-muted hover:border-ink-darkest hover:text-ink-darkest'
+                }`}
               >
-                <Heart size={12} className={`mr-1 ${favStatus?.isFavorited ? 'fill-brand text-brand' : ''}`} />
-                {favStatus?.isFavorited ? '찜함' : '찜하기'} {favStatus?.favoriteCount ? `(${favStatus.favoriteCount})` : ''}
+                <Heart size={10} className={favStatus?.isFavorited ? 'fill-brand text-brand' : ''} />
+                <span>{favStatus?.isFavorited ? '찜완료' : '찜'}</span>
+                {Boolean(favStatus?.favoriteCount) && (
+                  <span className="opacity-80">({favStatus?.favoriteCount})</span>
+                )}
               </button>
             </div>
           </div>
         </section>
 
-        {/* 탭 네비게이션: 3등분 그리드로 가로 스크롤 없이 시원하게 표시 */}
-        <nav className="mt-7 grid grid-cols-3 border-b border-line-base text-[12px] text-ink-lighter text-center">
+        {/* 예매처 바로가기 링크 (존재 시 배너형으로 노출) */}
+        {bookingLinks[0] && (
+          <a
+            href={bookingLinks[0].url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 w-full h-8 rounded bg-ink-darkest text-white text-[11px] font-semibold flex items-center justify-center gap-1 hover:bg-brand transition-colors"
+          >
+            <span>{show.title} 공식 예매처 바로가기</span>
+            <span className="text-[9px] opacity-70">↗</span>
+          </a>
+        )}
+
+        {/* 탭 네비게이션: 3등분 그리드, 모바일 간결 레이블 대응 */}
+        <nav className="mt-5 grid grid-cols-3 border-b border-line-base text-[12px] text-ink-lighter text-center">
           {TAB_ITEMS.map((tab) => (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`pb-3 font-medium transition-colors ${
+              className={`pb-2.5 font-medium transition-colors ${
                 activeTab === tab.key
                   ? 'border-b-2 border-brand font-bold text-ink-darkest'
                   : 'hover:text-ink-darker text-ink-muted'
               }`}
             >
-              {tab.label}
+              <span className="hidden sm:inline">{tab.label}</span>
+              <span className="sm:hidden">{tab.mobileLabel}</span>
             </button>
           ))}
         </nav>
 
-        <div className="mt-5 space-y-6 pb-12">
+        <div className="mt-4 space-y-5 pb-10">
+          {/* 1. 공연 정보 & 캐스팅 */}
           {activeTab === 'info' && (
             <div className="space-y-6">
               <ShowInfoTab show={show} />
               <div className="border-t border-line-lightest pt-5">
-                <h3 className="text-[13px] font-bold text-ink-darkest mb-3">출연진 / 캐스팅</h3>
                 <ShowCastingTab showId={showId} fallbackCastInfo={show.castInfo} />
               </div>
             </div>
           )}
 
+          {/* 2. 관람 후기 & 시야 */}
           {activeTab === 'reviews' && (
             <div className="space-y-6">
               <ShowReviewsTab
@@ -306,24 +303,25 @@ export default function ShowDetailPage() {
             </div>
           )}
 
+          {/* 3. 동행 & 톡 */}
           {activeTab === 'companion' && (
             <ShowCompanionLiveTab showId={showId} isOngoing={isOngoing} />
           )}
         </div>
       </div>
 
-      {/* 하단 플로팅 액션바 (높이 40px 터치 최적화) */}
-      <div className="fixed bottom-[54px] left-1/2 -translate-x-1/2 w-full max-w-[460px] z-30 border-t border-line-base bg-white/95 backdrop-blur-md px-4 py-2.5">
+      {/* 하단 플로팅 액션바 (높이 38px 터치 최적화, safe-area 대응) */}
+      <div className="fixed bottom-[calc(54px+env(safe-area-inset-bottom,0px))] left-1/2 -translate-x-1/2 w-full max-w-[460px] z-40 border-t border-line-base bg-white/95 backdrop-blur-md px-4 py-2">
         <div className="grid grid-cols-2 gap-2">
           <button
             onClick={() => openDiaryModal('quick')}
-            className="h-10 bg-brand text-[12px] font-bold text-white rounded flex items-center justify-center gap-1.5 active:scale-[0.99] transition-transform"
+            className="h-9 bg-brand text-[12px] font-bold text-white rounded flex items-center justify-center gap-1.5 active:scale-[0.99] transition-transform"
           >
             관극 기록하기
           </button>
           <button
             onClick={openReviewForm}
-            className="h-10 border border-line-base bg-surface-base text-[12px] font-semibold text-ink-darkest rounded flex items-center justify-center gap-1.5 hover:border-line-dark transition-colors"
+            className="h-9 border border-line-base bg-surface-base text-[12px] font-semibold text-ink-darkest rounded flex items-center justify-center gap-1.5 hover:border-line-dark transition-colors"
           >
             후기 작성
           </button>
