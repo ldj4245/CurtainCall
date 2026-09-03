@@ -71,5 +71,16 @@ public interface ShowRepository extends JpaRepository<Show, Long>, ShowRepositor
     @Query("UPDATE Show s SET s.status = 'ONGOING' WHERE s.status = 'UPCOMING' AND s.startDate <= :today AND (s.endDate IS NULL OR s.endDate >= :today)")
     int updateStartedShows(@Param("today") LocalDate today);
 
+    long countByStatus(Show.Status status);
+
+    @Query(value = "SELECT s.id FROM shows s " +
+           "WHERE s.status = 'ENDED' AND s.end_date < :cutoffDate " +
+           "AND NOT EXISTS (SELECT 1 FROM diary_entries d WHERE d.show_id = s.id) " +
+           "AND NOT EXISTS (SELECT 1 FROM reviews r WHERE r.show_id = s.id) " +
+           "AND NOT EXISTS (SELECT 1 FROM favorite_shows f WHERE f.show_id = s.id) " +
+           "AND NOT EXISTS (SELECT 1 FROM companion_posts c WHERE c.show_id = s.id) " +
+           "LIMIT :limit", nativeQuery = true)
+    List<Long> findOldUnreferencedEndedShowIds(@Param("cutoffDate") LocalDate cutoffDate, @Param("limit") int limit);
+
     List<Show> findByStatus(Show.Status status);
 }

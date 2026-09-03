@@ -14,10 +14,26 @@ public class UserService {
 
     private final UserRepository userRepository;
 
+    @org.springframework.beans.factory.annotation.Value("${app.admin.emails:ldj4241@naver.com}")
+    private String adminEmails;
+
+    @Transactional
     public UserResponse getMe(Long userId) {
-        return userRepository.findById(userId)
-                .map(UserResponse::from)
+        var user = userRepository.findById(userId)
                 .orElseThrow(() -> BusinessException.notFound("사용자를 찾을 수 없습니다."));
+
+        if (user.getEmail() != null && adminEmails != null) {
+            for (String email : adminEmails.split(",")) {
+                if (user.getEmail().trim().equalsIgnoreCase(email.trim())) {
+                    if (user.getRole() != com.curtaincall.domain.user.entity.User.Role.ADMIN) {
+                        user.promoteToAdmin();
+                    }
+                    break;
+                }
+            }
+        }
+
+        return UserResponse.from(user);
     }
 
     @Transactional

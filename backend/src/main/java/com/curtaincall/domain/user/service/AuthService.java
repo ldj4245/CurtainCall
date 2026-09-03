@@ -24,6 +24,9 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final OAuth2AuthorizationCodeStore authorizationCodeStore;
 
+    @org.springframework.beans.factory.annotation.Value("${app.admin.emails:ldj4241@naver.com}")
+    private String adminEmails;
+
     @Transactional
     public AuthTokens signUp(SignUpRequest request) {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
@@ -37,10 +40,12 @@ public class AuthService {
                 .role(User.Role.USER)
                 .build();
 
+        checkAndPromoteAdmin(user);
         userRepository.save(user);
         return issueTokens(user);
     }
 
+    @Transactional
     public AuthTokens login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> BusinessException.notFound("사용자를 찾을 수 없습니다."));
@@ -53,7 +58,21 @@ public class AuthService {
             throw BusinessException.unauthorized("비밀번호가 일치하지 않습니다.");
         }
 
+        checkAndPromoteAdmin(user);
         return issueTokens(user);
+    }
+
+    public void checkAndPromoteAdmin(User user) {
+        if (user != null && user.getEmail() != null && adminEmails != null) {
+            for (String email : adminEmails.split(",")) {
+                if (user.getEmail().trim().equalsIgnoreCase(email.trim())) {
+                    if (user.getRole() != User.Role.ADMIN) {
+                        user.promoteToAdmin();
+                    }
+                    break;
+                }
+            }
+        }
     }
 
     public AuthTokens refreshToken(String refreshToken) {
@@ -72,6 +91,7 @@ public class AuthService {
         return issueTokens(user);
     }
 
+    @Transactional
     public AuthTokens exchangeOAuth2Code(String code) {
         Long userId = authorizationCodeStore.consume(code)
                 .orElseThrow(() -> BusinessException.unauthorized("유효하지 않거나 만료된 OAuth 인증 코드입니다."));
@@ -79,6 +99,7 @@ public class AuthService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> BusinessException.notFound("사용자를 찾을 수 없습니다."));
 
+        checkAndPromoteAdmin(user);
         return issueTokens(user);
     }
 

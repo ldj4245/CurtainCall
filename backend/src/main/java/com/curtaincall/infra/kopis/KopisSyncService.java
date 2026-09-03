@@ -4,6 +4,8 @@ import com.curtaincall.domain.show.entity.Show;
 import com.curtaincall.domain.show.repository.ShowRepository;
 import com.curtaincall.domain.theater.entity.Theater;
 import com.curtaincall.domain.theater.repository.TheaterRepository;
+import com.curtaincall.domain.casting.repository.CastMemberRepository;
+import com.curtaincall.domain.showlive.repository.ShowLiveRoomRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -13,8 +15,12 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.ZonedDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 @Slf4j
 @Service
@@ -24,19 +30,46 @@ public class KopisSyncService {
     private final KopisApiClient kopisApiClient;
     private final ShowRepository showRepository;
     private final TheaterRepository theaterRepository;
+    private final CastMemberRepository castMemberRepository;
+    private final ShowLiveRoomRepository showLiveRoomRepository;
     private final org.springframework.cache.CacheManager cacheManager;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy.MM.dd");
+    private static final DateTimeFormatter KST_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final String[] GENRES = { "GGGA", "AAAA" }; // 뮤지컬, 연극
 
-    @Scheduled(cron = "0 0 2 * * *") // 매일 새벽 2시
+    private volatile String lastSyncTime = "미실행";
+    private volatile String lastSyncStatus = "대기중";
+
+    public String getLastSyncTime() {
+        return lastSyncTime;
+    }
+
+    public String getLastSyncStatus() {
+        return lastSyncStatus;
+    }
+
+    @Scheduled(cron = "0 0 4 * * *") // 매일 새벽 4시 (KST)
     @CacheEvict(value = { "showsSearch", "showDetail", "ongoingShows", "popularShows" }, allEntries = true)
     public void syncShows() {
-        log.info("KOPIS 공연 동기화 시작");
-
+        log.info("KOPIS 공연 동기화 및 일일 유지보수 시작 (KST 새벽 4시)");
+        lastSyncStatus = "진행중";
         LocalDate today = LocalDate.now();
-        LocalDate threeMonthsLater = today.plusMonths(3);
 
+        // 1. 공연 상태 자동 보정 (종료일 경과 -> ENDED, 시작일 도래 -> ONGOING)
+        try {
+            int endedCount = showRepository.updateEndedShows(today);
+            int startedCount = showRepository.updateStartedShows(today);
+            if (endedCount > 0 || startedCount > 0) {
+                log.info("공연 상태 자동 갱신 완료: 공연종료 전환 {}건, 공연중 전환 {}건", endedCount, startedCount);
+            }
+        } catch (Exception e) {
+            log.error("공연 상태 자동 갱신 실패: {}", e.getMessage());
+        }
+
+        // 2. KOPIS 신규/예정 공연 수집 (향후 3개월)
+        LocalDate threeMonthsLater = today.plusMonths(3);
+        int totalSynced = 0;
         for (String genre : GENRES) {
             try {
                 List<KopisShowDto> shows = kopisApiClient.fetchShows(today.minusMonths(1), threeMonthsLater, genre);
@@ -44,13 +77,40 @@ public class KopisSyncService {
 
                 for (KopisShowDto showDto : shows) {
                     syncShow(showDto);
+                    totalSynced++;
                 }
             } catch (Exception e) {
                 log.error("KOPIS 공연 동기화 실패 - genre: {}, error: {}", genre, e.getMessage());
             }
         }
 
-        log.info("KOPIS 공연 동기화 완료");
+        // 3. 5MB DB 용량 보호: 종료 후 30일 경과 & 미참조 공연 자동 정리
+        try {
+            int pruned = pruneOldEndedShows(30);
+            if (pruned > 0) {
+                log.info("DB 용량 보호를 위한 오래된 종료 공연 정리 완료: {}건 삭제", pruned);
+            }
+        } catch (Exception e) {
+            log.warn("오래된 종료 공연 정리 중 오류 (무시): {}", e.getMessage());
+        }
+
+        lastSyncTime = ZonedDateTime.now(ZoneId.of("Asia/Seoul")).format(KST_FORMATTER);
+        lastSyncStatus = "정상 완료 (" + totalSynced + "건 점검)";
+        log.info("KOPIS 일일 유지보수 및 공연 동기화 완료: {}", lastSyncTime);
+    }
+
+    @Transactional
+    public int pruneOldEndedShows(int daysAfterEnd) {
+        LocalDate cutoff = LocalDate.now().minusDays(daysAfterEnd);
+        List<Long> oldShowIds = showRepository.findOldUnreferencedEndedShowIds(cutoff, 100);
+        if (oldShowIds.isEmpty()) {
+            return 0;
+        }
+        log.info("5MB DB 용량 보호: 종료 후 {}일 경과한 미참조 공연 정리 시작 (대상: {}건)", daysAfterEnd, oldShowIds.size());
+        castMemberRepository.deleteAllByShowIdIn(oldShowIds);
+        showLiveRoomRepository.deleteAllByShowIdIn(oldShowIds);
+        showRepository.deleteAllByIdInBatch(oldShowIds);
+        return oldShowIds.size();
     }
 
     @Scheduled(cron = "0 0 3 * * MON") // 매주 월요일 새벽 3시

@@ -80,3 +80,7 @@ springdoc:
 
 server:
   forward-headers-strategy: native
+
+app:
+  admin:
+    emails: ${ADMIN_EMAILS:ldj4241@naver.com}

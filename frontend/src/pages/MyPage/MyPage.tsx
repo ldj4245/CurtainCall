@@ -10,6 +10,7 @@ import { reviewsApi } from '../../api/reviews'
 
 import Pagination from '../../components/common/Pagination'
 import ConfirmModal from '../../components/common/ConfirmModal'
+import AdminOperationsPanel from '../../components/admin/AdminOperationsPanel'
 
 type Tab = 'favorites' | 'reviews' | 'profile'
 
@@ -226,6 +227,9 @@ export default function MyPage() {
                     </div>
                 )}
             </div>
+
+            {/* 운영자 전용 관리 패널 (ADMIN 권한 보유 시에만 노출) */}
+            {user?.role === 'ADMIN' && <AdminOperationsPanel />}
 
             {/* 인앱 정보 및 출처 */}
             <div className="mt-12 pt-5 border-t border-line-lightest text-center text-[10px] text-ink-lightest space-y-1">

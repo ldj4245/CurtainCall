@@ -8,4 +8,5 @@ import java.util.Optional;
 
 public interface ShowLiveRoomRepository extends JpaRepository<ShowLiveRoom, Long> {
     Optional<ShowLiveRoom> findByShowIdAndLiveDate(Long showId, LocalDate liveDate);
+    void deleteAllByShowIdIn(java.util.List<Long> showIds);
 }

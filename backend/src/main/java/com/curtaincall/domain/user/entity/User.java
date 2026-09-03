@@ -49,6 +49,10 @@ public class User extends BaseTimeEntity {
         return this.password != null;
     }
 
+    public void promoteToAdmin() {
+        this.role = Role.ADMIN;
+    }
+
     public enum Role {
         USER, ADMIN
     }

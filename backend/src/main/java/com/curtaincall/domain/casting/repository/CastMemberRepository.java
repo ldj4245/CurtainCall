@@ -11,5 +11,7 @@ public interface CastMemberRepository extends JpaRepository<CastMember, Long> {
 
     void deleteByShowId(Long showId);
 
+    void deleteAllByShowIdIn(List<Long> showIds);
+
     boolean existsByShowId(Long showId);
 }
