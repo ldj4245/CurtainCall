@@ -25,6 +25,7 @@ interface Props {
   entry?: DiaryEntry
   initialShowId?: number
   initialShowTitle?: string
+  initialCastMemo?: string
   mode?: 'quick' | 'full'
   onClose: () => void
   onSaved: (savedEntry: DiaryEntry) => void
@@ -34,6 +35,7 @@ export default function DiaryFormModal({
   entry,
   initialShowId,
   initialShowTitle,
+  initialCastMemo,
   mode = 'full',
   onClose,
   onSaved,
@@ -75,12 +77,12 @@ export default function DiaryFormModal({
       watchedDate: entry?.watchedDate ?? new Date().toISOString().slice(0, 10),
       rating: entry?.rating ?? 5,
       seatInfo: entry?.seatInfo ?? '',
-      castMemo: entry?.castMemo ?? '',
+      castMemo: entry?.castMemo ?? initialCastMemo ?? '',
       comment: entry?.comment ?? '',
       ticketPrice: entry?.ticketPrice,
       isOpen: entry?.isOpen ?? true,
     }),
-    [entry, initialShowId]
+    [entry, initialShowId, initialCastMemo]
   )
 
   const {

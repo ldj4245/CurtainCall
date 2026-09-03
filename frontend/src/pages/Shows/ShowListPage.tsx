@@ -143,8 +143,8 @@ export default function ShowListPage() {
         </div>
 
         {/* 검색창 */}
-        <div className="sticky top-[59px] z-30 bg-surface-base -mx-5 px-5 pt-1 pb-3 sm:static sm:mx-0 sm:px-0 sm:pt-0 sm:pb-0">
-          <form onSubmit={handleSearch} className="flex gap-2 mb-4">
+        <div className="sticky top-[52px] z-30 bg-surface-base -mx-4 px-4 pt-1 pb-3 sm:static sm:mx-0 sm:px-0 sm:pt-0 sm:pb-0">
+          <form onSubmit={handleSearch} className="flex gap-2 mb-3">
             <div className="relative flex-1">
               <Search
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-lightest"
@@ -155,91 +155,80 @@ export default function ShowListPage() {
                 value={inputVal}
                 onChange={(e) => setInputVal(e.target.value)}
                 placeholder="공연명, 출연진 검색"
-                className="w-full h-[38px] pl-9 pr-4 text-[12px] bg-surface-base border border-line-base text-ink-base placeholder:text-ink-lightest focus:border-ink-base focus:outline-none transition-colors"
+                className="w-full h-10 pl-9 pr-4 text-[12px] bg-surface-base border border-line-base text-ink-base placeholder:text-ink-lightest focus:border-ink-base focus:outline-none transition-colors rounded"
               />
             </div>
             <button
               type="submit"
-              className="h-[38px] px-5 bg-ink-darkest text-white text-[12px] font-semibold hover:bg-brand transition-colors"
+              className="h-10 px-4 bg-ink-darkest text-white text-[12px] font-semibold hover:bg-brand transition-colors rounded"
             >
               검색
             </button>
           </form>
 
-          {/* 모바일 필터 버튼 */}
-          <div className="sm:hidden mb-4">
-            <button
-              onClick={() => setShowMobileFilter(true)}
-              className="w-full flex items-center justify-center gap-1.5 h-[36px] border border-line-base text-[11px] font-medium text-ink-light"
-            >
-              <SlidersHorizontal size={13} />
-              필터
-              {selectedFilterCount > 0 && (
-                <span className="text-[10px] bg-ink-darkest text-white px-1.5 py-0.5">
-                  {selectedFilterCount}
-                </span>
-              )}
-            </button>
-          </div>
-        </div>
+          {/* 통합 필터 바 (1줄로 압축) */}
+          <div className="flex items-center justify-between border-b border-line-lightest pb-2.5 gap-2">
+            <div className="flex items-center gap-1 overflow-x-auto scrollbar-none">
+              {GENRES.map(({ value, label }) => (
+                <button
+                  key={`g-${value}`}
+                  onClick={() => handleFilter('genre', value)}
+                  className={`h-7 px-3 text-[11px] transition-colors rounded ${
+                    genre === value
+                      ? 'bg-ink-darkest text-white font-semibold'
+                      : 'text-ink-muted hover:text-ink-darkest hover:bg-surface-alt'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
 
-        {/* 데스크톱 필터 */}
-        <div className="hidden sm:block mb-6">
-          <div className="flex flex-wrap items-center gap-x-1 gap-y-2 border-b border-line-lightest pb-3">
-            <span className="text-[11px] text-ink-lightest mr-2 min-w-[28px]">장르</span>
-            {GENRES.map(({ value, label }) => (
-              <Pill
-                key={`g-${value}`}
-                active={genre === value}
-                label={label}
-                onClick={() => handleFilter('genre', value)}
-              />
-            ))}
-            <span className="w-px h-3 bg-line-lighter mx-2" />
-            <span className="text-[11px] text-ink-lightest mr-2 min-w-[28px]">상태</span>
-            {STATUSES.map(({ value, label }) => (
-              <Pill
-                key={`s-${value}`}
-                active={status === value}
-                label={label}
-                onClick={() => handleFilter('status', value)}
-              />
-            ))}
-            <span className="w-px h-3 bg-line-lighter mx-2" />
-            <span className="text-[11px] text-ink-lightest mr-2 min-w-[28px]">지역</span>
-            {REGIONS.slice(0, 5).map(({ value, label }) => (
-              <Pill
-                key={`r-${value}`}
-                active={region === value}
-                label={label}
-                onClick={() => handleFilter('region', value)}
-              />
-            ))}
-            {hasActiveFilter && (
+            <div className="flex items-center gap-2 shrink-0">
               <button
-                onClick={resetFilters}
-                className="ml-2 flex items-center gap-1 text-[11px] text-ink-lightest hover:text-ink-muted"
+                onClick={() => setShowMobileFilter(true)}
+                className={`flex items-center gap-1.5 h-7 px-2.5 border text-[11px] font-medium transition-colors rounded ${
+                  selectedFilterCount > 0
+                    ? 'border-brand text-brand bg-brand/5'
+                    : 'border-line-base text-ink-muted hover:border-line-dark'
+                }`}
               >
-                <X size={11} />
-                초기화
+                <SlidersHorizontal size={11} />
+                <span>필터</span>
+                {selectedFilterCount > 0 && (
+                  <span className="text-[9px] bg-brand text-white px-1 rounded-full font-bold">
+                    {selectedFilterCount}
+                  </span>
+                )}
               </button>
-            )}
+
+              {hasActiveFilter && (
+                <button
+                  onClick={resetFilters}
+                  className="flex items-center gap-0.5 text-[10px] text-ink-lightest hover:text-ink-muted"
+                >
+                  <X size={10} />
+                  초기화
+                </button>
+              )}
+            </div>
           </div>
+
           {activeFilterSummary && (
-            <p className="mt-2 text-[11px] text-ink-lighter">
-              선택된 필터: <span className="font-medium text-ink-muted">{activeFilterSummary}</span>
+            <p className="mt-2 text-[10px] text-ink-lighter">
+              필터 적용 중: <span className="font-medium text-ink-muted">{activeFilterSummary}</span>
             </p>
           )}
         </div>
 
-        {/* 모바일 필터 시트 */}
+        {/* 필터 시트 (모바일 & 데스크톱 쉘 맞춤) */}
         {showMobileFilter && (
           <div
-            className="fixed inset-0 z-50 bg-black/40 flex items-end sm:hidden"
+            className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center"
             onClick={() => setShowMobileFilter(false)}
           >
             <div
-              className="w-full bg-surface-base border-t border-line-base"
+              className="w-full max-w-[460px] bg-white border-t border-line-base rounded-t-lg shadow-xl"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between px-5 py-4 border-b border-line-lightest">

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { diaryApi } from '../../api/diary'
 import { showsApi } from '../../api/shows'
 import DiaryFormModal from '../../components/diary/DiaryFormModal'
@@ -59,8 +59,10 @@ function ShowSection({
 }
 
 export default function HomePage() {
+  const navigate = useNavigate()
   const { user, isAuthenticated } = useAuthStore()
   const [showDiaryForm, setShowDiaryForm] = useState(false)
+  const [selectedShowForDiary, setSelectedShowForDiary] = useState<{ id: number; title: string; castInfo?: string } | null>(null)
   const [editEntry, setEditEntry] = useState<DiaryEntry | undefined>()
   const [activeGenre, setActiveGenre] = useState<GenreKey>('')
 
@@ -143,46 +145,15 @@ export default function HomePage() {
         ))}
       </div>
 
-      {/* 오늘의 공연 타임테이블 */}
-      <TodayScheduleSection genre={activeGenre} />
-
-      {/* 탭 콘텐츠 */}
+      {/* 1. 인기 공연 (박스오피스 TOP 8) - 첫 화면 상단 전진 배치! */}
       {isAllTab ? (
-        <>
-          <ShowSection
-            title="인기 공연"
-            linkTo="/shows"
-            shows={popular}
-            isLoading={homeSectionsLoading}
-            limit={8}
-          />
-          {endingSoon.length > 0 && (
-            <ShowSection
-              title="곧 종료되는 공연"
-              linkTo="/shows?status=ONGOING"
-              shows={endingSoon}
-              isLoading={homeSectionsLoading}
-              limit={4}
-            />
-          )}
-          {openingThisMonth.length > 0 && (
-            <ShowSection
-              title="이번 달 개막"
-              linkTo="/shows?status=UPCOMING"
-              shows={openingThisMonth}
-              isLoading={homeSectionsLoading}
-              limit={4}
-            />
-          )}
-          {mostRecorded.length > 0 && (
-            <ShowSection
-              title="관객 기록이 많은 공연"
-              shows={mostRecorded}
-              isLoading={homeSectionsLoading}
-              limit={4}
-            />
-          )}
-        </>
+        <ShowSection
+          title="실시간 인기 공연 (TOP 8)"
+          linkTo="/shows"
+          shows={popular}
+          isLoading={homeSectionsLoading}
+          limit={8}
+        />
       ) : (
         <ShowSection
           title={`${activeTabLabel} 인기 순위`}
@@ -191,6 +162,53 @@ export default function HomePage() {
           isLoading={genrePopularLoading}
           limit={8}
         />
+      )}
+
+      {/* 2. 오늘의 공연 타임테이블 - 인기 공연 바로 아래 연계 */}
+      <div className="mt-8 border-t border-line-lightest pt-6">
+        <TodayScheduleSection
+          genre={activeGenre}
+          onRecordShow={(show) => {
+            if (!isAuthenticated) {
+              navigate('/login')
+              return
+            }
+            setSelectedShowForDiary({ id: show.id, title: show.title, castInfo: show.castInfo })
+            setShowDiaryForm(true)
+          }}
+        />
+      </div>
+
+      {/* 3. 큐레이션 섹션 (곧 종료, 이번 달 개막, 기록 많은 공연) */}
+      {isAllTab && (
+        <>
+          {endingSoon.length > 0 && (
+            <ShowSection
+              title="곧 막을 내리는 공연"
+              linkTo="/shows?status=ONGOING"
+              shows={endingSoon}
+              isLoading={homeSectionsLoading}
+              limit={4}
+            />
+          )}
+          {openingThisMonth.length > 0 && (
+            <ShowSection
+              title="이번 달 개막 예정"
+              linkTo="/shows?status=UPCOMING"
+              shows={openingThisMonth}
+              isLoading={homeSectionsLoading}
+              limit={4}
+            />
+          )}
+          {mostRecorded.length > 0 && (
+            <ShowSection
+              title="관객들이 많이 기록한 공연"
+              shows={mostRecorded}
+              isLoading={homeSectionsLoading}
+              limit={4}
+            />
+          )}
+        </>
       )}
 
       {/* 빠른 탐색 바로가기 */}
@@ -221,13 +239,18 @@ export default function HomePage() {
       {showDiaryForm && (
         <DiaryFormModal
           entry={editEntry}
+          initialShowId={selectedShowForDiary?.id}
+          initialShowTitle={selectedShowForDiary?.title}
+          initialCastMemo={selectedShowForDiary?.castInfo}
           onClose={() => {
             setShowDiaryForm(false)
             setEditEntry(undefined)
+            setSelectedShowForDiary(null)
           }}
           onSaved={() => {
             setShowDiaryForm(false)
             setEditEntry(undefined)
+            setSelectedShowForDiary(null)
           }}
         />
       )}

@@ -17,14 +17,12 @@ import { useAuthStore } from '../../store/authStore'
 import type { DiaryEntry } from '../../types'
 import { getBookingLinks } from '../../utils/showUtils'
 
-type DetailTab = 'info' | 'casting' | 'seatview' | 'reviews' | 'companion'
+type DetailTab = 'info' | 'reviews' | 'companion'
 
 const TAB_ITEMS: { key: DetailTab; label: string }[] = [
-  { key: 'info', label: '공연정보' },
-  { key: 'casting', label: '캐스팅' },
-  { key: 'seatview', label: '좌석시야' },
-  { key: 'reviews', label: '후기' },
-  { key: 'companion', label: '동행' },
+  { key: 'info', label: '공연 정보 & 캐스팅' },
+  { key: 'reviews', label: '관람 후기 & 시야' },
+  { key: 'companion', label: '동행 & 톡' },
 ]
 
 export default function ShowDetailPage() {
@@ -259,15 +257,16 @@ export default function ShowDetailPage() {
           </div>
         </section>
 
-        <nav className="mt-8 flex gap-5 border-b border-line-base text-[12px] text-ink-lighter overflow-x-auto scrollbar-none">
+        {/* 탭 네비게이션: 3등분 그리드로 가로 스크롤 없이 시원하게 표시 */}
+        <nav className="mt-7 grid grid-cols-3 border-b border-line-base text-[12px] text-ink-lighter text-center">
           {TAB_ITEMS.map((tab) => (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`pb-3 whitespace-nowrap transition-colors ${
+              className={`pb-3 font-medium transition-colors ${
                 activeTab === tab.key
-                  ? 'border-b-2 border-brand font-semibold text-ink-base'
-                  : 'hover:text-ink-light'
+                  ? 'border-b-2 border-brand font-bold text-ink-darkest'
+                  : 'hover:text-ink-darker text-ink-muted'
               }`}
             >
               {tab.label}
@@ -275,46 +274,56 @@ export default function ShowDetailPage() {
           ))}
         </nav>
 
-        <div className="mt-5">
-          {activeTab === 'casting' && (
-            <ShowCastingTab showId={showId} fallbackCastInfo={show.castInfo} />
+        <div className="mt-5 space-y-6 pb-12">
+          {activeTab === 'info' && (
+            <div className="space-y-6">
+              <ShowInfoTab show={show} />
+              <div className="border-t border-line-lightest pt-5">
+                <h3 className="text-[13px] font-bold text-ink-darkest mb-3">출연진 / 캐스팅</h3>
+                <ShowCastingTab showId={showId} fallbackCastInfo={show.castInfo} />
+              </div>
+            </div>
           )}
-          {activeTab === 'info' && <ShowInfoTab show={show} />}
-          {activeTab === 'seatview' && (
-            <ShowSeatViewTab
-              show={show}
-              diarySnippets={diarySnippets?.items ?? []}
-              onAddSeatReview={() => openDiaryModal('full')}
-            />
-          )}
+
           {activeTab === 'reviews' && (
-            <ShowReviewsTab
-              show={show}
-              showId={showId}
-              diarySnippets={diarySnippets?.items ?? []}
-              onWriteDiary={() => openDiaryModal('quick')}
-              showReviewForm={showReviewForm}
-              onOpenReviewForm={openReviewForm}
-              onCloseReviewForm={() => setShowReviewForm(false)}
-            />
+            <div className="space-y-6">
+              <ShowReviewsTab
+                show={show}
+                showId={showId}
+                diarySnippets={diarySnippets?.items ?? []}
+                onWriteDiary={() => openDiaryModal('quick')}
+                showReviewForm={showReviewForm}
+                onOpenReviewForm={openReviewForm}
+                onCloseReviewForm={() => setShowReviewForm(false)}
+              />
+              <div className="border-t border-line-lightest pt-5">
+                <ShowSeatViewTab
+                  show={show}
+                  diarySnippets={diarySnippets?.items ?? []}
+                  onAddSeatReview={() => openDiaryModal('full')}
+                />
+              </div>
+            </div>
           )}
+
           {activeTab === 'companion' && (
             <ShowCompanionLiveTab showId={showId} isOngoing={isOngoing} />
           )}
         </div>
       </div>
 
-      <div className="fixed bottom-[54px] left-1/2 -translate-x-1/2 w-full max-w-[460px] z-30 border-t border-line-base bg-surface-base/95 backdrop-blur-md px-4 py-2">
+      {/* 하단 플로팅 액션바 (높이 40px 터치 최적화) */}
+      <div className="fixed bottom-[54px] left-1/2 -translate-x-1/2 w-full max-w-[460px] z-30 border-t border-line-base bg-white/95 backdrop-blur-md px-4 py-2.5">
         <div className="grid grid-cols-2 gap-2">
           <button
             onClick={() => openDiaryModal('quick')}
-            className="h-[34px] bg-brand text-[11px] font-semibold text-white flex items-center justify-center gap-1.5"
+            className="h-10 bg-brand text-[12px] font-bold text-white rounded flex items-center justify-center gap-1.5 active:scale-[0.99] transition-transform"
           >
-            기록 남기기
+            관극 기록하기
           </button>
           <button
             onClick={openReviewForm}
-            className="h-[34px] border border-line-base bg-surface-base text-[11px] text-ink-muted flex items-center justify-center gap-1.5 hover:border-line-dark transition-colors"
+            className="h-10 border border-line-base bg-surface-base text-[12px] font-semibold text-ink-darkest rounded flex items-center justify-center gap-1.5 hover:border-line-dark transition-colors"
           >
             후기 작성
           </button>
@@ -326,6 +335,7 @@ export default function ShowDetailPage() {
           entry={editingDiaryEntry}
           initialShowId={show.id}
           initialShowTitle={show.title}
+          initialCastMemo={show.castInfo}
           mode={diaryMode}
           onClose={() => {
             setShowDiaryForm(false)

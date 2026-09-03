@@ -7,9 +7,10 @@ import type { ScheduleShowItem } from '../../types'
 
 interface Props {
   genre?: string
+  onRecordShow?: (show: ScheduleShowItem) => void
 }
 
-export default function TodayScheduleSection({ genre }: Props) {
+export default function TodayScheduleSection({ genre, onRecordShow }: Props) {
   const [selectedTime, setSelectedTime] = useState<string>('')
   const [showAll, setShowAll] = useState(false)
 
@@ -151,6 +152,22 @@ export default function TodayScheduleSection({ genre }: Props) {
                 </p>
               )}
             </div>
+
+            {/* 우측 관극 기록 퀵 버튼 */}
+            {onRecordShow && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  onRecordShow(show)
+                }}
+                className="shrink-0 h-7 px-2 border border-line-base bg-white text-[10px] font-semibold text-ink-muted hover:border-brand hover:text-brand transition-colors rounded active:scale-95"
+                title="이 공연 관극 기록하기"
+              >
+                기록
+              </button>
+            )}
           </Link>
         ))}
       </div>

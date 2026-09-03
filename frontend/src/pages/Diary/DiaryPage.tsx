@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { diaryApi } from '../../api/diary'
 import DiaryEntryCard from '../../components/diary/DiaryEntryCard'
 import DiaryFormModal from '../../components/diary/DiaryFormModal'
@@ -46,9 +45,11 @@ export default function DiaryPage() {
       {/* 기록 피드 */}
       <div>
         <div className="flex items-center justify-between border-b border-line-lightest pb-3 mb-4">
-          <h2 className="text-[14px] font-semibold text-ink-base">2026년 8월</h2>
-          <div className="flex items-center gap-3 text-[11px] text-ink-lighter">
-            <ChevronLeft size={14} />8월<ChevronRight size={14} />
+          <h2 className="text-[14px] font-semibold text-ink-base">
+            {new Date().getFullYear()}년 {new Date().getMonth() + 1}월
+          </h2>
+          <div className="flex items-center gap-1 text-[11px] text-ink-lighter">
+            <span>{new Date().getMonth() + 1}월</span>
           </div>
         </div>
         
