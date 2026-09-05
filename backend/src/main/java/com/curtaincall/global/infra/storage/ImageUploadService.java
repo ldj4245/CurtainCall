@@ -14,6 +14,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,28 +30,57 @@ public class ImageUploadService {
     private final S3Client s3Client;
     private final String bucket;
     private final String cdnUrl;
+    private final boolean s3Configured;
 
     public ImageUploadService(
-            @Value("${storage.do-spaces.endpoint}") String endpoint,
-            @Value("${storage.do-spaces.region}") String region,
-            @Value("${storage.do-spaces.access-key}") String accessKey,
-            @Value("${storage.do-spaces.secret-key}") String secretKey,
-            @Value("${storage.do-spaces.bucket}") String bucket,
-            @Value("${storage.do-spaces.cdn-url}") String cdnUrl) {
+            @Value("${storage.do-spaces.endpoint:}") String endpoint,
+            @Value("${storage.do-spaces.region:sgp1}") String region,
+            @Value("${storage.do-spaces.access-key:}") String accessKey,
+            @Value("${storage.do-spaces.secret-key:}") String secretKey,
+            @Value("${storage.do-spaces.bucket:}") String bucket,
+            @Value("${storage.do-spaces.cdn-url:}") String cdnUrl) {
         this.bucket = bucket;
         this.cdnUrl = cdnUrl;
-        String validAccessKey = (accessKey != null && !accessKey.isBlank()) ? accessKey : "dummy-access-key";
-        String validSecretKey = (secretKey != null && !secretKey.isBlank()) ? secretKey : "dummy-secret-key";
-        this.s3Client = S3Client.builder()
-                .endpointOverride(URI.create(endpoint))
-                .region(Region.of(region != null && !region.isBlank() ? region : "sgp1"))
-                .credentialsProvider(StaticCredentialsProvider.create(
-                        AwsBasicCredentials.create(validAccessKey, validSecretKey)))
-                .build();
+
+        boolean hasCredentials = accessKey != null && !accessKey.isBlank() && !"dummy-access-key".equals(accessKey)
+                && secretKey != null && !secretKey.isBlank() && !"dummy-secret-key".equals(secretKey)
+                && endpoint != null && !endpoint.isBlank() && bucket != null && !bucket.isBlank();
+
+        if (hasCredentials) {
+            S3Client client = null;
+            try {
+                client = S3Client.builder()
+                        .endpointOverride(URI.create(endpoint))
+                        .region(Region.of(region != null && !region.isBlank() ? region : "us-east-1"))
+                        .credentialsProvider(StaticCredentialsProvider.create(
+                                AwsBasicCredentials.create(accessKey, secretKey)))
+                        .build();
+                log.info("S3-compatible storage initialized for bucket '{}'", bucket);
+            } catch (Exception e) {
+                log.warn("Failed to initialize S3Client, falling back to embedded Base64 storage: {}", e.getMessage());
+            }
+            this.s3Client = client;
+            this.s3Configured = (client != null);
+        } else {
+            this.s3Client = null;
+            this.s3Configured = false;
+            log.info("No external S3 storage configured. ImageUploadService will use embedded data URI storage (Zero-cost).");
+        }
     }
 
     public String uploadImage(MultipartFile file, String folder) {
         validateFile(file);
+
+        if (!s3Configured) {
+            try {
+                byte[] bytes = file.getBytes();
+                String base64 = Base64.getEncoder().encodeToString(bytes);
+                String mimeType = file.getContentType() != null ? file.getContentType() : "image/jpeg";
+                return "data:" + mimeType + ";base64," + base64;
+            } catch (IOException e) {
+                throw new RuntimeException("이미지 인코딩 중 오류가 발생했습니다.", e);
+            }
+        }
 
         String extension = getExtension(file.getOriginalFilename());
         String key = folder + "/" + UUID.randomUUID() + "." + extension;
@@ -72,7 +102,7 @@ public class ImageUploadService {
     }
 
     public void deleteImage(String imageUrl) {
-        if (imageUrl == null || !imageUrl.startsWith(cdnUrl)) {
+        if (!s3Configured || imageUrl == null || cdnUrl == null || !imageUrl.startsWith(cdnUrl)) {
             return;
         }
         String key = imageUrl.substring(cdnUrl.length() + 1);
