@@ -14,7 +14,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
   const windowSize = 5
   const halfWindow = Math.floor(windowSize / 2)
   let start = Math.max(0, currentPage - halfWindow)
-  let end = Math.min(totalPages, start + windowSize)
+  const end = Math.min(totalPages, start + windowSize)
 
   if (end - start < windowSize) {
     start = Math.max(0, end - windowSize)

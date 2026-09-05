@@ -49,7 +49,9 @@ export default function MyPage() {
     const handleLogout = async () => {
         try {
             await authApi.logout()
-        } catch { }
+        } catch {
+            // ignore logout error
+        }
         storeLogout()
         navigate('/')
         toast.success('로그아웃되었습니다')
