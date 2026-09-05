@@ -224,29 +224,11 @@ export default function HomePage() {
         </>
       )}
 
-      {/* 빠른 탐색 바로가기 */}
-      <div className="mt-10 pt-5 border-t border-line-lightest mb-4">
-        <h2 className="text-[11px] font-semibold text-ink-muted mb-2.5">빠른 탐색</h2>
-        <div className="grid grid-cols-3 gap-1.5">
-          <Link
-            to="/shows?genre=MUSICAL&status=ONGOING"
-            className="flex items-center justify-center h-8 border border-line-base bg-surface-base text-[10px] text-ink-muted hover:border-line-dark transition-colors"
-          >
-            공연중 뮤지컬
-          </Link>
-          <Link
-            to="/shows?genre=PLAY&status=ONGOING"
-            className="flex items-center justify-center h-8 border border-line-base bg-surface-base text-[10px] text-ink-muted hover:border-line-dark transition-colors"
-          >
-            공연중 연극
-          </Link>
-          <Link
-            to="/shows?status=UPCOMING"
-            className="flex items-center justify-center h-8 border border-line-base bg-surface-base text-[10px] text-ink-muted hover:border-line-dark transition-colors"
-          >
-            공연 예정
-          </Link>
-        </div>
+      {/* 서비스 푸터 */}
+      <div className="mt-12 pt-6 border-t border-line-lightest text-center text-[11px] text-ink-lightest mb-4">
+        <p className="font-semibold text-ink-muted">CurtainCall</p>
+        <p className="mt-1">KOPIS(공연예술통합전산망) 공공데이터 기반 실시간 정보 제공</p>
+        <p className="mt-0.5 text-[10px]">© 2026 CurtainCall. All rights reserved.</p>
       </div>
 
       {showDiaryForm && (

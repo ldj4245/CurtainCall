@@ -245,13 +245,26 @@ public class ShowService {
         for (Map.Entry<String, List<ShowScheduleResponse.ScheduleShowItem>> entry : timeSlotMap.entrySet()) {
             String time = entry.getKey();
             int hour = Integer.parseInt(time.split(":")[0]);
-            String label = (hour < 17) ? time + " (낮공)" : time + " (밤공)";
+            String label;
+            if (hour >= 11 && hour < 17) {
+                label = time + " (낮공)";
+            } else if (hour >= 17 && hour <= 22) {
+                label = time + " (밤공)";
+            } else {
+                label = time;
+            }
+
+            List<ShowScheduleResponse.ScheduleShowItem> sortedShows = entry.getValue();
+            sortedShows.sort(Comparator
+                    .comparing((ShowScheduleResponse.ScheduleShowItem s) -> s.getPosterUrl() != null && !s.getPosterUrl().isBlank() ? 0 : 1)
+                    .thenComparing((ShowScheduleResponse.ScheduleShowItem s) -> "MUSICAL".equals(s.getGenre()) ? 0 : ("PLAY".equals(s.getGenre()) ? 1 : 2))
+                    .thenComparing(ShowScheduleResponse.ScheduleShowItem::getTitle));
 
             timeSlots.add(ShowScheduleResponse.TimeSlot.builder()
                     .time(time)
                     .label(label)
-                    .count(entry.getValue().size())
-                    .shows(entry.getValue())
+                    .count(sortedShows.size())
+                    .shows(sortedShows)
                     .build());
         }
 
@@ -264,6 +277,20 @@ public class ShowService {
                 .totalShowsToday(countedShowIds.size())
                 .timeSlots(timeSlots)
                 .build();
+    }
+
+    private static boolean isValidShowTime(String time) {
+        if (time == null || !time.contains(":")) {
+            return false;
+        }
+        try {
+            String[] parts = time.split(":");
+            int h = Integer.parseInt(parts[0]);
+            int m = Integer.parseInt(parts[1]);
+            return (h >= 10 && h <= 22 && m >= 0 && m <= 59);
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private static List<String> extractTimesForDate(String dtguidance, LocalDate date) {
@@ -288,7 +315,7 @@ public class ShowService {
                 Matcher timeMatcher = Pattern.compile("(\\d{1,2}:\\d{2})").matcher(timeGroup);
                 while (timeMatcher.find()) {
                     String time = normalizeTime(timeMatcher.group(1));
-                    if (!times.contains(time)) {
+                    if (isValidShowTime(time) && !times.contains(time)) {
                         times.add(time);
                     }
                 }
@@ -300,7 +327,7 @@ public class ShowService {
                 Matcher tm = Pattern.compile("(\\d{1,2}:\\d{2})").matcher(dtguidance);
                 while (tm.find()) {
                     String time = normalizeTime(tm.group(1));
-                    if (!times.contains(time)) {
+                    if (isValidShowTime(time) && !times.contains(time)) {
                         times.add(time);
                     }
                 }

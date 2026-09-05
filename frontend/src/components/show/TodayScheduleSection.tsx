@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { Clock, ImageOff } from 'lucide-react'
+import { Clock, ImageOff, ArrowRight } from 'lucide-react'
 import { showsApi } from '../../api/shows'
 import type { ScheduleShowItem } from '../../types'
 
@@ -49,13 +49,43 @@ export default function TodayScheduleSection({ genre, onRecordShow }: Props) {
     }
   }
 
-  const activeSlot = data.timeSlots.find((s) => s.time === selectedTime)
-  const displayShows = selectedTime === ''
-    ? allShows
-    : (activeSlot ? activeSlot.shows : [])
+  // 대표 시간대 선별 (공연 수가 많은 상위 최대 6개 슬롯)
+  const sortedByCount = [...data.timeSlots].sort((a, b) => b.count - a.count)
+  const topSlots = sortedByCount.slice(0, 6)
+  const topSlotTimes = new Set(topSlots.map((s) => s.time))
+
+  // 시간순으로 정렬된 주요 슬롯
+  const majorSlots = data.timeSlots.filter((s) => topSlotTimes.has(s.time))
+  // 나머지 자투리 시간대
+  const otherSlots = data.timeSlots.filter((s) => !topSlotTimes.has(s.time))
+  const otherShows: ScheduleShowItem[] = []
+  const otherSeenIds = new Set<number>()
+  for (const slot of otherSlots) {
+    for (const show of slot.shows) {
+      if (!otherSeenIds.has(show.id)) {
+        otherSeenIds.add(show.id)
+        otherShows.push(show)
+      }
+    }
+  }
+
+  let displayShows: ScheduleShowItem[] = []
+  if (selectedTime === '') {
+    displayShows = allShows
+  } else if (selectedTime === 'OTHER') {
+    displayShows = otherShows
+  } else {
+    const activeSlot = data.timeSlots.find((s) => s.time === selectedTime)
+    displayShows = activeSlot ? activeSlot.shows : []
+  }
 
   const month = new Date(data.date).getMonth() + 1
   const day = new Date(data.date).getDate()
+
+  // 기본 6개, 펼치기 시 최대 18개까지만 홈에 노출하여 피로도 최소화
+  const MAX_EXPANDED = 18
+  const renderedShows = showAll ? displayShows.slice(0, MAX_EXPANDED) : displayShows.slice(0, 6)
+  const hasMoreThanLimit = displayShows.length > MAX_EXPANDED
 
   return (
     <div className="mb-10 border border-line-base bg-surface-base p-5 sm:p-6">
@@ -71,11 +101,11 @@ export default function TodayScheduleSection({ genre, onRecordShow }: Props) {
           </span>
         </div>
         <span className="text-[11px] text-ink-lightest">
-          총 <strong className="font-semibold text-ink-base">{data.totalShowsToday}</strong>편의 공연 진행 중
+          오늘 총 <strong className="font-semibold text-ink-base">{data.totalShowsToday}</strong>편 진행 중
         </span>
       </div>
 
-      {/* 시간대 칩 필터 (모바일 가로 스크롤 지원) */}
+      {/* 시간대 칩 필터 (대표 핵심 시간대 + 기타 묶음) */}
       <div className="flex items-center gap-1.5 mb-5 overflow-x-auto scrollbar-none pb-1 -mx-1 px-1">
         <button
           type="button"
@@ -89,7 +119,7 @@ export default function TodayScheduleSection({ genre, onRecordShow }: Props) {
           전체 ({allShows.length})
         </button>
 
-        {data.timeSlots.map((slot) => (
+        {majorSlots.map((slot) => (
           <button
             key={slot.time}
             type="button"
@@ -103,11 +133,25 @@ export default function TodayScheduleSection({ genre, onRecordShow }: Props) {
             {slot.label} <span className="opacity-70">({slot.count})</span>
           </button>
         ))}
+
+        {otherShows.length > 0 && (
+          <button
+            type="button"
+            onClick={() => { setSelectedTime('OTHER'); setShowAll(false) }}
+            className={`h-7 px-3 text-[11px] whitespace-nowrap shrink-0 transition-colors ${
+              selectedTime === 'OTHER'
+                ? 'bg-ink-darkest text-white font-semibold'
+                : 'border border-line-base bg-surface-base text-ink-muted hover:border-line-dark'
+            }`}
+          >
+            기타 시간대 <span className="opacity-70">({otherShows.length})</span>
+          </button>
+        )}
       </div>
 
       {/* 해당 시간대 공연 목록 (컴팩트 카드 그리드) */}
       <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-        {(showAll ? displayShows : displayShows.slice(0, 6)).map((show) => (
+        {renderedShows.map((show) => (
           <Link
             key={`${show.id}-${show.time}`}
             to={`/shows/${show.id}`}
@@ -172,14 +216,27 @@ export default function TodayScheduleSection({ genre, onRecordShow }: Props) {
         ))}
       </div>
 
+      {/* 펼쳐보기 및 전체 탐색 유도 */}
       {displayShows.length > 6 && (
-        <button
-          type="button"
-          onClick={() => setShowAll(!showAll)}
-          className="mt-4 flex w-full h-[32px] items-center justify-center border border-line-base bg-surface-base text-[11px] text-ink-muted hover:bg-surface-alt transition-colors"
-        >
-          {showAll ? '접기' : `펼쳐보기 (+${displayShows.length - 6}편 더보기)`}
-        </button>
+        <div className="mt-4 space-y-2">
+          <button
+            type="button"
+            onClick={() => setShowAll(!showAll)}
+            className="flex w-full h-[32px] items-center justify-center border border-line-base bg-surface-base text-[11px] text-ink-muted hover:bg-surface-alt transition-colors"
+          >
+            {showAll ? '접기' : `더보기 (+${Math.min(displayShows.length - 6, MAX_EXPANDED - 6)}편)`}
+          </button>
+
+          {(showAll && hasMoreThanLimit) && (
+            <Link
+              to="/shows"
+              className="flex w-full h-[34px] items-center justify-center gap-1 border border-ink-darkest bg-ink-darkest text-[11.5px] font-semibold text-white hover:bg-ink-darker transition-colors"
+            >
+              <span>오늘 전체 {displayShows.length}편 공연 탐색에서 모두 보기</span>
+              <ArrowRight size={13} />
+            </Link>
+          )}
+        </div>
       )}
     </div>
   )

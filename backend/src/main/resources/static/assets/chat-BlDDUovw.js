@@ -1,0 +1,1 @@
+import{f as t}from"./index-BZ8x7PNI.js";const e={getMyRooms:async()=>{const{data:a}=await t.get("/chat/rooms");return a},getMessages:async a=>{const{data:s}=await t.get(`/chat/rooms/${a}/messages`);return s}};export{e as c};
