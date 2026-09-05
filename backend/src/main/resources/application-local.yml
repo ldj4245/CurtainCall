@@ -26,12 +26,12 @@ kopis:
 
 storage:
   do-spaces:
-    endpoint: https://sgp1.digitaloceanspaces.com
-    region: sgp1
-    access-key: local-dev-access-key
-    secret-key: local-dev-secret-key
-    bucket: curtaincall
-    cdn-url: https://curtaincall.sgp1.cdn.digitaloceanspaces.com
+    endpoint: ""
+    region: us-east-1
+    access-key: ""
+    secret-key: ""
+    bucket: ""
+    cdn-url: ""
 
 app:
   frontend-url: ${FRONTEND_URL:http://localhost:3000}

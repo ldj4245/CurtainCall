@@ -54,7 +54,7 @@ dependencies {
     // Swagger
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
 
-    // AWS S3 SDK (DigitalOcean Spaces 호환)
+    // AWS S3 SDK (S3 호환 스토리지)
     implementation 'software.amazon.awssdk:s3:2.25.27'
 
     // Jsoup (HTML 크롤링/파싱)

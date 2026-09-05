@@ -69,9 +69,8 @@
 | DB | MySQL 8.0 |
 | Frontend | React 18, TypeScript, Tailwind CSS |
 | 상태관리 | Zustand, TanStack Query |
-| 인프라 | Docker Compose, Nginx, DigitalOcean |
-| 스토리지 | DigitalOcean Spaces (S3 호환) |
-| CI/CD | GitHub Actions |
+| 인프라 | Heroku Dyno, JawsDB MySQL |
+| 배포 / CI | Heroku Automatic Deploys, GitHub Actions |
 
 ---
 
@@ -81,15 +80,15 @@
 사용자
   │ HTTPS
   ▼
-Nginx (SSL 종단 / 리버스 프록시)
-  ├── /          → React (정적 파일)
-  ├── /api/      → Spring Boot :8080
-  └── /ws/       → Spring Boot :8080 (WebSocket Upgrade)
-       │
-       ├── MySQL 8.0
-       ├── KOPIS Open API (Spring Batch, 매일 02:00)
-       ├── Kakao / Naver / Google OAuth2
-       └── DigitalOcean Spaces (이미지 업로드)
+Heroku Router (SSL 자동 종단)
+  └── Spring Boot (:PORT)
+       ├── /          → React SPA 정적 서빙 (index.html)
+       ├── /api/      → REST API
+       └── /ws/       → WebSocket (STOMP 채팅)
+            │
+            ├── JawsDB MySQL
+            ├── KOPIS Open API (공연 데이터 연동)
+            └── Kakao / Naver / Google OAuth2
 ```
 
 **WebSocket 흐름**

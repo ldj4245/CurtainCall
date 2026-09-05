@@ -34,7 +34,7 @@ public class ImageUploadService {
 
     public ImageUploadService(
             @Value("${storage.do-spaces.endpoint:}") String endpoint,
-            @Value("${storage.do-spaces.region:sgp1}") String region,
+            @Value("${storage.do-spaces.region:us-east-1}") String region,
             @Value("${storage.do-spaces.access-key:}") String accessKey,
             @Value("${storage.do-spaces.secret-key:}") String secretKey,
             @Value("${storage.do-spaces.bucket:}") String bucket,
