@@ -9,31 +9,40 @@ export interface PriceGrade {
  * 예: "VIP석 170,000원, R석 140,000원, S석 110,000원, A석 80,000원"
  */
 export function parsePriceInfo(priceInfo?: string | null): PriceGrade[] {
-  if (!priceInfo || priceInfo.trim() === '' || priceInfo === '전석무료') {
-    if (priceInfo === '전석무료') return [{ grade: '전석', price: '무료' }]
-    return []
+  const trimmed = priceInfo?.trim() ?? ''
+  if (!trimmed) return []
+  if (trimmed === '전석무료' || trimmed === '무료') {
+    return [{ grade: '전석', price: '무료' }]
   }
 
-  // 쉼표나 슬래시, 줄바꿈으로 분리
-  const rawParts = priceInfo.split(/[,/\n]+/).map((s) => s.trim()).filter(Boolean)
+  const normalized = trimmed
+    .replace(/(원|무료)\s*,\s*/g, '$1\n')
+    .replace(/,\s*(?=[^\d\s])/g, '\n')
+    .replace(/[/\n]+/g, '\n')
+
+  const rawParts = normalized.split('\n').map((s) => s.trim()).filter(Boolean)
   const results: PriceGrade[] = []
 
   for (const part of rawParts) {
-    const match = part.match(/^([가-힣a-zA-Z0-9\s]+?)\s*[:\s-]?\s*([0-9,]+원|[0-9,]+|무료)/)
+    if (part === '전석무료') {
+      results.push({ grade: '전석', price: '무료' })
+      continue
+    }
+    const match = part.match(/^(.+?)\s*[:\s-]\s*([0-9][0-9,]*\s*원(?:\s*\([^)]*\))?|[0-9][0-9,]*|무료)$/)
     if (match) {
       const grade = match[1].trim()
-      let price = match[2].trim()
-      if (/^[0-9,]+$/.test(price)) {
+      let price = match[2].replace(/\s+원/, '원').trim()
+      if (/^[0-9][0-9,]*$/.test(price)) {
         price += '원'
       }
       const isVip = /VIP|OP|R석/i.test(grade)
       results.push({ grade, price, isVip })
     } else {
-      results.push({ grade: '기본', price: part })
+      results.push({ grade: '안내', price: part })
     }
   }
 
-  return results.length > 0 ? results : [{ grade: '입장료', price: priceInfo }]
+  return results.length > 0 ? results : [{ grade: '안내', price: trimmed }]
 }
 
 export interface BookingLink {
