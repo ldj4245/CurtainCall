@@ -24,7 +24,7 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final OAuth2AuthorizationCodeStore authorizationCodeStore;
 
-    @org.springframework.beans.factory.annotation.Value("${app.admin.emails:ldj4241@naver.com}")
+    @org.springframework.beans.factory.annotation.Value("${app.admin.emails:}")
     private String adminEmails;
 
     @Transactional
@@ -63,9 +63,10 @@ public class AuthService {
     }
 
     public void checkAndPromoteAdmin(User user) {
-        if (user != null && user.getEmail() != null && adminEmails != null) {
+        if (user != null && user.getEmail() != null && adminEmails != null && !adminEmails.isBlank()) {
             for (String email : adminEmails.split(",")) {
-                if (user.getEmail().trim().equalsIgnoreCase(email.trim())) {
+                String trimmed = email.trim();
+                if (!trimmed.isEmpty() && user.getEmail().trim().equalsIgnoreCase(trimmed)) {
                     if (user.getRole() != User.Role.ADMIN) {
                         user.promoteToAdmin();
                     }

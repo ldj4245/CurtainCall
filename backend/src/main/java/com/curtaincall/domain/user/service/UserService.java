@@ -14,7 +14,7 @@ public class UserService {
 
     private final UserRepository userRepository;
 
-    @org.springframework.beans.factory.annotation.Value("${app.admin.emails:ldj4241@naver.com}")
+    @org.springframework.beans.factory.annotation.Value("${app.admin.emails:}")
     private String adminEmails;
 
     @Transactional
@@ -22,9 +22,10 @@ public class UserService {
         var user = userRepository.findById(userId)
                 .orElseThrow(() -> BusinessException.notFound("사용자를 찾을 수 없습니다."));
 
-        if (user.getEmail() != null && adminEmails != null) {
+        if (user.getEmail() != null && adminEmails != null && !adminEmails.isBlank()) {
             for (String email : adminEmails.split(",")) {
-                if (user.getEmail().trim().equalsIgnoreCase(email.trim())) {
+                String trimmed = email.trim();
+                if (!trimmed.isEmpty() && user.getEmail().trim().equalsIgnoreCase(trimmed)) {
                     if (user.getRole() != com.curtaincall.domain.user.entity.User.Role.ADMIN) {
                         user.promoteToAdmin();
                     }

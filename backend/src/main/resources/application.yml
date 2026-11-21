@@ -83,4 +83,4 @@ server:
 
 app:
   admin:
-    emails: ${ADMIN_EMAILS:ldj4241@naver.com}
+    emails: ${ADMIN_EMAILS:}
