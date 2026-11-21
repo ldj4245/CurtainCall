@@ -3,16 +3,19 @@ package com.curtaincall.domain.diary.repository;
 import com.curtaincall.domain.diary.entity.DiaryEntry;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 public interface DiaryEntryRepository extends JpaRepository<DiaryEntry, Long>, DiaryEntryRepositoryCustom {
 
+    @EntityGraph(attributePaths = {"show", "show.theater"})
     Optional<DiaryEntry> findByShareTokenAndIsOpenTrue(String token);
 
     @Query("SELECT COUNT(d.rating) AS ratingCount, AVG(d.rating) AS averageRating FROM DiaryEntry d WHERE d.show.id = :showId AND d.isOpen = true")
@@ -29,11 +32,11 @@ public interface DiaryEntryRepository extends JpaRepository<DiaryEntry, Long>, D
 
     Optional<DiaryEntry> findByIdAndUserId(Long id, Long userId);
 
-    @Query("SELECT d FROM DiaryEntry d JOIN FETCH d.show s JOIN FETCH d.user u " +
+    @Query("SELECT d FROM DiaryEntry d JOIN FETCH d.show s LEFT JOIN FETCH s.theater JOIN FETCH d.user u " +
             "WHERE d.user.id = :userId ORDER BY d.watchedDate DESC")
     List<DiaryEntry> findAllByUserIdWithShow(@Param("userId") Long userId);
 
-    @Query("SELECT d FROM DiaryEntry d JOIN FETCH d.show s JOIN FETCH d.user u " +
+    @Query("SELECT d FROM DiaryEntry d JOIN FETCH d.show s LEFT JOIN FETCH s.theater JOIN FETCH d.user u " +
             "WHERE d.show.id = :showId AND d.isOpen = true ORDER BY d.watchedDate DESC")
     List<DiaryEntry> findPublicByShowId(@Param("showId") Long showId);
 
@@ -54,8 +57,16 @@ public interface DiaryEntryRepository extends JpaRepository<DiaryEntry, Long>, D
             "FROM DiaryEntry d GROUP BY d.show.id ORDER BY COUNT(d.id) DESC")
     List<ShowRecordCount> findMostRecordedShowIds(Pageable pageable);
 
+    @Query("SELECT d.user.id AS userId, d.createdAt AS createdAt FROM DiaryEntry d ORDER BY d.user.id ASC, d.createdAt ASC")
+    List<UserDiaryCreatedAt> findAllUserCreatedAt();
+
     interface ShowRecordCount {
         Long getShowId();
         Long getRecordCount();
+    }
+
+    interface UserDiaryCreatedAt {
+        Long getUserId();
+        LocalDateTime getCreatedAt();
     }
 }

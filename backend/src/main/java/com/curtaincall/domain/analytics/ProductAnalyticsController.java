@@ -33,24 +33,31 @@ public class ProductAnalyticsController {
     public Map<String, Object> metrics() {
         var now = LocalDateTime.now();
         var allUsers = users.findAll();
+        Map<Long, List<LocalDateTime>> diaryTimesByUser = new HashMap<>();
+        for (var row : diaries.findAllUserCreatedAt()) {
+            diaryTimesByUser.computeIfAbsent(row.getUserId(), k -> new ArrayList<>()).add(row.getCreatedAt());
+        }
         long firstEligible = 0, firstSaved = 0, repeatEligible = 0, repeated = 0;
         for (var user : allUsers) {
             if (user.isDeactivated()) continue;
-            var records = diaries.findAllByUserIdWithShow(user.getId()).stream().sorted(Comparator.comparing(d -> d.getCreatedAt())).toList();
+            var records = diaryTimesByUser.getOrDefault(user.getId(), List.of());
             if (user.getCreatedAt().isBefore(now.minusHours(24))) {
                 firstEligible++;
-                if (records.stream().anyMatch(d -> !d.getCreatedAt().isAfter(user.getCreatedAt().plusHours(24)))) firstSaved++;
+                if (records.stream().anyMatch(createdAt -> !createdAt.isAfter(user.getCreatedAt().plusHours(24)))) firstSaved++;
             }
-            if (!records.isEmpty() && records.get(0).getCreatedAt().isBefore(now.minusDays(30))) {
+            if (!records.isEmpty() && records.get(0).isBefore(now.minusDays(30))) {
                 repeatEligible++;
-                if (records.size() > 1 && !records.get(1).getCreatedAt().isAfter(records.get(0).getCreatedAt().plusDays(30))) repeated++;
+                if (records.size() > 1 && !records.get(1).isAfter(records.get(0).plusDays(30))) repeated++;
             }
         }
-        var allPlans = plans.findAll();
+        long totalPlans = plans.count();
+        long completedPlans = plans.countByDiaryIdIsNotNull();
+        Map<String, Long> events90d = events.countByNameAfter(now.minusDays(90)).stream()
+                .collect(Collectors.toMap(ProductEventRepository.EventCount::getName, ProductEventRepository.EventCount::getCount));
         return Map.of("first24hEligible", firstEligible, "first24hSaved", firstSaved,
             "repeat30dEligible", repeatEligible, "repeat30dSaved", repeated,
-            "plans", allPlans.size(), "completedPlans", allPlans.stream().filter(p -> p.getDiaryId() != null).count(),
-            "events90d", events.findByCreatedAtAfter(now.minusDays(90)).stream().collect(Collectors.groupingBy(ProductEvent::getName, Collectors.counting())));
+            "plans", totalPlans, "completedPlans", completedPlans,
+            "events90d", events90d);
     }
     @Scheduled(cron = "0 15 3 * * *", zone = "Asia/Seoul") @Transactional
     public void purge() { events.deleteByCreatedAtBefore(LocalDateTime.now().minusDays(90)); }

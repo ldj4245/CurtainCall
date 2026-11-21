@@ -5,14 +5,17 @@ import com.curtaincall.domain.show.entity.Show;
 import com.curtaincall.domain.user.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface FavoriteShowRepository extends JpaRepository<FavoriteShow, Long> {
-    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = "show")
-    java.util.List<FavoriteShow> findByUserId(Long userId);
+    @EntityGraph(attributePaths = "show")
+    List<FavoriteShow> findByUserId(Long userId);
 
     boolean existsByUserIdAndShowId(Long userId, Long showId);
 
@@ -20,9 +23,9 @@ public interface FavoriteShowRepository extends JpaRepository<FavoriteShow, Long
 
     Optional<FavoriteShow> findByUserAndShow(User user, Show show);
 
-    @Query(value = "SELECT f.show FROM FavoriteShow f JOIN FETCH f.show.theater WHERE f.user = :user ORDER BY f.createdAt DESC",
+    @Query(value = "SELECT s FROM FavoriteShow f JOIN f.show s LEFT JOIN FETCH s.theater WHERE f.user = :user ORDER BY f.createdAt DESC",
            countQuery = "SELECT COUNT(f) FROM FavoriteShow f WHERE f.user = :user")
-    Page<Show> findShowsByUser(User user, Pageable pageable);
+    Page<Show> findShowsByUser(@Param("user") User user, Pageable pageable);
 
     long countByShowId(Long showId);
 

@@ -8,7 +8,12 @@ import lombok.*;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "shows")
+@Table(name = "shows", indexes = {
+        @Index(name = "idx_shows_status_rank", columnList = "status, popularity_rank"),
+        @Index(name = "idx_shows_status_end_date", columnList = "status, end_date"),
+        @Index(name = "idx_shows_status_start_date", columnList = "status, start_date"),
+        @Index(name = "idx_shows_genre_status_rank", columnList = "genre, status, popularity_rank")
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder

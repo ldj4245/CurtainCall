@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.PageRequest;
 import java.time.*;
-import java.util.List;
+import java.util.*;
 
 @Service @RequiredArgsConstructor @Transactional
 public class NotificationService {
@@ -26,19 +26,43 @@ public class NotificationService {
     public List<Notification> list(Long user) {
         var p = preference(user);
         var today = LocalDate.now(ZoneId.of("Asia/Seoul"));
+        Map<String, Notification> candidates = new LinkedHashMap<>();
         if (p.isPlans()) for (var plan : plans.findByUserIdOrderByWatchedDateAscWatchedTimeAsc(user)) {
             if (!plan.isReminder() || plan.getDiaryId() != null) continue;
-            if (plan.getWatchedDate().equals(today) || plan.getWatchedDate().equals(today.plusDays(1)))
-                add(user, "plan:" + plan.getId() + ":" + plan.getWatchedDate(), plan.getShow().getTitle() + " · " + plan.getWatchedDate() + " 관람 예정", "/plans");
-            else if (plan.getWatchedDate().isBefore(today) && !plan.getWatchedDate().isBefore(today.minusDays(7)))
-                add(user, "record:" + plan.getId() + ":" + plan.getWatchedDate(), plan.getShow().getTitle() + " 관람 기록 남기기", "/plans");
+            if (plan.getWatchedDate().equals(today) || plan.getWatchedDate().equals(today.plusDays(1))) {
+                String key = "plan:" + plan.getId() + ":" + plan.getWatchedDate();
+                candidates.putIfAbsent(key, Notification.builder().userId(user).eventKey(key)
+                        .title(plan.getShow().getTitle() + " · " + plan.getWatchedDate() + " 관람 예정").path("/plans").build());
+            } else if (plan.getWatchedDate().isBefore(today) && !plan.getWatchedDate().isBefore(today.minusDays(7))) {
+                String key = "record:" + plan.getId() + ":" + plan.getWatchedDate();
+                candidates.putIfAbsent(key, Notification.builder().userId(user).eventKey(key)
+                        .title(plan.getShow().getTitle() + " 관람 기록 남기기").path("/plans").build());
+            }
         }
         if (p.isFavorites()) for (var f : favorites.findByUserId(user)) {
             var end = f.getShow().getEndDate();
-            if (end != null && !end.isBefore(today) && !end.isAfter(today.plusDays(7)))
-                add(user, "ending:" + f.getShow().getId() + ":" + end, f.getShow().getTitle() + " · " + end + " 공연 종료", "/shows/" + f.getShow().getId());
+            if (end != null && !end.isBefore(today) && !end.isAfter(today.plusDays(7))) {
+                String key = "ending:" + f.getShow().getId() + ":" + end;
+                candidates.putIfAbsent(key, Notification.builder().userId(user).eventKey(key)
+                        .title(f.getShow().getTitle() + " · " + end + " 공연 종료").path("/shows/" + f.getShow().getId()).build());
+            }
         }
-        if (p.isMonthly()) add(user, "month:" + YearMonth.from(today), today.minusMonths(1).getMonthValue() + "월 관람 기록 보기", "/diary?month=" + YearMonth.from(today.minusMonths(1)));
+        if (p.isMonthly()) {
+            String key = "month:" + YearMonth.from(today);
+            candidates.putIfAbsent(key, Notification.builder().userId(user).eventKey(key)
+                    .title(today.minusMonths(1).getMonthValue() + "월 관람 기록 보기")
+                    .path("/diary?month=" + YearMonth.from(today.minusMonths(1))).build());
+        }
+        if (!candidates.isEmpty()) {
+            Set<String> existingKeys = notifications.findExistingEventKeys(user, candidates.keySet());
+            List<Notification> toCreate = candidates.entrySet().stream()
+                    .filter(entry -> !existingKeys.contains(entry.getKey()))
+                    .map(Map.Entry::getValue)
+                    .toList();
+            if (!toCreate.isEmpty()) {
+                notifications.saveAll(toCreate);
+            }
+        }
         return notifications.findByUserIdOrderByCreatedAtDesc(user, PageRequest.of(0, 50));
     }
     public void reply(Long owner, Long writer, Long commentId, Long showId) {

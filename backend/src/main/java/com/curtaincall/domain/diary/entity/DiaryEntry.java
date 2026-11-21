@@ -12,7 +12,10 @@ import org.hibernate.annotations.SQLRestriction;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "diary_entries")
+@Table(name = "diary_entries", indexes = {
+        @Index(name = "idx_diary_user_watched", columnList = "user_id, watched_date"),
+        @Index(name = "idx_diary_show_open_watched", columnList = "show_id, is_open, watched_date")
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder

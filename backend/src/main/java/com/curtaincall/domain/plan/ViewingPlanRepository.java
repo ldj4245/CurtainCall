@@ -11,4 +11,5 @@ public interface ViewingPlanRepository extends JpaRepository<ViewingPlan, Long> 
     @Query("select p from ViewingPlan p where p.id = :id and p.user.id = :userId")
     Optional<ViewingPlan> lockOwned(Long id, Long userId);
     List<ViewingPlan> findByUserIdAndDiaryId(Long userId, Long diaryId);
+    long countByDiaryIdIsNotNull();
 }

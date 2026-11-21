@@ -62,7 +62,7 @@ class ProductFlowIntegrationTest {
     JsonNode request(MockHttpServletRequestBuilder r, String auth, Object body, int status) throws Exception {
         if (auth != null) r.header("Authorization", "Bearer " + auth);
         if (body != null) r.contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(body));
-        String data = mvc.perform(r).andExpect(status().is(status)).andReturn().getResponse().getContentAsString();
+        String data = mvc.perform(r).andExpect(status().is(status)).andReturn().getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
         return data.isBlank() ? json.nullNode() : json.readTree(data);
     }
     @Test void optionalRatingPhotosOwnershipAndRevocableSharing() throws Exception {
@@ -224,5 +224,30 @@ class ProductFlowIntegrationTest {
             assertThat(received.poll(1, TimeUnit.SECONDS)).isNull();
             writer.disconnect(); member.disconnect();
         } finally { client.stop(); }
+    }
+
+    @Test void favoritesIncludeShowsWithoutTheaterAndExportAndMetricsWork() throws Exception {
+        request(post("/api/favorites/shows/" + show.getId()), token, null, 200);
+        var favs = request(get("/api/favorites/my"), token, null, 200);
+        assertThat(favs.get("totalElements").asLong()).isEqualTo(1L);
+        assertThat(favs.get("content").get(0).get("id").asLong()).isEqualTo(show.getId());
+
+        long planId = request(post("/api/plans"), token, Map.of("showId", show.getId(), "watchedDate", LocalDate.now().toString(), "reminder", true), 200).get("id").asLong();
+        var recordBody = record(false);
+        recordBody.put("planId", planId);
+        request(post("/api/diary"), token, recordBody, 201);
+
+        var exported = request(get("/api/diary/me/export"), token, null, 200);
+        assertThat(exported.size()).isGreaterThanOrEqualTo(1);
+        assertThat(exported.get(0).get("showTitle").asText()).contains("통합 점검 공연");
+
+        request(post("/api/events"), token, Map.of("name", "show_view", "sessionId", UUID.randomUUID().toString(), "showId", show.getId()), 204);
+
+        var admin = users.save(User.builder().nickname("관리자").email(UUID.randomUUID() + "@example.test").password("unused").role(User.Role.ADMIN).build());
+        String adminToken = jwt.createAccessToken(admin.getId(), admin.getEmail(), "ADMIN");
+        var metrics = request(get("/api/admin/metrics"), adminToken, null, 200);
+        assertThat(metrics.get("plans").asLong()).isGreaterThanOrEqualTo(1L);
+        assertThat(metrics.get("completedPlans").asLong()).isGreaterThanOrEqualTo(1L);
+        assertThat(metrics.get("events90d").get("show_view").asLong()).isGreaterThanOrEqualTo(1L);
     }
 }
