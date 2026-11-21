@@ -7,7 +7,7 @@ RUN npm run build
 
 FROM gradle:8.6-jdk17-alpine AS builder
 WORKDIR /app
-COPY build.gradle settings.gradle ./
+COPY settings.gradle ./
 COPY backend/build.gradle backend/build.gradle
 COPY backend/src backend/src
 COPY --from=frontend-builder /app/frontend/dist frontend/dist
