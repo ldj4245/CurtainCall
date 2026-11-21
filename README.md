@@ -1,546 +1,166 @@
 # CurtainCall
 
-뮤지컬·연극 공연 기록 및 동행 커뮤니티 웹 서비스
+뮤지컬·연극 공연 정보 탐색, 관극 기록, 동행 채팅 웹 서비스
 
-**[thecurtaincall.me](https://thecurtaincall.me)**
+[https://thecurtaincall.me](https://thecurtaincall.me)
 
-![Java](https://img.shields.io/badge/Java_17-ED8B00?style=flat-square&logo=openjdk&logoColor=white)
-![Spring Boot](https://img.shields.io/badge/Spring_Boot_3.2-6DB33F?style=flat-square&logo=springboot&logoColor=white)
-![React](https://img.shields.io/badge/React_18-61DAFB?style=flat-square&logo=react&logoColor=black)
-![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)
-![MySQL](https://img.shields.io/badge/MySQL_8.0-4479A1?style=flat-square&logo=mysql&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker_Compose-2496ED?style=flat-square&logo=docker&logoColor=white)
+## 주요 기능
 
----
-
-## 목차
-
-- [기능](#기능)
-- [기술 스택](#기술-스택)
-- [아키텍처](#아키텍처)
-- [프로젝트 구조](#프로젝트-구조)
-- [스크린샷](#스크린샷)
-- [트러블슈팅](#트러블슈팅)
-- [API](#api)
-- [로컬 실행](#로컬-실행)
-
----
-
-## 기능
-
-**공연 탐색**
-- KOPIS Open API 연동, 매일 새벽 2시 자동 동기화
-- 장르 / 상태 / 지역 필터, 키워드 검색
-- 박스오피스 기반 인기 공연 랭킹
-
-**관극 다이어리**
-- 관람일, 좌석, 캐스트 메모, 별점, 사진(최대 5장) 기록
-- 캘린더 / 목록 / 갤러리 뷰
-- 관람 통계 (월별 히트맵, 총 지출, 장르 분포)
-- SNS 공유용 카드 생성
-
-**리뷰 커뮤니티**
-- 스토리 / 캐스팅 / 연출 / 음향 항목별 평점
-- 리뷰 좋아요, 댓글
-
-**동행 매칭**
-- 공연별 동행 모집글 작성 / 참여
-- 동행 참여 시 전용 채팅방 자동 생성
-- WebSocket(STOMP) 기반 실시간 채팅, 메시지 DB 영속화
-
-**오늘 라이브**
-- 공연 상세 페이지에서 당일 공연을 본 사람들과 실시간 감상 채팅
-- 날짜별 독립 채팅방, 이전 날짜 기록 아카이브
-
-**인증**
-- 이메일 회원가입 / 로그인
-- 카카오 / 네이버 / 구글 OAuth2 소셜 로그인
-- JWT (Access 1h / Refresh 7d)
-
----
+- **공연 탐색 · 시간표**
+  - KOPIS Open API 정기 동기화(KST 스케줄), 장르·상태·지역·키워드 검색
+  - 박스오피스 인기 순위, 오늘 시간표, 출연진 정보(PlayDB + KOPIS), 데이터 출처·갱신 상태 확인
+- **관극 기록 · 관람 예정**
+  - 비공개 기본값의 관극 다이어리(관람일, 좌석, 캐스트, 별점 선택, 스포일러 표시, 사진 첨부)
+  - 로그인 전 임시 작성 및 가입·로그인 후 이어쓰기, 목록·포스터·달력 보기, 재관람 빠른 복사
+  - 관람 예정 일정 등록 및 관람 후 기록 전환(기록 삭제 시 일정 전환 가능 상태 복원)
+  - 월간 공유 카드(PNG) 생성 및 단건 공개 링크 발급(비공개 전환·삭제·탈퇴 시 기존 링크 폐기)
+- **후기 · 동행 · 실시간 채팅**
+  - 공연별 공개 관극 기록·좌석 시야 검색 및 기존 세부 평점 후기 열람
+  - 동행 모집글과 전용 채팅방, 당일 관람객 실시간 라이브 채팅(WebSocket/STOMP)
+  - 신고·사용자 차단 및 운영자 신고 처리
+- **계정 · 알림 · 데이터**
+  - 이메일 및 카카오·네이버·구글 OAuth2 로그인(JWT)
+  - 사이트 내 알림 및 항목별 수신 설정
+  - 내 기록 JSON 내보내기, 회원 탈퇴 시 기록·일정·공개 링크 정리 및 프로필 익명화
 
 ## 기술 스택
 
-| | 기술 |
+| 영역 | 기술 |
 |---|---|
-| Backend | Java 17, Spring Boot 3.2, Spring Security, Spring Batch |
-| ORM | Spring Data JPA, QueryDSL |
-| 실시간 | Spring WebSocket, STOMP |
-| DB | MySQL 8.0 |
-| Frontend | React 18, TypeScript, Tailwind CSS |
-| 상태관리 | Zustand, TanStack Query |
-| 인프라 | Heroku Dyno, JawsDB MySQL |
-| 배포 / CI | Heroku Automatic Deploys, GitHub Actions |
+| Backend | Java 17, Spring Boot 3.2, Spring Security, Spring Data JPA, QueryDSL, Spring Batch, Spring WebSocket(STOMP) |
+| Frontend | React 18, TypeScript, Vite, Tailwind CSS, Zustand, TanStack Query |
+| Database | MySQL 8.0 (테스트 환경 H2) |
+| Infra & CI | Oracle Cloud Infrastructure Always Free, Caddy 2, systemd, GitHub Actions |
 
----
+## 운영 아키텍처
 
-## 아키텍처
+Oracle Cloud Infrastructure Tokyo(`ap-tokyo-1`) Always Free VM 2대 분리 구성으로 운영한다.
 
-```
+```text
 사용자
-  │ HTTPS
+  │ HTTPS (:80 -> :443 자동 리다이렉트)
   ▼
-Heroku Router (SSL 자동 종단)
-  └── Spring Boot (:PORT)
-       ├── /          → React SPA 정적 서빙 (index.html)
-       ├── /api/      → REST API
-       └── /ws/       → WebSocket (STOMP 채팅)
+App VM (Caddy 2 자동 TLS)
+  └── Spring Boot (:8080, systemd, React 정적 번들 포함)
+       ├── /          React SPA & 공개 HTML 메타데이터
+       ├── /api/      REST API
+       ├── /ws/       WebSocket (STOMP)
+       └── /oauth2/   소셜 로그인 콜백
             │
-            ├── JawsDB MySQL
-            ├── KOPIS Open API (공연 데이터 연동)
+            ├── VCN 사설망 (:3306) ──▶ DB VM (MySQL 8.0, 외부 3306 차단, 일일 cron 백업)
+            ├── KOPIS Open API
             └── Kakao / Naver / Google OAuth2
 ```
 
-**WebSocket 흐름**
-
-```
-클라이언트 SockJS 연결 → /ws
-  CONNECT 헤더에 JWT 첨부
-  → ChannelInterceptor에서 검증 후 Principal 설정
-
-동행 채팅:  /pub/chat/{roomId}  →  /sub/chat/{roomId}
-라이브 채팅: /pub/live/{roomId}  →  /sub/live/{roomId}
-```
-
-**인증 흐름 (OAuth2)**
-
-```
-/oauth2/authorization/kakao
-  → 카카오 로그인
-  → Spring Security OAuth2 콜백
-  → User 조회 또는 생성
-  → JWT 발급
-  → /oauth2/callback?accessToken=...
-```
-
----
+- **WebSocket 인증 및 채널**: `/ws` SockJS 연결 후 `CONNECT` 프레임 헤더의 JWT를 검증하며, 동행 채팅(`/pub/chat/{roomId}` → `/sub/chat/{roomId}`)과 라이브 채팅(`/pub/live/{roomId}` → `/sub/live/{roomId}`)으로 분리한다.
+- **이미지 저장**: 외부 오브젝트 스토리지(S3 호환) 설정이 비어 있으면 추가 스토리지 비용 없이 Base64 데이터 URI 폴백으로 동작한다.
 
 ## 프로젝트 구조
 
-```
+```text
 curtaincall/
 ├── backend/src/main/java/com/curtaincall/
 │   ├── domain/
-│   │   ├── show/          공연 검색·필터·상세·인기 랭킹
-│   │   ├── theater/       극장 정보
-│   │   ├── diary/         관극 다이어리 (CRUD·통계·캘린더·이미지)
-│   │   ├── review/        리뷰·댓글·좋아요
-│   │   ├── favorite/      찜하기
-│   │   ├── companion/     동행 모집·참여
+│   │   ├── admin/         운영자 신고 처리·지표 조회
+│   │   ├── analytics/     행동 이벤트 수집·집계
+│   │   ├── casting/       출연진 정보 (PlayDB + KOPIS)
 │   │   ├── chat/          동행 채팅방·메시지 (WebSocket)
-│   │   ├── showlive/      공연별 날짜 라이브 채팅 (WebSocket)
-│   │   ├── casting/       출연진 (PlayDB 크롤링 + KOPIS 폴백)
-│   │   └── user/          회원 (이메일 + OAuth2)
+│   │   ├── companion/     동행 모집·참여
+│   │   ├── diary/         관극 다이어리·통계·달력·공유 링크
+│   │   ├── favorite/      관심 공연
+│   │   ├── notification/  알림·수신 설정
+│   │   ├── plan/          관람 예정 일정·기록 전환
+│   │   ├── review/        세부 평점 리뷰·좋아요·댓글
+│   │   ├── safety/        신고·사용자 차단
+│   │   ├── show/          공연 검색·필터·상세·인기 순위·데이터 상태
+│   │   ├── showlive/      공연별 당일 라이브 채팅 (WebSocket)
+│   │   ├── theater/       극장 정보
+│   │   └── user/          회원·내 데이터 내보내기·탈퇴
 │   ├── infra/
-│   │   ├── kopis/         KOPIS API 클라이언트 + Spring Batch
-│   │   ├── oauth2/        OAuth2 핸들러
-│   │   └── storage/       S3 이미지 업로드
+│   │   ├── kopis/         KOPIS API 클라이언트·동기화
+│   │   └── oauth2/        OAuth2 로그인 핸들러
 │   └── global/
-│       ├── config/        Security·WebSocket·Swagger 설정
+│       ├── common/        공통 응답·유틸
+│       ├── config/        Security·WebSocket·SPA·공개 메타 설정
 │       ├── exception/     전역 예외 처리
+│       ├── infra/storage/ 이미지 저장소 처리
 │       └── jwt/           JWT 발급·검증 필터
-│
 └── frontend/src/
-    ├── pages/             Home·Shows·Diary·MyPage·Chat·Auth
-    ├── components/        show·diary·review·companion·common
-    ├── api/               Axios 기반 API 레이어
-    ├── hooks/             useChat·useShowLive 등 커스텀 훅
-    └── store/             Zustand 전역 상태
+    ├── pages/             Home·Shows·Diary·Plans·Notifications·Shared·MyPage·Chat·Auth
+    ├── components/        show·diary·plan·review·companion·admin·common
+    ├── api/               Axios API 모듈
+    ├── hooks/             useChat·useShowLive
+    ├── store/             Zustand 인증 상태
+    └── utils/             analytics·diaryReminder·showUtils·ticketParser
 ```
-
----
-
-## 스크린샷
-
-### 홈
-
-![홈 (비로그인)](docs/screenshots/home_guest.png)
-
-![홈 (로그인)](docs/screenshots/home_loggedin.png)
-
-### 공연
-
-![공연 목록](docs/screenshots/shows_list.png)
-
-![공연 상세](docs/screenshots/show_detail_top.png)
-
-<details>
-<summary>공연 상세 — 더 보기 (라이브·동행·리뷰)</summary>
-
-![오늘 라이브](docs/screenshots/show_detail_live.png)
-
-![함께 관극](docs/screenshots/show_detail_companion.png)
-
-![리뷰](docs/screenshots/show_detail_review.png)
-
-</details>
-
-<details>
-<summary>관극 다이어리 · 마이페이지 · 채팅 · 로그인</summary>
-
-### 관극 다이어리
-
-![다이어리](docs/screenshots/diary.png)
-
-### 마이페이지
-
-![마이페이지](docs/screenshots/mypage.png)
-
-### 동행 채팅
-
-![채팅 목록](docs/screenshots/chat_list.png)
-
-### 로그인 / 회원가입
-
-![로그인](docs/screenshots/login.png)
-
-![회원가입](docs/screenshots/signup.png)
-
-</details>
-
----
 
 ## 트러블슈팅
 
 <details>
-<summary>N+1 쿼리 문제 해결</summary>
-
-### 발견 경위
-
-코드 리뷰 중 목록 API에서 쿼리가 비정상적으로 많이 나가는 걸 확인했다. 로그를 찍어보니 동행 모집글 10개를 조회하는 요청 하나에 쿼리가 40개 넘게 발생하고 있었다.
-
----
-
-### 원인
-
-목록 조회 후 각 엔티티에 대해 루프 안에서 추가 쿼리를 날리는 구조 때문이었다.
-
-**동행 목록 (최대 4N+1)**
-
-```java
-// 수정 전
-return posts.map(post -> {
-    // 게시글마다 참여자 조회 쿼리 1번
-    List<CompanionParticipantResponse> participants =
-        companionParticipantRepository.findByCompanionPostId(post.getId());
-    // 게시글마다 채팅방 조회 쿼리 1번
-    Long chatRoomId = chatRoomRepository.findByCompanionPostId(post.getId())
-        .map(ChatRoom::getId).orElse(null);
-    // post.getShow(), post.getAuthor() LAZY 로딩으로 추가 2번
-    return CompanionPostResponse.from(post, participants, chatRoomId);
-});
-```
-
-게시글 10개면 기본 1 + 40 = 41쿼리.
-
-**리뷰 목록 (2N+1)**
-
-```java
-// 수정 전
-return reviews.map(review -> {
-    boolean isLiked = likeRepository.existsByReviewIdAndUserId(review.getId(), userId); // N번
-    long commentCount = commentRepository.countByReviewId(review.getId()); // N번
-    return ReviewResponse.from(review, isLiked, commentCount);
-});
-```
-
----
-
-### 해결
-
-**동행 목록:** fetch join으로 `show`, `author`를 한 번에 가져오고, 참여자와 채팅방은 `IN` 조건 배치 쿼리 1번씩으로 처리했다.
-
-```java
-// 수정 후 - CompanionPostRepository
-@Query(value = "SELECT cp FROM CompanionPost cp JOIN FETCH cp.show JOIN FETCH cp.author WHERE cp.status = :status",
-       countQuery = "SELECT COUNT(cp) FROM CompanionPost cp WHERE cp.status = :status")
-Page<CompanionPost> findByStatus(@Param("status") CompanionPost.Status status, Pageable pageable);
-
-// 수정 후 - CompanionService
-private Page<CompanionPostResponse> toResponsePage(Page<CompanionPost> posts) {
-    List<Long> postIds = posts.getContent().stream().map(CompanionPost::getId).toList();
-
-    // 참여자 전체를 한 번에
-    Map<Long, List<CompanionParticipantResponse>> participantsByPost =
-        companionParticipantRepository.findByCompanionPostIdIn(postIds).stream()
-            .collect(Collectors.groupingBy(p -> p.getCompanionPost().getId(), ...));
-
-    // 채팅방 전체를 한 번에
-    Map<Long, Long> chatRoomByPost =
-        chatRoomRepository.findByCompanionPostIdIn(postIds).stream()
-            .collect(Collectors.toMap(r -> r.getCompanionPost().getId(), ChatRoom::getId));
-
-    return new PageImpl<>(posts.getContent().stream()
-        .map(post -> CompanionPostResponse.from(
-            post,
-            participantsByPost.getOrDefault(post.getId(), List.of()),
-            chatRoomByPost.get(post.getId())))
-        .toList(), posts.getPageable(), posts.getTotalElements());
-}
-```
-
-결과: **41쿼리 → 3쿼리**
-
-**리뷰 목록:** 좋아요는 `IN` 조건으로 좋아요 누른 reviewId 목록을 한 번에 가져오고, 댓글 수는 `GROUP BY`로 집계한 결과를 Map으로 변환했다.
-
-```java
-// ReviewLikeRepository
-@Query("SELECT rl.review.id FROM ReviewLike rl WHERE rl.review.id IN :reviewIds AND rl.user.id = :userId")
-Set<Long> findLikedReviewIds(@Param("reviewIds") List<Long> reviewIds, @Param("userId") Long userId);
-
-// ReviewCommentRepository
-@Query("SELECT c.review.id as reviewId, COUNT(c) as count FROM ReviewComment c WHERE c.review.id IN :reviewIds GROUP BY c.review.id")
-List<CommentCountProjection> countByReviewIds(@Param("reviewIds") List<Long> reviewIds);
-
-// ReviewService
-private Page<ReviewResponse> enrichReviews(Page<Review> reviews, Long currentUserId) {
-    List<Long> reviewIds = reviews.getContent().stream().map(Review::getId).toList();
-
-    Set<Long> likedIds = currentUserId != null
-        ? likeRepository.findLikedReviewIds(reviewIds, currentUserId)
-        : Collections.emptySet();
-
-    Map<Long, Long> commentCounts = commentRepository.countByReviewIds(reviewIds).stream()
-        .collect(Collectors.toMap(CommentCountProjection::getReviewId, CommentCountProjection::getCount));
-
-    return reviews.map(review -> ReviewResponse.from(
-        review,
-        likedIds.contains(review.getId()),
-        commentCounts.getOrDefault(review.getId(), 0L)));
-}
-```
-
-결과: **21쿼리 → 3쿼리**
-
-**다이어리 목록:** `findByUserIdOrderByWatchedDateDesc`에 fetch join을 추가해 `Show`와 `Theater`를 한 번에 로딩했다.
-
-```java
-@Query(value = "SELECT d FROM DiaryEntry d JOIN FETCH d.show s LEFT JOIN FETCH s.theater WHERE d.user.id = :userId ORDER BY d.watchedDate DESC",
-       countQuery = "SELECT COUNT(d) FROM DiaryEntry d WHERE d.user.id = :userId")
-Page<DiaryEntry> findByUserIdOrderByWatchedDateDesc(@Param("userId") Long userId, Pageable pageable);
-```
-
-결과: **2N+1 → 1쿼리**
-
----
-
-### 2차 점검 — 누락된 도메인 추가 발견 및 해결
-
-코드 리뷰를 더 진행하다 다른 도메인에서도 같은 패턴이 남아있는 걸 발견했다.
-
-**ShowLiveMessage — `m.room` fetch join 누락 (50+1쿼리)**
-
-```java
-// 수정 전
-SELECT m FROM ShowLiveMessage m
-JOIN FETCH m.sender   -- sender만 fetch join
-WHERE m.room.id = :roomId
-
-// ShowLiveMessageDto.from()에서
-.roomId(message.getRoom().getId())  // LAZY 로딩 → 메시지 50건마다 room SELECT 50번
-```
-
-```java
-// 수정 후
-SELECT m FROM ShowLiveMessage m
-JOIN FETCH m.sender
-JOIN FETCH m.room   -- 추가
-WHERE m.room.id = :roomId
-```
-
-결과: **51쿼리 → 1쿼리**
-
-**ShowService.getOngoingShows() — theater fetch join 누락 (N+1쿼리)**
-
-```java
-// 수정 전
-SELECT s FROM Show s
-WHERE s.status = 'ONGOING' AND s.endDate >= CURRENT_DATE
-
-// ShowResponse.from()에서
-.theaterName(show.getTheater().getName())  // LAZY → 공연 N건마다 theater SELECT N번
-```
-
-```java
-// 수정 후
-SELECT s FROM Show s LEFT JOIN FETCH s.theater
-WHERE s.status = 'ONGOING' AND s.endDate >= CURRENT_DATE
-```
-
-같은 파일에 있는 `findPopularOngoing`은 fetch join이 이미 있었는데 `findTop10ByStatusOngoing`만 빠져있었다.
-
-결과: **N+1 → 1쿼리**
-
-**FavoriteShowService — 불필요한 엔티티 로드 + theater fetch join 누락**
-
-```java
-// 수정 전 - isFavorited(): User, Show 엔티티를 각각 로드한 뒤 exists 체크
-User user = userRepository.findById(userId).orElse(null);
-Show show = showRepository.findById(showId).orElse(null);
-return favoriteShowRepository.existsByUserAndShow(user, show);  // 총 3쿼리
-
-// 수정 전 - getMyFavorites(): theater fetch join 없음
-SELECT f.show FROM FavoriteShow f WHERE f.user = :user  // show.theater LAZY → N+1
-```
-
-```java
-// 수정 후 - isFavorited(): ID로 직접 체크 (1쿼리)
-return favoriteShowRepository.existsByUserIdAndShowId(userId, showId);
-
-// 수정 후 - getMyFavorites(): fetch join 추가
-SELECT f.show FROM FavoriteShow f JOIN FETCH f.show.theater WHERE f.user = :user
-```
-
-결과: exists 3쿼리 → 1쿼리 / 찜 목록 N+1 → 1쿼리
-
-**BoxOfficeScheduler.refreshBoxOffice() — 순위 조회 N+1**
-
-박스오피스 순위를 갱신할 때 kopisId 하나마다 SELECT를 날리고 있었다.
-
-```java
-// 수정 전
-for (String kopisId : musicalRanking) {
-    showRepository.findByKopisId(kopisId).ifPresent(show -> {  // 순위 수만큼 SELECT
-        show.updatePopularityRank(currentRank);
-    });
-}
-```
-
-```java
-// 수정 후 - IN 쿼리로 한 번에 조회 후 Map으로 처리
-Map<String, Show> showByKopisId = showRepository
-    .findAllByKopisIdIn(allKopisIds).stream()
-    .collect(Collectors.toMap(Show::getKopisId, s -> s));
-
-for (String kopisId : musicalRanking) {
-    Show show = showByKopisId.get(kopisId);
-    if (show != null) show.updatePopularityRank(rank);
-}
-```
-
-결과: **N쿼리 → 1쿼리**
-
----
-
-### 3차 점검 — DTO 변환에서 남은 지연 로딩 제거
-
-앞선 개선 뒤에도 목록 DTO를 만들 때 연관 엔티티를 다시 건드리는 경로가 남아 있었다.
-쿼리 자체는 페이지 단위로 줄였지만, `from()` 메서드에서 `user`, `show`, `parent`, `replies`를 접근하면서
-데이터가 늘면 다시 N+1이 생길 수 있는 구조였다.
-
-**리뷰 목록 — 작성자/공연 fetch 계획 누락**
-
-```java
-// ReviewResponse.from()
-.userNickname(review.getUser().getNickname())
-.showTitle(review.getShow().getTitle())
-```
-
-리뷰 목록은 페이지 조회 후 모든 항목에서 작성자와 공연을 사용하므로 repository fetch 계획에 포함했다.
-
-```java
-@EntityGraph(attributePaths = {"user", "show"})
-Page<Review> findByShowIdOrderByCreatedAtDesc(Long showId, Pageable pageable);
-
-@EntityGraph(attributePaths = {"user", "show"})
-Page<Review> findByShowIdOrderByLikeCountDesc(Long showId, Pageable pageable);
-```
-
-**댓글 목록 — root 댓글과 대댓글을 분리 조회**
-
-댓글은 페이지네이션이 필요하고 대댓글은 collection이어서 한 번에 fetch join하면 페이징이 깨질 수 있다.
-그래서 root 댓글은 페이지로 조회하고, 화면에 필요한 대댓글은 parent id 목록으로 한 번 더 조회한다.
-
-```java
-Page<ReviewComment> rootComments =
-    commentRepository.findRootCommentsWithUser(reviewId, safePageRequest(page, size));
-
-List<Long> rootCommentIds = rootComments.getContent().stream()
-    .map(ReviewComment::getId)
-    .toList();
-
-Map<Long, List<CommentResponse>> repliesByParentId =
-    commentRepository.findRepliesByParentIdIn(rootCommentIds).stream()
-        .collect(Collectors.groupingBy(
-            reply -> reply.getParent().getId(),
-            Collectors.mapping(CommentResponse::fromReply, Collectors.toList())
-        ));
-```
-
-```java
-@Query("""
-        SELECT c FROM ReviewComment c
-        JOIN FETCH c.user
-        WHERE c.review.id = :reviewId AND c.parent IS NULL
-        ORDER BY c.createdAt ASC
-        """)
-Page<ReviewComment> findRootCommentsWithUser(@Param("reviewId") Long reviewId, Pageable pageable);
-
-@Query("""
-        SELECT c FROM ReviewComment c
-        JOIN FETCH c.user
-        JOIN FETCH c.parent
-        WHERE c.parent.id IN :parentIds
-        ORDER BY c.createdAt ASC
-        """)
-List<ReviewComment> findRepliesByParentIdIn(@Param("parentIds") List<Long> parentIds);
-```
-
-**동행 참여자 — 참여자 user fetch 누락**
-
-동행 글 자체는 `show`, `author`를 fetch join하고 있었지만, 참여자 목록을 DTO로 바꿀 때
-`participant.getUser()`를 다시 접근했다.
-
-```java
-@Query("SELECT p FROM CompanionParticipant p JOIN FETCH p.companionPost JOIN FETCH p.user WHERE p.companionPost.id IN :postIds")
-List<CompanionParticipant> findByCompanionPostIdIn(@Param("postIds") List<Long> postIds);
-```
-
-**요청 크기 방어**
-
-목록 API에 큰 `size`나 `limit`이 들어오면 한 요청이 DB와 메모리를 과하게 사용할 수 있다.
-서비스 레이어에서 페이지 크기를 최대 50, 홈 목록 limit을 최대 20으로 제한했다.
-
-```java
-private PageRequest safePageRequest(int page, int size) {
-    return PageRequest.of(Math.max(page, 0), Math.max(1, Math.min(size, MAX_PAGE_SIZE)));
-}
-```
-
-결과: 리뷰/댓글/동행 목록의 남은 N+1 위험을 줄이고, 비정상적으로 큰 목록 요청을 서비스 레이어에서 차단했다.
+<summary>목록 API N+1 쿼리 제거 및 요청 크기 제한</summary>
+
+- **문제**: 동행(10건 기준 41쿼리), 리뷰(21쿼리), 다이어리·라이브 메시지·박스오피스 순위 갱신 등에서 연관 엔티티 지연 로딩과 루프 내 단건 조회가 반복됐다.
+- **조치**:
+  - 동행·공연·다이어리·찜·라이브 메시지에 `JOIN FETCH` 또는 `@EntityGraph`를 적용하고, 참여자·채팅방·좋아요·댓글 수·박스오피스 `kopisId`는 `IN` 조건 배치 쿼리와 `Map` 매핑으로 전환했다.
+  - 대댓글이 있는 댓글 목록은 root 댓글만 페이지네이션 조회한 뒤 `parentIds` 목록으로 답글을 일괄 조회해 컬렉션 fetch join 페이징 문제를 피했다.
+  - 서비스 레이어에서 페이지 크기를 최대 `50`으로 제한(`MAX_PAGE_SIZE`)했다.
+- **결과**: 동행 41쿼리 → 3쿼리, 리뷰 21쿼리 → 3쿼리, 라이브 메시지 51쿼리 → 1쿼리 등 목록 조회 쿼리를 상수 개수로 줄였다.
 
 </details>
 
----
+<details>
+<summary>초기 KOPIS 동기화 MySQL Lock Wait Timeout(1205) 및 호출 제한 해결</summary>
 
-## API
+- **문제**: 빈 DB에서 서버를 기동하면 `BoxOfficeScheduler`의 외부 `@Transactional`이 `shows` 테이블을 갱신하는 도중 `KopisSyncService.syncShow()`(`REQUIRES_NEW`)가 두 번째 DB 커넥션으로 같은 행을 수정해 InnoDB 락 대기 타임아웃(`SQL Error: 1205`)이 발생했고, KOPIS 연속 요청 시 간헐적 400 응답 및 로그 내 `service` 파라미터 노출 위험도 있었다.
+- **조치**:
+  - `BoxOfficeScheduler`의 외부 `@Transactional`과 `KopisSyncService`의 중복 기동 이벤트 리스너를 제거하고, 순위 갱신과 DB 상태 반영만 짧은 `TransactionTemplate` 단위로 분리해 단일 비동기 흐름으로 순차 실행했다.
+  - `KopisApiClient.fetchXml()`에 `250ms` 간격의 직렬 호출 제어를 두고 에러 로그 출력 시 `service` 키를 마스킹했다.
+- **결과**: 기동 시 락 충돌 없이 초기 공연 데이터 및 박스오피스 순위가 정상 적재되고 로그 내 API 키 노출을 차단했다.
 
-Swagger UI: `https://thecurtaincall.me:8080/swagger-ui.html`
+</details>
 
-| 도메인 | 엔드포인트 |
-|---|---|
-| 공연 | `GET /api/shows`, `GET /api/shows/{id}`, `GET /api/shows/ongoing`, `GET /api/shows/popular` |
-| 다이어리 | `GET·POST·PUT·DELETE /api/diary`, `GET /api/diary/me/stats`, `GET /api/diary/me/calendar` |
-| 리뷰 | `GET·POST /api/shows/{id}/reviews`, `POST /api/reviews/{id}/like`, `POST /api/reviews/{id}/comments` |
-| 찜 | `POST /api/favorites/{showId}` |
-| 동행 | `GET·POST /api/shows/{showId}/companions`, `POST /api/companions/{id}/join` |
-| 채팅 | `GET /api/chat/rooms`, `GET /api/chat/rooms/{id}/messages` |
-| 라이브 | `GET /api/shows/{showId}/live?date=YYYY-MM-DD` |
-| 인증 | `POST /api/auth/login`, `POST /api/auth/register` |
+<details>
+<summary>OCI 1GB RAM 환경 앱·DB 분리 및 MySQL 설정 로딩 순서 해결</summary>
 
----
+- **문제**: Always Free `E2.1.Micro`(1GB RAM) 단일 인스턴스에 App·MySQL·프록시를 모두 올리면 OOM 위험이 있었고, DB VM 분리 시 `/etc/mysql/mysql.conf.d/99-curtaincall.cnf`가 알파벳순으로 `mysqld.cnf`보다 먼저 읽혀 `bind-address`가 다시 `127.0.0.1`로 덮어쓰이는 현상이 발생했다.
+- **조치**:
+  - App VM(Caddy + Spring Boot `-Xmx512m` + `UseSerialGC`)과 DB VM(MySQL `innodb_buffer_pool_size=384M`, `max_connections=60`)을 분리하고 각 VM에 `2GB` Swap(`vm.swappiness=10`)을 구성했다.
+  - 커스텀 MySQL 설정 파일명을 `zz-curtaincall.cnf`로 변경해 `mysqld.cnf` 이후 마지막에 적용되도록 했다.
+- **결과**: VCN 사설 IP 간 DB 통신을 정상 확보하면서 양쪽 VM 모두 유휴 메모리와 Swap 여유를 유지했다.
+
+</details>
 
 ## 로컬 실행
 
+### 저장소 클론 및 환경 변수
+
 ```bash
-git clone https://github.com/ldj4245/CurtainCall.git
+git clone https://github.com/ldj4245/curtaincall.git
 cd curtaincall
 
 cp .env.example .env
 # .env에 KOPIS_API_KEY, JWT_SECRET, OAuth2 키 입력
+```
 
+### 백엔드 / 프론트엔드 개발 서버 실행
+
+Java 17, Node.js 20, MySQL 8.0이 필요하다.
+
+```bash
+# 백엔드 (:8080)
+./gradlew :backend:bootRun
+
+# 프론트엔드 (frontend/, :3000)
+cd frontend
+npm install
+npm run dev
+```
+
+### Docker Compose 실행
+
+```bash
 docker compose up -d
 ```
 
 - 사이트: http://localhost
-- Swagger: http://localhost:8080/swagger-ui.html
+- Swagger UI: http://localhost:8080/swagger-ui.html
