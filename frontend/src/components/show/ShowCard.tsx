@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import type { Show } from '../../types'
+import Poster from '../common/Poster'
 
 interface Props {
   show: Show
@@ -9,20 +10,25 @@ interface Props {
 export default function ShowCard({ show, index }: Props) {
   const date = (value?: string) => value?.replace(/-/g, '.')
   const genre = show.genreDisplayName || (show.genre === 'MUSICAL' ? '뮤지컬' : '연극')
+  const runtime = show.runtime?.trim()
+  const castInfo = show.castInfo?.trim()
 
   return (
     <article className="feed-item">
       {index != null && <span className="feed-index" aria-hidden="true">{index + 1}</span>}
+      <Link to={`/shows/${show.id}`} className="feed-thumb" aria-hidden="true" tabIndex={-1}>
+        <Poster src={show.posterUrl} title={show.title} className="w-full h-full" />
+      </Link>
       <div className="feed-item-body">
         <div className="feed-title-line">
           <h2><Link to={`/shows/${show.id}`}>{show.title}</Link></h2>
           {show.theaterName && <span className="feed-venue">({show.theaterName})</span>}
         </div>
-        {show.castInfo && <p className="feed-description">출연 {show.castInfo}</p>}
+        {castInfo && <p className="feed-description">출연 {castInfo}</p>}
         <p className="feed-meta">
           <span>{genre}</span>
           <span>{date(show.startDate)}{show.endDate && ` ~ ${date(show.endDate)}`}</span>
-          {show.runtime && <span>{show.runtime}</span>}
+          {runtime && <span>{runtime}</span>}
           {show.theaterRegion && <span>{show.theaterRegion}</span>}
         </p>
         <div className="feed-links">

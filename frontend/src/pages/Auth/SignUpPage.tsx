@@ -82,24 +82,21 @@ export default function SignUpPage() {
       <div className="auth-panel">
         {/* 로고 및 타이틀 */}
         <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center gap-2 text-[17px] font-semibold tracking-[-0.055em] text-ink-darkest">
-            <span className="grid h-5 w-5 place-items-center bg-brand font-serif text-[13px] text-white rounded-[2px]">C</span>
-            CurtainCall
-          </Link>
+          <Link to="/" className="wordmark text-[22px]">커튼콜</Link>
           <h1 className="mt-4 text-[20px] font-semibold tracking-tight text-ink-darker">회원가입</h1>
-          <p className="mt-1 text-[12px] text-ink-muted">계정 정보를 입력해 주세요.</p>
+          <p className="mt-1.5 text-[12px] text-ink-muted">계정 정보를 입력해 주세요.</p>
         </div>
 
         {/* 폼 */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-3.5">
           <div>
-            <label className="block text-[11px] font-semibold text-ink-muted mb-1">이메일</label>
+            <label className="block text-[12px] font-semibold text-ink-muted mb-1">이메일</label>
             <div className="flex gap-2">
               <input
                 type="email"
                 autoComplete="email"
                 placeholder="name@example.com"
-                className="flex-1 h-10 border border-line-base bg-surface-base px-3 text-[12.5px] text-ink-base rounded placeholder:text-ink-lighter focus:border-ink-darkest focus:bg-white focus:outline-none transition-colors"
+                className="flex-1 h-10 border border-line-base bg-surface-base px-3 text-[13px] text-ink-base rounded placeholder:text-ink-lighter focus:border-ink-darkest focus:bg-white focus:outline-none transition-colors"
                 {...register('email', {
                   required: '이메일을 입력해 주세요.',
                   pattern: { value: /^\S+@\S+$/i, message: '올바른 이메일 형식이 아닙니다.' },
@@ -110,41 +107,41 @@ export default function SignUpPage() {
                 type="button"
                 onClick={() => checkEmail(emailValue)}
                 disabled={isCheckingEmail || !emailValue}
-                className="h-10 px-3 border border-line-base bg-white rounded text-[11px] font-semibold text-ink-muted hover:text-ink-darkest hover:border-line-dark disabled:opacity-50 transition-colors shrink-0"
+                className="h-10 px-3 border border-line-base bg-white rounded text-[12px] font-semibold text-ink-muted hover:text-ink-darkest hover:border-line-dark disabled:opacity-50 transition-colors shrink-0"
               >
                 {isCheckingEmail ? <Loader2 size={13} className="animate-spin" /> : '중복 확인'}
               </button>
             </div>
             {errors.email ? (
-              <p className="mt-1 text-[11px] text-rose-600 font-medium">{errors.email.message}</p>
+              <p className="mt-1 text-[12px] text-rose-600 font-medium">{errors.email.message}</p>
             ) : emailChecked === true ? (
-              <p className="mt-1 text-[11px] text-emerald-600 font-medium">사용 가능한 이메일입니다.</p>
+              <p className="mt-1 text-[12px] text-emerald-600 font-medium">사용 가능한 이메일입니다.</p>
             ) : null}
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold text-ink-muted mb-1">닉네임</label>
+            <label className="block text-[12px] font-semibold text-ink-muted mb-1">닉네임</label>
             <input
               type="text"
               placeholder="2~20자"
-              className="w-full h-10 border border-line-base bg-surface-base px-3 text-[12.5px] text-ink-base rounded placeholder:text-ink-lighter focus:border-ink-darkest focus:bg-white focus:outline-none transition-colors"
+              className="w-full h-10 border border-line-base bg-surface-base px-3 text-[13px] text-ink-base rounded placeholder:text-ink-lighter focus:border-ink-darkest focus:bg-white focus:outline-none transition-colors"
               {...register('nickname', {
                 required: '닉네임을 입력해 주세요.',
                 minLength: { value: 2, message: '닉네임은 2자 이상이어야 합니다.' },
                 maxLength: { value: 20, message: '닉네임은 20자 이하여야 합니다.' },
               })}
             />
-            {errors.nickname && <p className="mt-1 text-[11px] text-rose-600 font-medium">{errors.nickname.message}</p>}
+            {errors.nickname && <p className="mt-1 text-[12px] text-rose-600 font-medium">{errors.nickname.message}</p>}
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold text-ink-muted mb-1">비밀번호</label>
+            <label className="block text-[12px] font-semibold text-ink-muted mb-1">비밀번호</label>
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
                 autoComplete="new-password"
                 placeholder="8자 이상 영문/숫자"
-                className="w-full h-10 border border-line-base bg-surface-base pl-3 pr-9 text-[12.5px] text-ink-base rounded placeholder:text-ink-lighter focus:border-ink-darkest focus:bg-white focus:outline-none transition-colors"
+                className="w-full h-10 border border-line-base bg-surface-base pl-3 pr-9 text-[13px] text-ink-base rounded placeholder:text-ink-lighter focus:border-ink-darkest focus:bg-white focus:outline-none transition-colors"
                 {...register('password', {
                   required: '비밀번호를 입력해 주세요.',
                   minLength: { value: 8, message: '비밀번호는 8자 이상이어야 합니다.' },
@@ -161,17 +158,17 @@ export default function SignUpPage() {
                 {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
               </button>
             </div>
-            {errors.password && <p className="mt-1 text-[11px] text-rose-600 font-medium">{errors.password.message}</p>}
+            {errors.password && <p className="mt-1 text-[12px] text-rose-600 font-medium">{errors.password.message}</p>}
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold text-ink-muted mb-1">비밀번호 확인</label>
+            <label className="block text-[12px] font-semibold text-ink-muted mb-1">비밀번호 확인</label>
             <div className="relative">
               <input
                 type={showPasswordConfirm ? 'text' : 'password'}
                 autoComplete="new-password"
                 placeholder="비밀번호 재입력"
-                className="w-full h-10 border border-line-base bg-surface-base pl-3 pr-9 text-[12.5px] text-ink-base rounded placeholder:text-ink-lighter focus:border-ink-darkest focus:bg-white focus:outline-none transition-colors"
+                className="w-full h-10 border border-line-base bg-surface-base pl-3 pr-9 text-[13px] text-ink-base rounded placeholder:text-ink-lighter focus:border-ink-darkest focus:bg-white focus:outline-none transition-colors"
                 {...register('passwordConfirm', {
                   required: '비밀번호를 다시 입력해 주세요.',
                   validate: (value) => value === password || '비밀번호가 일치하지 않습니다.',
@@ -186,11 +183,11 @@ export default function SignUpPage() {
                 {showPasswordConfirm ? <EyeOff size={15} /> : <Eye size={15} />}
               </button>
             </div>
-            {errors.passwordConfirm && <p className="mt-1 text-[11px] text-rose-600 font-medium">{errors.passwordConfirm.message}</p>}
+            {errors.passwordConfirm && <p className="mt-1 text-[12px] text-rose-600 font-medium">{errors.passwordConfirm.message}</p>}
           </div>
 
-          <p className="pt-2 text-[10.5px] text-ink-lightest leading-relaxed">
-            가입 시 CurtainCall의 서비스 이용약관 및 개인정보 처리방침에 동의하게 됩니다.
+          <p className="pt-2 text-[12px] text-ink-lighter leading-relaxed">
+            가입 시 서비스 이용약관 및 개인정보 처리방침에 동의하게 됩니다.
           </p>
 
           <button
@@ -203,7 +200,7 @@ export default function SignUpPage() {
         </form>
 
         {/* 로그인 이동 */}
-        <p className="mt-6 text-center text-[11px] text-ink-muted">
+        <p className="mt-6 text-center text-[12px] text-ink-muted">
           이미 계정이 있으신가요?{' '}
           <Link to="/login" className="text-ink-darkest font-semibold underline underline-offset-4 hover:text-brand">
             로그인

@@ -18,7 +18,6 @@ const LoginPage = lazy(() => import('./pages/Auth/LoginPage'))
 const SignUpPage = lazy(() => import('./pages/Auth/SignUpPage'))
 const OAuth2Callback = lazy(() => import('./pages/Auth/OAuth2Callback'))
 const NotFoundPage = lazy(() => import('./pages/NotFound/NotFoundPage'))
-const DesignMockupPage = lazy(() => import('./pages/Mockup/DesignMockupPage'))
 
 import ErrorBoundary from './components/common/ErrorBoundary'
 
@@ -73,7 +72,7 @@ export default function App() {
       <ScrollToTop />
       <Suspense fallback={
         <div className="min-h-screen flex items-center justify-center bg-surface-base">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-700 border-t-brand" />
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-line-base border-t-brand" />
         </div>
       }>
         <Routes>
@@ -83,7 +82,6 @@ export default function App() {
           <Route path="/signup" element={<SignUpPage />} />
           <Route path="/oauth2/callback" element={<OAuth2Callback />} />
         </Route>
-        <Route path="/mockup" element={<DesignMockupPage />} />
 
         {/* 메인 웹앱 라우트 */}
         <Route element={<MainLayout />}>

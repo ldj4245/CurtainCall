@@ -71,7 +71,17 @@ export default function DiaryPage() {
         </div>
       </header>
 
-      {!isAuthenticated && <p className="feed-notice">공연과 관람일을 입력해 보세요. 저장할 때 로그인하면 입력 내용이 이어집니다. <Link to="/shows" className="text-action">공연 찾기</Link></p>}
+      {!isAuthenticated && (
+        <div className="mb-6 border border-line-base bg-white p-5">
+          <p className="text-[13px] text-ink-base leading-relaxed">
+            로그인 전에도 공연과 관람일을 먼저 작성해 볼 수 있습니다. 저장 시 로그인하면 입력한 내용이 그대로 이어집니다.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button type="button" onClick={openNew} className="button-primary">기록 시작하기</button>
+            <Link to="/shows" className="button-secondary">공연 찾아보기</Link>
+          </div>
+        </div>
+      )}
       {(stats?.totalCount ?? 0) > 0 && (
         <dl className="book-summary">
           <div><dt>전체 기록</dt><dd>{stats?.totalCount}<small>개</small></dd></div>
@@ -81,18 +91,20 @@ export default function DiaryPage() {
       )}
 
       {(stats?.totalCount ?? 0) > 0 && <InstallApp />}
-      <nav className="book-tabs" aria-label="기록 보기 방식">
-        {([
-          { value: 'list', label: '목록' },
-          { value: 'gallery', label: '포스터' },
-          { value: 'calendar', label: '달력' },
-        ] as const).map(({ value, label }) => (
-          <button key={value} aria-pressed={viewMode === value} onClick={() => setViewMode(value)} className={viewMode === value ? 'is-active' : ''}>
-            {label}
-          </button>
-        ))}
-        <span className="ml-auto text-[12px] text-ink-lighter">{diaryData?.totalElements ?? 0}개의 기록</span>
-      </nav>
+      {isAuthenticated && (
+        <nav className="book-tabs" aria-label="기록 보기 방식">
+          {([
+            { value: 'list', label: '목록' },
+            { value: 'gallery', label: '포스터' },
+            { value: 'calendar', label: '달력' },
+          ] as const).map(({ value, label }) => (
+            <button key={value} aria-pressed={viewMode === value} onClick={() => setViewMode(value)} className={viewMode === value ? 'is-active' : ''}>
+              {label}
+            </button>
+          ))}
+          <span className="ml-auto text-[12px] text-ink-lighter">{diaryData?.totalElements ?? 0}개의 기록</span>
+        </nav>
+      )}
 
       {isAuthenticated && (isLoading ? <p className="feed-notice" role="status">불러오는 중...</p>
         : isError ? <div className="quiet-empty"><p>기록을 불러오지 못했습니다.</p><button onClick={() => refetch()} className="button-secondary">다시 시도</button></div>

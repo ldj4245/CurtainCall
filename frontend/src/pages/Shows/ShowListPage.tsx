@@ -37,7 +37,7 @@ export default function ShowListPage() {
       <section className="search-surface" aria-label="공연 검색과 필터">
         <form className="large-search" onSubmit={event => { event.preventDefault(); update('keyword', input.trim()) }}>
 
-          <input key={keyword} aria-label="공연명 또는 출연 배우" value={input} onChange={event => setInput(event.target.value)} placeholder="공연명 또는 배우" />
+          <input aria-label="공연명 또는 출연 배우" value={input} onChange={event => setInput(event.target.value)} placeholder="공연명 또는 배우" />
           {input && <button type="button" className="icon-button !h-9 !w-9" onClick={() => { setInput(''); update('keyword', '') }} aria-label="검색어 지우기"><X size={17} /></button>}
           <button className="button-primary !min-h-10 !px-4 !text-[12px]" type="submit">검색</button>
         </form>
@@ -49,7 +49,7 @@ export default function ShowListPage() {
           </div>
         </div>
       </section>
-      <div className="mb-6 flex items-center justify-between"><p className="text-[12px] text-ink-lighter">{isLoading ? '검색 중' : <><span className="font-medium text-ink-base">{data?.totalElements ?? 0}</span>개의 공연{keyword && ` · “${keyword}” 검색 결과`}</>}</p>{hasFilter && <button onClick={clear} className="text-link !text-[11px]"><X size={13} />필터 초기화</button>}</div>
+      <div className="mb-6 flex items-center justify-between"><p className="text-[12px] text-ink-lighter">{isLoading ? '검색 중' : <><span className="font-medium text-ink-base">{data?.totalElements ?? 0}</span>개의 공연{keyword && ` · “${keyword}” 검색 결과`}</>}</p>{hasFilter && <button onClick={clear} className="text-link !text-[12px]"><X size={13} />필터 초기화</button>}</div>
       {isLoading ? <p className="feed-notice" role="status">불러오는 중...</p>
       : isError ? <div className="quiet-empty"><p>공연 목록을 불러오지 못했습니다.</p><button className="button-secondary" onClick={() => refetch()}>다시 불러오기</button></div>
       : data?.content.length ? <><div className="feed-list">{data.content.map((show,index) => <ShowCard key={show.id} show={show} index={page*12+index} />)}</div><div className="mt-10"><Pagination currentPage={page} totalPages={data.totalPages} onPageChange={value => { update('page', String(value)); window.scrollTo({top:0,behavior:'smooth'}) }} /></div></>

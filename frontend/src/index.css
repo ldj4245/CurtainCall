@@ -15,15 +15,16 @@
 
 @layer components {
   .page-width { width: min(1180px, calc(100% - 48px)); margin-inline: auto; }
-  .site-header { background: #e5e5e5; }
+  .site-header { background: #fff; border-bottom: 1px solid #e5e5e5; }
   .site-header-inner { display: flex; flex-wrap: wrap; align-items: center; gap: 15px; min-height: 49px; padding-block: 8px; }
-  .wordmark { font-size: 18px; font-weight: 700; letter-spacing: -.7px; color: #203e70; white-space: nowrap; }
+  .wordmark { font-size: 18px; font-weight: 700; letter-spacing: -.7px; color: #1a1a1a; white-space: nowrap; }
   .wordmark:hover { text-decoration: underline; }
   .header-links { display: flex; align-items: center; flex-wrap: wrap; gap: 13px; font-size: 13px; }
-  .header-links a, .header-links button, .account-link { color: #333; }
-  .header-links a:hover, .header-links button:hover, .account-link:hover { text-decoration: underline; }
-  .header-links .is-active { color: #000; font-weight: 600; }
-  .nav-divider { color: #999; }
+  .header-links a, .header-links button, .header-account a, .account-link { color: #333; }
+  .header-links a:hover, .header-links button:hover, .header-account a:hover, .account-link:hover { text-decoration: underline; }
+  .header-links .is-active, .header-account .is-active { color: #000; font-weight: 600; }
+  .nav-divider { color: #ccc; }
+  .header-account { margin-left: auto; display: flex; align-items: center; gap: 14px; white-space: nowrap; font-size: 13px; }
   .account-link { margin-left: auto; white-space: nowrap; font-size: 13px; }
   .feed-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; padding-block: 16px 10px; }
   .text-tabs { display: flex; flex-wrap: wrap; gap: 15px; align-items: center; font-size: 13px; color: #777; }
@@ -32,8 +33,13 @@
   .text-tabs .is-active { font-weight: 600; color: #111; text-decoration: underline; text-underline-offset: 4px; }
   .genre-tabs { padding-left: 20px; border-left: 1px solid #ddd; }
   .feed-list { max-width: 1010px; }
-  .feed-item { display: flex; align-items: flex-start; gap: 11px; padding: 13px 0 15px; }
+  .feed-item { display: flex; align-items: flex-start; gap: 14px; padding: 14px 0; border-bottom: 1px solid #f0f0f0; }
+  .feed-item:last-child { border-bottom: 0; }
   .feed-index { flex: 0 0 24px; color: #aaa; font-size: 13px; text-align: right; line-height: 25px; font-variant-numeric: tabular-nums; }
+  .feed-thumb { flex: 0 0 54px; width: 54px; height: 72px; border: 1px solid #ececec; display: block; }
+  .feed-thumb .poster-placeholder { padding: 4px; gap: 2px; }
+  .feed-thumb .poster-placeholder > span { font-size: 10px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .feed-thumb .poster-placeholder > small { display: none; }
   .feed-item-body { min-width: 0; flex: 1; }
   .feed-title-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 3px 8px; }
   .feed-title-line h2, .diary-entry h2 { display: inline; font-size: 17px; line-height: 1.6; font-weight: 600; letter-spacing: -.2px; }
@@ -80,16 +86,16 @@
   .booking-note { display: flex; justify-content: space-between; align-items: center; gap: 15px; margin-top: 20px; padding-block: 12px; border-bottom: 1px solid #e4e4e4; font-size: 12px; color: #888; }.booking-note > span:last-child { display: flex; align-items: center; gap: 5px; color: #555; }
   .detail-info-grid { display: grid; grid-template-columns: minmax(0,1.6fr) minmax(0,1fr); gap: 24px; }.detail-casting-panel { align-self: start; padding: 0; }.detail-tab-content { padding-bottom: 30px; }.detail-mobile-action { padding-top: 16px; display: flex; flex-wrap: wrap; gap: 8px; }
   .detail-info-grid > div:first-child > div { border: 0; padding: 0; }.detail-info-grid > div:first-child h3 { border-color: #e5e5e5; }
-  .account-page { max-width: 900px; padding-top: 24px; }.account-page > div:first-child h1 { font-size: 19px; font-weight: 600; }.account-page > div:first-child { padding-bottom: 15px; }.account-page > div:nth-child(2) { box-shadow: none; border: 0; background: transparent; padding-inline: 0; }
+  .account-page { max-width: 900px; }
   .auth-screen { display: flex; align-items: flex-start; justify-content: center; min-height: 100dvh; padding: 70px 24px; }.auth-panel { width: 100%; max-width: 350px; }.auth-panel input { background: #fff; border-radius: 0; }
   .record-dialog { border-radius: 2px !important; box-shadow: 0 10px 35px #0002; }.record-privacy { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 12px 0; border-top: 1px solid #e5e5e5; font-size: 12px; cursor: pointer; }.record-privacy strong { display: block; font-size: 12px; font-weight: 500; }.record-privacy small { display: block; margin-top: 5px; color: #999; font-size: 11px; line-height: 1.6; }
 }
 .scrollbar-none { scrollbar-width: none; }.scrollbar-none::-webkit-scrollbar { display: none; }
 @media (max-width: 767px) {
-  .page-width { width: calc(100% - 24px); }.site-header-inner { gap: 9px; min-height: 46px; }.wordmark { font-size: 17px; }.header-links { gap: 10px; font-size: 12px; }.account-link { font-size: 12px; }.nav-divider { display: none; }
-  .feed-toolbar { gap: 6px 14px; padding-block: 11px 3px; }.text-tabs { gap: 14px; font-size: 12px; }.genre-tabs { padding-left: 14px; }.feed-item { gap: 8px; padding-block: 12px 14px; }.feed-index { flex-basis: 17px; font-size: 12px; }.feed-title-line h2,.diary-entry h2 { font-size: 16px; }.feed-venue { font-size: 12px; }.feed-description { font-size: 13px; }.feed-meta,.feed-links { font-size: 12px; }.feed-more { padding-left: 25px; }
+  .page-width { width: calc(100% - 24px); }.site-header-inner { gap: 9px; min-height: 46px; }.wordmark { font-size: 17px; }.header-links { gap: 10px; font-size: 12px; }.header-account { margin-left: auto; gap: 10px; font-size: 12px; }.account-link { font-size: 12px; }.nav-divider { display: none; }
+  .feed-toolbar { gap: 6px 14px; padding-block: 11px 3px; }.text-tabs { gap: 14px; font-size: 12px; }.genre-tabs { padding-left: 14px; }.feed-item { gap: 10px; padding-block: 12px; }.feed-index { flex-basis: 17px; font-size: 12px; }.feed-thumb { flex-basis: 46px; width: 46px; height: 62px; }.feed-title-line h2,.diary-entry h2 { font-size: 16px; }.feed-venue { font-size: 12px; }.feed-description { font-size: 13px; }.feed-meta,.feed-links { font-size: 12px; }.feed-more { padding-left: 25px; }
   .page-heading { padding-block: 20px 14px; }.page-heading h1 { font-size: 18px; }.filter-row { gap: 9px; }.filter-row > div:last-child { margin-left: 0; }.book-summary { gap: 10px 18px; }.book-summary > div { gap: 5px; }.book-tabs { gap: 18px; }.poster-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
-  .detail-overview { grid-template-columns: 90px minmax(0,1fr); gap: 17px; padding-top: 18px; }.detail-summary h1 { font-size: 19px; }.detail-theater { font-size: 12px; }.detail-summary dl { font-size: 11px; margin-top: 12px; }.detail-summary dl > div { gap: 8px; }.detail-summary dt { min-width: 48px; }.detail-record-card { display: none; }.detail-info-grid { grid-template-columns: 1fr; gap: 25px; }
+  .detail-overview { grid-template-columns: 90px minmax(0,1fr); gap: 17px; padding-top: 18px; }.detail-summary h1 { font-size: 19px; }.detail-theater { font-size: 12px; }.detail-summary dl { font-size: 12px; margin-top: 12px; }.detail-summary dl > div { gap: 8px; }.detail-summary dt { min-width: 52px; }.detail-record-card { display: none; }.detail-info-grid { grid-template-columns: 1fr; gap: 25px; }
 }
 @media (max-width: 370px) { .genre-tabs { border-left: 0; padding-left: 0; width: 100%; }.header-links { gap: 8px; }.site-header-inner { gap: 8px; }.wordmark { font-size: 16px; } }
 @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }

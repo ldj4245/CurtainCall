@@ -9,8 +9,7 @@ export default function Navbar() {
   if (pathname.startsWith('/chat/')) return null
 
   const startRecord = () => {
-    const destination = '/diary?compose=1'
-    navigate(destination)
+    navigate('/diary?compose=1')
   }
 
   return (
@@ -32,10 +31,17 @@ export default function Navbar() {
           <span className="nav-divider" aria-hidden="true">|</span>
           <button type="button" onClick={startRecord}>기록하기</button>
         </nav>
-        {isAuthenticated && <Link to="/notifications" className="account-link">알림</Link>}
-        <Link to={isAuthenticated ? '/my' : '/login'} className="account-link">
-          {isAuthenticated ? '마이' : '로그인'}
-        </Link>
+        <div className="header-account">
+          {isAuthenticated ? (
+            <>
+              <NavLink to="/chat" className={({ isActive }) => isActive ? 'is-active' : ''}>메시지</NavLink>
+              <NavLink to="/notifications" className={({ isActive }) => isActive ? 'is-active' : ''}>알림</NavLink>
+              <NavLink to="/my" className={({ isActive }) => isActive ? 'is-active' : ''}>마이</NavLink>
+            </>
+          ) : (
+            <Link to="/login">로그인</Link>
+          )}
+        </div>
       </div>
     </header>
   )
