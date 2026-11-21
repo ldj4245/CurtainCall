@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { communityApi } from '../../api/community'
 import { showsApi, type ShowAutocomplete } from '../../api/shows'
@@ -14,9 +14,14 @@ interface SelectedShow {
 
 export default function CommunityEditorPage() {
   const { id } = useParams()
+  const [searchParams] = useSearchParams()
   const isEdit = Boolean(id)
   const parsedId = id ? Number(id) : NaN
   const validEditId = isEdit && Number.isInteger(parsedId) && parsedId > 0 ? parsedId : null
+
+  const queryShowIdRaw = Number(searchParams.get('showId'))
+  const queryShowId = !isEdit && Number.isInteger(queryShowIdRaw) && queryShowIdRaw > 0 ? queryShowIdRaw : null
+  const queryShowTitle = searchParams.get('showTitle')?.trim() || ''
 
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -30,6 +35,7 @@ export default function CommunityEditorPage() {
   const [dropdownOpen, setDropdownOpen] = useState(false)
 
   const initializedIdRef = useRef<number | null>(null)
+  const prefilledShowRef = useRef(false)
   const showBoxRef = useRef<HTMLDivElement>(null)
 
   const { data: existingPost, isLoading: loadingPost, isError: loadError } = useQuery({
@@ -37,6 +43,20 @@ export default function CommunityEditorPage() {
     queryFn: () => communityApi.getPost(validEditId!, false),
     enabled: validEditId !== null,
   })
+
+  const { data: queryShowDetail } = useQuery({
+    queryKey: ['show', 'community-prefill', queryShowId],
+    queryFn: () => showsApi.getById(queryShowId!),
+    enabled: queryShowId !== null && !queryShowTitle,
+  })
+
+  useEffect(() => {
+    if (isEdit || prefilledShowRef.current || queryShowId === null) return
+    const resolvedTitle = queryShowTitle || queryShowDetail?.title
+    if (!resolvedTitle) return
+    prefilledShowRef.current = true
+    setSelectedShow({ id: queryShowId, title: resolvedTitle })
+  }, [isEdit, queryShowId, queryShowTitle, queryShowDetail])
 
   useEffect(() => {
     if (!existingPost) return

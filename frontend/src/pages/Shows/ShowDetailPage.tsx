@@ -5,6 +5,7 @@ import { Calendar, Heart, Star, Share2, Plus } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { favoritesApi } from '../../api/favorites'
 import { showsApi } from '../../api/shows'
+import { communityApi } from '../../api/community'
 import PlanForm from '../../components/plan/PlanForm'
 import { track } from '../../utils/analytics'
 import Poster from '../../components/common/Poster'
@@ -16,12 +17,14 @@ import ShowReviewsTab from '../../components/show/ShowReviewsTab'
 import { useAuthStore } from '../../store/authStore'
 import type { DiaryEntry } from '../../types'
 import { summarizePriceRange } from '../../utils/showUtils'
+import { formatCommunityDate } from '../Community/constants'
 
-type DetailTab = 'info' | 'reviews'
+type DetailTab = 'info' | 'reviews' | 'community'
 
 const TAB_ITEMS: { key: DetailTab; label: string }[] = [
   { key: 'info', label: '공연 정보' },
   { key: 'reviews', label: '후기 · 시야' },
+  { key: 'community', label: '커뮤니티 글' },
 ]
 
 export default function ShowDetailPage() {
@@ -32,7 +35,9 @@ export default function ShowDetailPage() {
   const { isAuthenticated } = useAuthStore()
 
   const [params, setParams] = useSearchParams()
-  const activeTab: DetailTab = params.get('tab') === 'reviews' ? 'reviews' : 'info'
+  const tabParam = params.get('tab')
+  const activeTab: DetailTab =
+    tabParam === 'reviews' ? 'reviews' : tabParam === 'community' ? 'community' : 'info'
   const setActiveTab = (tab: DetailTab) => {
     const next = new URLSearchParams(params)
     if (tab === 'info') next.delete('tab')
@@ -66,6 +71,12 @@ export default function ShowDetailPage() {
     queryKey: ['favorite-status', id],
     queryFn: () => favoritesApi.getStatus(showId),
     enabled: Number.isFinite(showId) && showId > 0 && isAuthenticated,
+  })
+
+  const { data: relatedPosts } = useQuery({
+    queryKey: ['community-posts', 'show', showId],
+    queryFn: () => communityApi.getPosts({ showId, size: 10 }),
+    enabled: Number.isFinite(showId) && showId > 0,
   })
 
   const toggleFav = useMutation({
@@ -231,11 +242,69 @@ export default function ShowDetailPage() {
         <button onClick={handleOpenPlan} className="button-secondary"><Calendar size={14} />관람 예정</button>
       </div>
       <nav className="book-tabs mt-8" aria-label="공연 상세 정보">
-        {TAB_ITEMS.map(tab => <button key={tab.key} aria-pressed={activeTab === tab.key} className={activeTab === tab.key ? 'is-active' : ''} onClick={() => setActiveTab(tab.key)}>{tab.label}</button>)}
+        {TAB_ITEMS.map(tab => {
+          const suffix = tab.key === 'community' && relatedPosts && relatedPosts.totalElements > 0
+            ? ` (${relatedPosts.totalElements})`
+            : ''
+          return (
+            <button
+              key={tab.key}
+              aria-pressed={activeTab === tab.key}
+              className={activeTab === tab.key ? 'is-active' : ''}
+              onClick={() => setActiveTab(tab.key)}
+            >
+              {tab.label}{suffix}
+            </button>
+          )
+        })}
       </nav>
       <div className="detail-tab-content">
         {activeTab === 'info' && <div className="detail-info-grid"><ShowInfoTab show={show} /><div className="detail-casting-panel"><ShowCastingTab showId={showId} fallbackCastInfo={show.castInfo} /></div></div>}
         {activeTab === 'reviews' && <ShowReviewsTab show={show} showId={showId} onWriteDiary={() => openDiaryModal('quick')} showReviewForm={showReviewForm} onCloseReviewForm={() => setShowReviewForm(false)} />}
+        {activeTab === 'community' && (
+          <section className="space-y-4" aria-label="관련 커뮤니티 글">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-[13px] text-ink-muted">
+                이 공연과 연결된 커뮤니티 글 {relatedPosts?.totalElements ?? 0}건
+              </p>
+              <Link
+                to={`/community/new?showId=${show.id}&showTitle=${encodeURIComponent(show.title)}`}
+                className="button-primary"
+              >
+                이 공연으로 글쓰기
+              </Link>
+            </div>
+            {relatedPosts?.content.length ? (
+              <div className="feed-list border-t border-line-base">
+                {relatedPosts.content.map((post) => (
+                  <article key={post.id} className="feed-item">
+                    <div className="feed-item-body">
+                      <div className="feed-title-line">
+                        <span className="text-[12px] text-[#777] shrink-0">{post.categoryDisplayName}</span>
+                        <h2>
+                          <Link to={`/community/${post.id}`}>{post.title}</Link>
+                        </h2>
+                        {post.commentCount > 0 && (
+                          <span className="text-[13px] font-medium text-[#555]">[{post.commentCount}]</span>
+                        )}
+                      </div>
+                      <div className="feed-meta">
+                        <span>{post.authorNickname}</span>
+                        <time dateTime={post.createdAt}>{formatCommunityDate(post.createdAt)}</time>
+                        <span>공감 {post.likeCount}</span>
+                        <span>조회 {post.viewCount}</span>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <p className="feed-notice border-t border-line-base">
+                아직 이 공연과 연결된 커뮤니티 글이 없습니다. 첫 이야기를 남겨 보세요.
+              </p>
+            )}
+          </section>
+        )}
       </div>
       {planOpen && <PlanForm showId={show.id} showTitle={show.title} onClose={closePlan} />}
       {showDiaryForm && <DiaryFormModal entry={editingDiaryEntry} initialShowId={show.id} initialShowTitle={show.title} mode={diaryMode} onClose={() => { setShowDiaryForm(false); setEditingDiaryEntry(undefined) }} onSaved={handleDiarySaved} />}

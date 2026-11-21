@@ -22,6 +22,7 @@ public class CommunityPostRepositoryImpl implements CommunityPostRepositoryCusto
     @Override
     public Page<CommunityPost> searchPosts(
             CommunityPost.Category category,
+            Long showId,
             String keyword,
             String sort,
             Pageable pageable) {
@@ -32,6 +33,9 @@ public class CommunityPostRepositoryImpl implements CommunityPostRepositoryCusto
         BooleanBuilder builder = new BooleanBuilder();
         if (category != null) {
             builder.and(post.category.eq(category));
+        }
+        if (showId != null) {
+            builder.and(post.show.id.eq(showId));
         }
         if (keyword != null && !keyword.isBlank()) {
             String trimmed = keyword.trim();

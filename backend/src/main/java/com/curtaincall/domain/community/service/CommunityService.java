@@ -44,6 +44,7 @@ public class CommunityService {
 
     public Page<CommunityPostSummaryResponse> getPosts(
             String category,
+            Long showId,
             String keyword,
             String sort,
             int page,
@@ -53,6 +54,7 @@ public class CommunityService {
         String normalizedKeyword = normalizeKeyword(keyword);
         Page<CommunityPost> posts = postRepository.searchPosts(
                 parsedCategory,
+                showId,
                 normalizedKeyword,
                 sort,
                 safePageRequest(page, size)

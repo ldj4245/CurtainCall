@@ -6,5 +6,10 @@ import org.springframework.data.domain.Pageable;
 
 public interface CommunityPostRepositoryCustom {
 
-    Page<CommunityPost> searchPosts(CommunityPost.Category category, String keyword, String sort, Pageable pageable);
+    Page<CommunityPost> searchPosts(
+            CommunityPost.Category category,
+            Long showId,
+            String keyword,
+            String sort,
+            Pageable pageable);
 }

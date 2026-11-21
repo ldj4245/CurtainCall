@@ -25,12 +25,13 @@ public class CommunityController {
     @GetMapping("/posts")
     public ResponseEntity<Page<CommunityPostSummaryResponse>> getPosts(
             @RequestParam(required = false) String category,
+            @RequestParam(required = false) Long showId,
             @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "latest") String sort,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @AuthenticationPrincipal Long userId) {
-        return ResponseEntity.ok(communityService.getPosts(category, keyword, sort, page, size, userId));
+        return ResponseEntity.ok(communityService.getPosts(category, showId, keyword, sort, page, size, userId));
     }
 
     @Operation(summary = "내 커뮤니티 게시글 목록")

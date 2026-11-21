@@ -10,6 +10,7 @@ import type {
 
 export interface CommunityPostListParams {
   category?: string
+  showId?: number
   keyword?: string
   sort?: 'latest' | 'likes'
   page?: number

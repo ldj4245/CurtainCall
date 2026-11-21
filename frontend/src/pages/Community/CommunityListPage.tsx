@@ -141,7 +141,16 @@ export default function CommunityListPage() {
       </section>
 
       {isLoading ? (
-        <p className="feed-notice">불러오는 중...</p>
+        <div className="feed-list animate-pulse" aria-label="불러오는 중">
+          {[0, 1, 2, 3, 4].map((row) => (
+            <div key={row} className="feed-item">
+              <div className="flex-1 space-y-2 py-0.5">
+                <div className="h-4 w-3/5 bg-[#eceae6]" />
+                <div className="h-3 w-1/3 bg-[#eceae6]" />
+              </div>
+            </div>
+          ))}
+        </div>
       ) : isError ? (
         <div className="feed-notice">
           <p>게시글을 불러오지 못했습니다.</p>

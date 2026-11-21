@@ -106,7 +106,17 @@ export default function DiaryPage() {
         </nav>
       )}
 
-      {isAuthenticated && (isLoading ? <p className="feed-notice" role="status">불러오는 중...</p>
+      {isAuthenticated && (isLoading ? (
+        <div className="diary-feed animate-pulse" aria-label="기록 불러오는 중">
+          {[0, 1, 2].map((row) => (
+            <div key={row} className="diary-entry border-b border-line-lightest space-y-2">
+              <div className="h-4 w-2/5 bg-[#eceae6]" />
+              <div className="h-3 w-1/3 bg-[#eceae6]" />
+              <div className="h-3 w-3/4 bg-[#eceae6]" />
+            </div>
+          ))}
+        </div>
+      )
         : isError ? <div className="quiet-empty"><p>기록을 불러오지 못했습니다.</p><button onClick={() => refetch()} className="button-secondary">다시 시도</button></div>
         : entries.length === 0 ? <div className="quiet-empty"><p>관극 기록이 없습니다.</p><button onClick={openNew} className="text-action">기록하기</button></div>
         : viewMode === 'gallery' ? <DiaryGalleryView onEdit={edit} />

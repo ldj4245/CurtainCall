@@ -38,6 +38,7 @@ export default function ShowCard({ show, index, rank, showEndingBadge = false }:
       </Link>
       <div className="feed-item-body">
         <div className="feed-title-line">
+          {endingLabel && <span className="ending-badge">{endingLabel}</span>}
           <h2><Link to={`/shows/${show.id}`}>{show.title}</Link></h2>
           {show.theaterName && <span className="feed-venue">({show.theaterName})</span>}
         </div>
@@ -45,18 +46,17 @@ export default function ShowCard({ show, index, rank, showEndingBadge = false }:
         <p className="feed-meta">
           <span>{genre}</span>
           {show.status === 'UPCOMING' && <span>공연예정</span>}
-          {endingLabel && <span>{endingLabel}</span>}
           <span>{date(show.startDate)}{show.endDate && ` ~ ${date(show.endDate)}`}</span>
           {runtime && <span>{runtime}</span>}
           {show.theaterRegion && <span>{show.theaterRegion}</span>}
         </p>
-        <div className="feed-links">
-          <Link to={`/shows/${show.id}`}>상세</Link>
-          <span aria-hidden="true">·</span>
-          <Link to={`/shows/${show.id}?tab=reviews`}>
-            후기{show.reviewCount != null ? ` ${show.reviewCount}개` : ''}
-          </Link>
-        </div>
+        {show.reviewCount != null && show.reviewCount > 0 && (
+          <div className="feed-links">
+            <Link to={`/shows/${show.id}?tab=reviews`}>
+              후기 {show.reviewCount}개{show.averageScore != null && show.averageScore > 0 ? ` (${show.averageScore.toFixed(1)})` : ''}
+            </Link>
+          </div>
+        )}
       </div>
     </article>
   )

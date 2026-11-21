@@ -18,7 +18,8 @@ import java.util.Locale;
                 @Index(name = "idx_community_posts_created", columnList = "created_at"),
                 @Index(name = "idx_community_posts_cat_created", columnList = "category, created_at"),
                 @Index(name = "idx_community_posts_likes_created", columnList = "like_count, created_at"),
-                @Index(name = "idx_community_posts_user_created", columnList = "user_id, created_at")
+                @Index(name = "idx_community_posts_user_created", columnList = "user_id, created_at"),
+                @Index(name = "idx_community_posts_show_created", columnList = "show_id, created_at")
         }
 )
 @Getter

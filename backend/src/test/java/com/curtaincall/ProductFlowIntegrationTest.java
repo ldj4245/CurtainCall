@@ -285,6 +285,12 @@ class ProductFlowIntegrationTest {
         request(post("/api/community/posts/" + otherPostId + "/comments"), token,
                 Map.of("content", "저도 공감합니다."), 201);
 
+        var byShow = request(get("/api/community/posts").param("showId", "" + show.getId()), null, null, 200);
+        assertThat(byShow.get("content")).anySatisfy(item ->
+                assertThat(item.get("id").asLong()).isEqualTo(postId));
+        assertThat(byShow.get("content")).noneSatisfy(item ->
+                assertThat(item.get("id").asLong()).isEqualTo(otherPostId));
+
         request(delete("/api/users/me"), token, Map.of("confirmation", "탈퇴"), 204);
 
         request(get("/api/community/posts/" + postId), null, null, 404);
