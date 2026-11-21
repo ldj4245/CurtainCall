@@ -30,6 +30,7 @@ public class ChatService {
     private final ChatMessageRepository chatMessageRepository;
     private final CompanionParticipantRepository companionParticipantRepository;
     private final UserRepository userRepository;
+    private final com.curtaincall.domain.safety.UserBlockRepository blocks;
 
     public List<ChatRoomDto> getMyRooms(Long userId) {
         return chatRoomRepository.findRoomsByUserId(userId).stream()
@@ -41,7 +42,9 @@ public class ChatService {
         ChatRoom room = getRoom(roomId);
         ensureParticipant(room, userId);
 
+        var blockedIds = blocks.findByUserId(userId).stream().map(com.curtaincall.domain.safety.UserBlock::getBlockedUserId).collect(java.util.stream.Collectors.toSet());
         return chatMessageRepository.findRecentByRoomId(roomId, PageRequest.of(0, MESSAGE_HISTORY_LIMIT)).stream()
+                .filter(m -> !blockedIds.contains(m.getSender().getId()))
                 .map(ChatMessageDto::from)
                 .sorted(Comparator.comparing(ChatMessageDto::getCreatedAt))
                 .toList();
@@ -58,6 +61,8 @@ public class ChatService {
         ChatRoom room = getRoom(roomId);
         ensureParticipant(room, senderId);
 
+        if (content == null || content.isBlank() || content.length() > 2000) throw BusinessException.badRequest("메시지는 1~2000자로 입력해 주세요.");
+        if (type != ChatMessage.MessageType.TALK) throw BusinessException.badRequest("사용자 메시지만 보낼 수 있습니다.");
         User sender = userRepository.findById(senderId)
                 .orElseThrow(() -> BusinessException.notFound("사용자를 찾을 수 없습니다."));
 

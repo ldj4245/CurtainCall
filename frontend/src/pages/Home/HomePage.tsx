@@ -1,254 +1,103 @@
 import { useState } from 'react'
-import { Search, ChevronRight } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
-import { Link, useNavigate } from 'react-router-dom'
-import { diaryApi } from '../../api/diary'
+import { Link } from 'react-router-dom'
+import api from '../../api/axios'
 import { showsApi } from '../../api/shows'
-import DiaryFormModal from '../../components/diary/DiaryFormModal'
+import { retentionApi } from '../../api/retention'
+import { useAuthStore } from '../../store/authStore'
+import { diaryApi } from '../../api/diary'
+import { localDate } from '../../utils/analytics'
 import ShowCard from '../../components/show/ShowCard'
 import TodayScheduleSection from '../../components/show/TodayScheduleSection'
-import { useAuthStore } from '../../store/authStore'
-import type { DiaryEntry } from '../../types'
-import { getThisMonthDiaryCount } from '../../utils/diaryReminder'
 
-const GENRE_TABS = [
-  { label: '전체', genre: '' },
-  { label: '뮤지컬', genre: 'MUSICAL' },
-  { label: '연극', genre: 'PLAY' },
-] as const
-
-type GenreKey = '' | 'MUSICAL' | 'PLAY'
-
-function ShowSection({
-  title,
-  linkTo,
-  shows,
-  isLoading,
-  limit,
-}: {
-  title: string
-  linkTo?: string
-  shows: any[]
-  isLoading: boolean
-  limit: number
-}) {
-  return (
-    <div className="mt-8 first:mt-0">
-      <div className="flex items-baseline justify-between mb-3.5">
-        <h2 className="text-[13px] font-semibold text-ink-base tracking-[-0.03em]">{title}</h2>
-        {linkTo && (
-          <Link to={linkTo} className="text-[11px] text-ink-lightest hover:text-ink-muted underline underline-offset-4">
-            전체 보기
-          </Link>
-        )}
-      </div>
-      <div className="grid grid-cols-2 gap-x-3 gap-y-5">
-        {isLoading
-          ? Array.from({ length: limit }).map((_, i) => (
-              <article key={i} className="min-w-0">
-                <div className="aspect-[2/3] bg-surface-muted animate-pulse" />
-                <div className="mt-2 h-3 w-4/5 bg-surface-muted animate-pulse" />
-                <div className="mt-1 h-2.5 w-1/2 bg-surface-muted animate-pulse" />
-              </article>
-            ))
-          : shows.slice(0, limit).map((show) => (
-              <ShowCard key={show.id} show={show} />
-            ))}
-      </div>
-    </div>
-  )
-}
+const GENRES = [
+  { value: '', label: '전체' },
+  { value: 'MUSICAL', label: '뮤지컬' },
+  { value: 'PLAY', label: '연극' },
+]
 
 export default function HomePage() {
-  const navigate = useNavigate()
-  const { user, isAuthenticated } = useAuthStore()
-  const [showDiaryForm, setShowDiaryForm] = useState(false)
-  const [selectedShowForDiary, setSelectedShowForDiary] = useState<{ id: number; title: string; castInfo?: string } | null>(null)
-  const [editEntry, setEditEntry] = useState<DiaryEntry | undefined>()
-  const [activeGenre, setActiveGenre] = useState<GenreKey>('')
+  const { data: sourceStatus } = useQuery({ queryKey: ['source-status'], queryFn: () => api.get<Record<string, string>>('/shows/data-status').then(r => r.data), staleTime: 60000 })
+  const isAuthenticated = useAuthStore(s => s.isAuthenticated)
+  const { data: plans = [] } = useQuery({ queryKey: ['plans'], queryFn: retentionApi.plans, enabled: isAuthenticated })
+  const { data: recent } = useQuery({ queryKey: ['diary', 'home-latest'], queryFn: () => diaryApi.getMyDiary(0, 1), enabled: isAuthenticated })
+  const nextPlan = plans.find(p => !p.diaryId && p.watchedDate >= localDate())
+  const pastPlans = plans.filter(p => !p.diaryId && p.watchedDate < localDate())
+  const [genre, setGenre] = useState('')
+  const [collection, setCollection] = useState<'ongoing' | 'upcoming' | 'today'>('ongoing')
 
-  // 1. 홈 섹션 데이터
-  const { data: homeSections, isLoading: homeSectionsLoading } = useQuery({
-    queryKey: ['shows', 'home-sections'],
-    queryFn: () => showsApi.getHomeSections(8),
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: ['shows', 'home-feed', collection, genre],
+    queryFn: async () => collection === 'upcoming'
+      ? (await showsApi.search({ status: 'UPCOMING', genre, size: 20 })).content
+      : showsApi.getPopular(20, genre),
+    enabled: collection !== 'today',
   })
-
-  // 2. 장르 탭 데이터
-  const { data: genrePopular, isLoading: genrePopularLoading } = useQuery({
-    queryKey: ['shows', 'popular', activeGenre],
-    queryFn: () => showsApi.getPopular(8, activeGenre),
-    enabled: activeGenre !== '',
-  })
-
-  // 3. 사용자 통계 (로그인 시)
-  const { data: stats } = useQuery({
-    queryKey: ['diary', 'stats'],
-    queryFn: diaryApi.getStats,
-    enabled: isAuthenticated,
-  })
-
-  const thisMonthCount = getThisMonthDiaryCount(stats)
-  const totalCount = stats?.totalCount ?? 0
-
-  const popular = homeSections?.popular ?? []
-  const endingSoon = homeSections?.endingSoon ?? []
-  const openingThisMonth = homeSections?.openingThisMonth ?? []
-  const mostRecorded = homeSections?.mostRecorded ?? []
-
-  const isAllTab = activeGenre === ''
-  const activeTabLabel = GENRE_TABS.find((t) => t.genre === activeGenre)?.label ?? '전체'
 
   return (
-    <div className="px-4 py-4 sm:px-5">
-      {/* 헤더 */}
-      <div className="mb-3 pb-2.5 border-b border-line-lightest flex items-end justify-between">
-        <h1 className="text-[18px] font-bold tracking-[-0.04em] text-ink-darker">CurtainCall</h1>
-        <span className="text-[11px] text-ink-muted">
-          {new Date().getFullYear()}년 {new Date().getMonth() + 1}월 {new Date().getDate()}일
-        </span>
+    <div className="page-width">
+      <h1 className="sr-only">공연 목록</h1>
+      {isAuthenticated && (nextPlan || pastPlans.length > 0 || recent?.content.length) ? <div className="border-b border-line-base py-4 text-sm space-y-2">
+        {nextPlan && <p>다음 관람 · <Link to="/plans" className="text-action">{nextPlan.watchedDate} {nextPlan.showTitle}</Link></p>}
+        {pastPlans.length > 0 && <p><Link to="/plans" className="text-action">관람 기록을 남길 일정 {pastPlans.length}개</Link></p>}
+        {recent?.content[0] && <p>최근 기록 · <Link to="/diary" className="text-action">{recent.content[0].showTitle}</Link> · <Link to={`/diary?month=${localDate().slice(0, 7)}`} className="text-action">월간 카드</Link></p>}
+      </div> : null}
+      <div className="feed-toolbar">
+        <nav className="text-tabs" aria-label="공연 일정">
+          {([
+            ['ongoing', '공연 중'],
+            ['upcoming', '개막 예정'],
+            ['today', '오늘 시간표'],
+          ] as const).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={collection === value}
+              onClick={() => setCollection(value)}
+              className={collection === value ? 'is-active' : ''}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
+        <nav className="text-tabs genre-tabs" aria-label="장르">
+          {GENRES.map(({ value, label }) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={genre === value}
+              onClick={() => setGenre(value)}
+              className={genre === value ? 'is-active' : ''}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
       </div>
 
-      {/* 홈 상단 검색바 */}
-      <div className="mb-4">
-        <Link
-          to="/shows"
-          className="flex items-center gap-2.5 h-10 w-full px-3.5 rounded-md border border-line-base bg-surface-base text-[12.5px] text-ink-lighter hover:border-ink-darkest hover:text-ink-muted transition-colors shadow-sm"
-        >
-          <Search size={15} className="text-ink-lighter shrink-0" />
-          <span className="truncate">공연명, 출연 배우를 검색해 보세요</span>
-        </Link>
-      </div>
-
-      {/* 나의 관극 기록 위젯 (로그인 시) */}
-      {isAuthenticated && (
-        <div className="mb-5 p-3.5 border border-line-base bg-white rounded-md flex items-center justify-between shadow-sm">
-          <Link to="/diary" className="group flex-1 min-w-0 pr-2">
-            <p className="text-[12px] font-semibold text-ink-darkest flex items-center gap-1 group-hover:text-brand transition-colors">
-              <span>{user?.nickname}님의 관극 다이어리</span>
-              <ChevronRight size={13} className="text-ink-lighter group-hover:translate-x-0.5 transition-transform" />
-            </p>
-            <p className="text-[11px] text-ink-muted mt-0.5">
-              이번 달 <strong className="text-brand font-semibold">{thisMonthCount}회</strong> · 누적 <strong className="text-ink-darkest font-semibold">{totalCount}건</strong>
-            </p>
-          </Link>
-          <button
-            type="button"
-            onClick={() => setShowDiaryForm(true)}
-            className="h-8 px-3 bg-brand text-white rounded text-[11px] font-semibold hover:bg-brand/90 transition-colors shrink-0"
-          >
-            기록 남기기
-          </button>
+      {collection === 'today' ? <TodayScheduleSection key={genre} genre={genre} /> : (
+        <div className="feed-list" aria-label="공연 목록">
+          {isLoading ? <p className="feed-notice" role="status">불러오는 중...</p>
+            : isError ? <div className="feed-notice">
+                <p>공연 정보를 불러오지 못했습니다.</p>
+                <button onClick={() => refetch()} className="text-action">다시 시도</button>
+              </div>
+            : data?.length ? data.map((show, index) => (
+                <ShowCard key={show.id} show={show} index={index} />
+              ))
+            : <p className="feed-notice">등록된 공연이 없습니다.</p>}
         </div>
       )}
 
-      {/* 장르 탭 */}
-      <div className="flex gap-6 border-b border-line-lightest mb-5">
-        {GENRE_TABS.map(({ label, genre }) => (
-          <button
-            key={genre}
-            onClick={() => setActiveGenre(genre as GenreKey)}
-            className={`text-[12px] pb-2.5 -mb-px border-b-[1.5px] transition-colors ${
-              activeGenre === genre
-                ? 'border-ink-darkest font-semibold text-ink-darker'
-                : 'border-transparent text-ink-lightest hover:text-ink-muted'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
+      <div className="feed-more">
+        <Link to={`/shows?status=${collection === 'upcoming' ? 'UPCOMING' : 'ONGOING'}${genre ? `&genre=${genre}` : ''}`}>공연 더 보기</Link>
       </div>
-
-      {/* 1. 인기 공연 (박스오피스 TOP 8) - 첫 화면 상단 전진 배치! */}
-      {isAllTab ? (
-        <ShowSection
-          title="실시간 인기 공연 (TOP 8)"
-          linkTo="/shows"
-          shows={popular}
-          isLoading={homeSectionsLoading}
-          limit={8}
-        />
-      ) : (
-        <ShowSection
-          title={`${activeTabLabel} 인기 순위`}
-          linkTo={`/shows?genre=${activeGenre}`}
-          shows={genrePopular ?? []}
-          isLoading={genrePopularLoading}
-          limit={8}
-        />
-      )}
-
-      {/* 2. 오늘의 공연 타임테이블 - 인기 공연 바로 아래 연계 */}
-      <div className="mt-8 border-t border-line-lightest pt-6">
-        <TodayScheduleSection
-          genre={activeGenre}
-          onRecordShow={(show) => {
-            if (!isAuthenticated) {
-              navigate('/login')
-              return
-            }
-            setSelectedShowForDiary({ id: show.id, title: show.title, castInfo: show.castInfo })
-            setShowDiaryForm(true)
-          }}
-        />
-      </div>
-
-      {/* 3. 큐레이션 섹션 (곧 종료, 이번 달 개막, 기록 많은 공연) */}
-      {isAllTab && (
-        <>
-          {endingSoon.length > 0 && (
-            <ShowSection
-              title="곧 막을 내리는 공연"
-              linkTo="/shows?status=ONGOING"
-              shows={endingSoon}
-              isLoading={homeSectionsLoading}
-              limit={4}
-            />
-          )}
-          {openingThisMonth.length > 0 && (
-            <ShowSection
-              title="이번 달 개막 예정"
-              linkTo="/shows?status=UPCOMING"
-              shows={openingThisMonth}
-              isLoading={homeSectionsLoading}
-              limit={4}
-            />
-          )}
-          {mostRecorded.length > 0 && (
-            <ShowSection
-              title="관객들이 많이 기록한 공연"
-              shows={mostRecorded}
-              isLoading={homeSectionsLoading}
-              limit={4}
-            />
-          )}
-        </>
-      )}
-
-      {/* 서비스 푸터 */}
-      <div className="mt-12 pt-6 border-t border-line-lightest text-center text-[11px] text-ink-lightest mb-4">
-        <p className="font-semibold text-ink-muted">CurtainCall</p>
-        <p className="mt-1">KOPIS(공연예술통합전산망) 공공데이터 기반 실시간 정보 제공</p>
-        <p className="mt-0.5 text-[10px]">© 2026 CurtainCall. All rights reserved.</p>
-      </div>
-
-      {showDiaryForm && (
-        <DiaryFormModal
-          entry={editEntry}
-          initialShowId={selectedShowForDiary?.id}
-          initialShowTitle={selectedShowForDiary?.title}
-          initialCastMemo={selectedShowForDiary?.castInfo}
-          onClose={() => {
-            setShowDiaryForm(false)
-            setEditEntry(undefined)
-            setSelectedShowForDiary(null)
-          }}
-          onSaved={() => {
-            setShowDiaryForm(false)
-            setEditEntry(undefined)
-            setSelectedShowForDiary(null)
-          }}
-        />
-      )}
+      {sourceStatus && <details className="mt-6 text-xs text-ink-lighter"><summary className="cursor-pointer">공연 정보 출처·갱신 상태</summary><p className="mt-2">{sourceStatus.source} · {sourceStatus.lastSyncStatus} · {sourceStatus.lastSyncTime}</p><p className="mt-1">{sourceStatus.rankingBasis}</p><p className="mt-1">순위 갱신: {sourceStatus.rankingStatus}</p></details>}
+      <footer className="site-footer">
+        <Link to="/shows">공연 검색</Link>
+        <Link to="/diary">내 기록</Link>
+        <span>공연 정보 KOPIS</span>
+      </footer>
     </div>
   )
 }

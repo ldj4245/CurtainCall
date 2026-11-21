@@ -13,6 +13,7 @@ import java.util.List;
 @Builder
 public class ShowResponse {
 
+    private java.time.LocalDateTime sourceUpdatedAt;
     private Long id;
     private String kopisId;
     private String title;
@@ -36,10 +37,14 @@ public class ShowResponse {
     private List<String> introImages;
     private Double averageScore;
     private Long reviewCount;
+    private Long ratingCount;
+
+    public ShowResponse withRatingCount(long count) { this.ratingCount = count; return this; }
     private Long diaryCount;
 
     public static ShowResponse from(Show show) {
         return ShowResponse.builder()
+                .sourceUpdatedAt(show.getUpdatedAt())
                 .id(show.getId())
                 .kopisId(show.getKopisId())
                 .title(show.getTitle())
@@ -68,6 +73,7 @@ public class ShowResponse {
     public static ShowResponse fromWithStats(Show show, Double averageScore, Long reviewCount) {
         ShowResponse response = from(show);
         return ShowResponse.builder()
+                .sourceUpdatedAt(response.sourceUpdatedAt)
                 .id(response.id)
                 .kopisId(response.kopisId)
                 .title(response.title)
@@ -98,6 +104,7 @@ public class ShowResponse {
     public static ShowResponse fromWithDiaryCount(Show show, Long diaryCount) {
         ShowResponse response = from(show);
         return ShowResponse.builder()
+                .sourceUpdatedAt(response.sourceUpdatedAt)
                 .id(response.id)
                 .kopisId(response.kopisId)
                 .title(response.title)

@@ -1,0 +1,11 @@
+.git
+.env
+.idea
+.codex
+.agents
+.gradle
+**/node_modules
+**/build
+**/dist
+output
+.playwright-cli

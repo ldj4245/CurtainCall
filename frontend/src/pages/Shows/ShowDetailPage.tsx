@@ -1,11 +1,14 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useNavigate, useParams } from 'react-router-dom'
-import { Heart, ImageOff, Star, Share2 } from 'lucide-react'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Heart, Star, Share2, Plus, ArrowUpRight } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { diaryApi } from '../../api/diary'
 import { favoritesApi } from '../../api/favorites'
 import { showsApi } from '../../api/shows'
+import PlanForm from '../../components/plan/PlanForm'
+import { track } from '../../utils/analytics'
+import Poster from '../../components/common/Poster'
 import DiaryFormModal from '../../components/diary/DiaryFormModal'
 import DiarySavedSheet from '../../components/diary/DiarySavedSheet'
 import ShowCastingTab from '../../components/show/ShowCastingTab'
@@ -20,9 +23,9 @@ import { getBookingLinks } from '../../utils/showUtils'
 type DetailTab = 'info' | 'reviews' | 'companion'
 
 const TAB_ITEMS: { key: DetailTab; label: string; mobileLabel: string }[] = [
-  { key: 'info', label: '공연 정보 & 캐스팅', mobileLabel: '정보 & 캐스팅' },
-  { key: 'reviews', label: '관람 후기 & 시야', mobileLabel: '후기 & 시야' },
-  { key: 'companion', label: '동행 & 톡', mobileLabel: '동행 & 톡' },
+  { key: 'info', label: '공연 정보', mobileLabel: '정보 & 캐스팅' },
+  { key: 'reviews', label: '관람 후기', mobileLabel: '후기 & 시야' },
+  { key: 'companion', label: '동행', mobileLabel: '동행 & 톡' },
 ]
 
 export default function ShowDetailPage() {
@@ -32,16 +35,25 @@ export default function ShowDetailPage() {
   const queryClient = useQueryClient()
   const { isAuthenticated } = useAuthStore()
 
-  const [activeTab, setActiveTab] = useState<DetailTab>('info')
+  const [params, setParams] = useSearchParams()
+  const activeTab: DetailTab = params.get('tab') === 'reviews' ? 'reviews' : params.get('tab') === 'companion' ? 'companion' : 'info'
+  const setActiveTab = (tab: DetailTab) => {
+    const next = new URLSearchParams(params)
+    if (tab === 'info') next.delete('tab')
+    else next.set('tab', tab)
+    setParams(next, { replace: true })
+  }
   const [showReviewForm, setShowReviewForm] = useState(false)
   const [showDiaryForm, setShowDiaryForm] = useState(false)
   const [diaryMode, setDiaryMode] = useState<'quick' | 'full'>('quick')
   const [editingDiaryEntry, setEditingDiaryEntry] = useState<DiaryEntry | undefined>()
   const [savedDiaryEntry, setSavedDiaryEntry] = useState<DiaryEntry | undefined>()
   const [showSavedSheet, setShowSavedSheet] = useState(false)
+  const [showPlan, setShowPlan] = useState(false)
+  useEffect(() => { if (showId > 0) track("show_view", showId) }, [showId])
 
   const { data: show, isLoading, isError, refetch } = useQuery({
-    queryKey: ['show', id],
+    queryKey: ['show', showId],
     queryFn: () => showsApi.getById(showId),
     enabled: Number.isFinite(showId),
   })
@@ -74,10 +86,6 @@ export default function ShowDetailPage() {
   }
 
   const openDiaryModal = (mode: 'quick' | 'full', entry?: DiaryEntry) => {
-    if (!isAuthenticated) {
-      requireLogin('관극 기록은 로그인 후 이용할 수 있습니다.')
-      return
-    }
     setEditingDiaryEntry(entry)
     setDiaryMode(mode)
     setShowDiaryForm(true)
@@ -89,7 +97,7 @@ export default function ShowDetailPage() {
       return
     }
     setActiveTab('reviews')
-    setShowReviewForm(true)
+    openDiaryModal('quick')
   }
 
   const handleDiarySaved = (savedEntry: DiaryEntry) => {
@@ -147,6 +155,8 @@ export default function ShowDetailPage() {
   const isOngoing = show.status === 'ONGOING'
   const bookingLinks = getBookingLinks(show.title)
 
+  const planOpen = isAuthenticated && (showPlan || params.get("plan") === "1")
+  const closePlan = () => { setShowPlan(false); const next = new URLSearchParams(params); next.delete("plan"); setParams(next, { replace: true }) }
   const handleShare = async () => {
     if (!show) return
     if (navigator.share) {
@@ -166,229 +176,39 @@ export default function ShowDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-surface-base pb-24">
-      <div className="px-4 py-4 sm:px-5">
-        {/* 상단 공연 기본 요약 (정비율 3:4 포스터 + 깔끔한 텍스트 정렬) */}
-        <section className="mt-1 flex gap-3.5 items-start">
-          <div className="w-[110px] aspect-[3/4] shrink-0 overflow-hidden rounded bg-surface-muted border border-line-lightest shadow-sm">
-            {show.posterUrl ? (
-              <img
-                src={show.posterUrl}
-                alt={show.title}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="flex h-full w-full flex-col items-center justify-center gap-1.5 text-ink-lightest">
-                <ImageOff size={20} />
-                <p className="text-[10px]">포스터 없음</p>
-              </div>
-            )}
+    <div className="page-width show-detail-page">
+      <section className="detail-overview">
+        <Poster src={show.posterUrl} title={show.title} className="detail-poster aspect-[3/4]" />
+        <div className="detail-summary">
+          <p className="eyebrow">{show.genreDisplayName || '공연'}<span className="!tracking-normal">{show.statusDisplayName}</span></p>
+          <h1>{show.title}</h1>
+          <p className="detail-theater">{show.theaterName || '공연장 미정'}</p>
+          <dl><div><dt>공연 기간</dt><dd>{show.startDate} — {show.endDate || '미정'}</dd></div>{show.runtime && <div><dt>러닝타임</dt><dd>{show.runtime}</dd></div>}<div><dt>관람 연령</dt><dd>{show.ageLimit || '정보 확인 중'}</dd></div></dl>
+          <div className="flex flex-wrap items-center gap-4 mt-5">
+            {show.averageScore != null && show.averageScore > 0 ? <span className="flex items-center gap-1.5 text-[13px] text-brand"><Star size={14} fill="currentColor" />{show.averageScore.toFixed(1)}<span className="text-ink-lighter">· 공개 평점 {show.ratingCount ?? 0}개</span></span> : <span className="text-[12px] text-ink-lighter">등록된 평점 없음</span>}
+            <button onClick={handleShare} className="text-link" aria-label="공연 공유"><Share2 size={15} />공유</button>
           </div>
-
-          <div className="min-w-0 flex-1 pt-0.5">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="px-1.5 py-0.5 rounded bg-brand/10 text-brand text-[10px] font-bold">
-                {show.genreDisplayName}
-              </span>
-              <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${isOngoing ? 'bg-ink-darkest text-white' : 'bg-gray-100 text-ink-muted'}`}>
-                {isOngoing ? '공연중' : show.statusDisplayName}
-              </span>
-            </div>
-
-            <h1 className="mt-1 text-[16px] font-bold text-ink-darkest leading-snug line-clamp-2">
-              {show.title}
-            </h1>
-
-            <div className="mt-1.5 space-y-0.5 text-[11px] text-ink-muted">
-              <p className="font-medium text-ink-darker truncate">
-                {show.theaterName || '공연장 미정'}
-              </p>
-              <p className="text-[10px] text-ink-light truncate">
-                {show.startDate ? `${show.startDate} ~ ${show.endDate || '미정'}` : '일정 미정'}
-              </p>
-              {show.runtime && (
-                <p className="text-[10px] text-ink-lightest">
-                  러닝타임 {show.runtime} {show.ageLimit ? `· ${show.ageLimit}` : ''}
-                </p>
-              )}
-            </div>
-
-            {/* 평점 & 찜 & 공유 버튼 */}
-            <div className="mt-2.5 flex items-center justify-between border-t border-line-lightest pt-2">
-              <div className="flex items-center gap-1 text-[12px]">
-                {show.averageScore != null && show.averageScore > 0 ? (
-                  <>
-                    <Star size={12} className="fill-amber-400 text-amber-400" />
-                    <span className="font-bold text-ink-darkest">{show.averageScore.toFixed(1)}</span>
-                    <span className="text-[10px] text-ink-lightest">({show.reviewCount ?? 0})</span>
-                  </>
-                ) : (
-                  <span className="text-[10px] text-ink-lightest">별점 등록 전</span>
-                )}
-              </div>
-
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={handleShare}
-                  className="h-6 px-2 rounded border border-line-base text-[10px] font-medium text-ink-muted hover:border-ink-darkest hover:text-ink-darkest flex items-center gap-1 transition-colors"
-                  title="공연 공유"
-                >
-                  <Share2 size={10} />
-                  <span>공유</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!isAuthenticated) {
-                      requireLogin('찜 기능은 로그인 후 이용할 수 있습니다.')
-                      return
-                    }
-                    toggleFav.mutate()
-                  }}
-                  disabled={isAuthenticated && toggleFav.isPending}
-                  className={`h-6 px-2 rounded border text-[10px] font-medium flex items-center gap-1 transition-colors ${
-                    favStatus?.isFavorited
-                      ? 'border-brand text-brand bg-brand/5'
-                      : 'border-line-base text-ink-muted hover:border-ink-darkest hover:text-ink-darkest'
-                  }`}
-                >
-                  <Heart size={10} className={favStatus?.isFavorited ? 'fill-brand text-brand' : ''} />
-                  <span>{favStatus?.isFavorited ? '찜완료' : '찜'}</span>
-                  {Boolean(favStatus?.favoriteCount) && (
-                    <span className="opacity-80">({favStatus?.favoriteCount})</span>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* 예매처 바로가기 링크 (존재 시 배너형으로 노출) */}
-        {bookingLinks[0] && (
-          <a
-            href={bookingLinks[0].url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-3 w-full h-8 rounded bg-ink-darkest text-white text-[11px] font-semibold flex items-center justify-center gap-1 hover:bg-brand transition-colors"
-          >
-            <span>{show.title} 공식 예매처 바로가기</span>
-            <span className="text-[9px] opacity-70">↗</span>
-          </a>
-        )}
-
-        {/* 탭 네비게이션: 3등분 그리드, 모바일 간결 레이블 대응 */}
-        <nav className="mt-5 grid grid-cols-3 border-b border-line-base text-[12px] text-ink-lighter text-center">
-          {TAB_ITEMS.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`pb-2.5 font-medium transition-colors ${
-                activeTab === tab.key
-                  ? 'border-b-2 border-brand font-bold text-ink-darkest'
-                  : 'hover:text-ink-darker text-ink-muted'
-              }`}
-            >
-              <span className="hidden sm:inline">{tab.label}</span>
-              <span className="sm:hidden">{tab.mobileLabel}</span>
-            </button>
-          ))}
-        </nav>
-
-        <div className="mt-4 space-y-5 pb-10">
-          {/* 1. 공연 정보 & 캐스팅 */}
-          {activeTab === 'info' && (
-            <div className="space-y-6">
-              <ShowInfoTab show={show} />
-              <div className="border-t border-line-lightest pt-5">
-                <ShowCastingTab showId={showId} fallbackCastInfo={show.castInfo} />
-              </div>
-            </div>
-          )}
-
-          {/* 2. 관람 후기 & 시야 */}
-          {activeTab === 'reviews' && (
-            <div className="space-y-6">
-              <ShowReviewsTab
-                show={show}
-                showId={showId}
-                diarySnippets={diarySnippets?.items ?? []}
-                onWriteDiary={() => openDiaryModal('quick')}
-                showReviewForm={showReviewForm}
-                onOpenReviewForm={openReviewForm}
-                onCloseReviewForm={() => setShowReviewForm(false)}
-              />
-              <div className="border-t border-line-lightest pt-5">
-                <ShowSeatViewTab
-                  show={show}
-                  diarySnippets={diarySnippets?.items ?? []}
-                  onAddSeatReview={() => openDiaryModal('full')}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* 3. 동행 & 톡 */}
-          {activeTab === 'companion' && (
-            <ShowCompanionLiveTab showId={showId} isOngoing={isOngoing} />
-          )}
         </div>
+        <aside className="detail-record-card">
+          <h2>관극 기록</h2><p>관람일과 감상을 남깁니다.</p>
+          <button onClick={() => openDiaryModal('quick')} className="button-primary w-full"><Plus size={16} />관극 기록하기</button>
+          <button onClick={() => { if (!isAuthenticated) { requireLogin('관심 공연을 저장하려면 로그인해 주세요.'); return } toggleFav.mutate() }} disabled={toggleFav.isPending} className="button-secondary w-full mt-2"><Heart size={15} fill={favStatus?.isFavorited ? 'currentColor' : 'none'} />{favStatus?.isFavorited ? '관심 공연 해제' : '관심 공연 저장'}</button>
+        </aside>
+      </section>
+      <div className="detail-mobile-action md:hidden"><button onClick={() => openDiaryModal('quick')} className="button-primary w-full"><Plus size={16} />관극 기록하기</button></div>
+      {bookingLinks[0] && <a href={bookingLinks[0].url} target="_blank" rel="noopener noreferrer" className="booking-note"><span>예매 정보</span><span>예매처에서 검색하기 <ArrowUpRight size={14} /></span></a>}
+      <div className="mt-4 flex gap-5"><button className="text-action" onClick={() => { if (!isAuthenticated) { sessionStorage.setItem("postLoginRedirect", `/shows/${id}?plan=1`); navigate("/login") } else setShowPlan(true) }}>관람 예정 등록</button><a className="text-action" href="/plans">내 일정</a></div>
+      <nav className="book-tabs mt-8" aria-label="공연 상세 정보">
+        {TAB_ITEMS.map(tab => <button key={tab.key} aria-pressed={activeTab === tab.key} className={activeTab === tab.key ? 'is-active' : ''} onClick={() => setActiveTab(tab.key)}>{tab.label}</button>)}
+      </nav>
+      <div className="detail-tab-content">
+        {activeTab === 'info' && <div className="detail-info-grid"><ShowInfoTab show={show} /><div className="detail-casting-panel"><ShowCastingTab showId={showId} fallbackCastInfo={show.castInfo} /></div></div>}
+        {activeTab === 'reviews' && <div className="space-y-8"><ShowReviewsTab show={show} showId={showId} diarySnippets={diarySnippets?.items ?? []} onWriteDiary={() => openDiaryModal('quick')} showReviewForm={showReviewForm} onOpenReviewForm={openReviewForm} onCloseReviewForm={() => setShowReviewForm(false)} /><ShowSeatViewTab show={show} diarySnippets={diarySnippets?.items ?? []} onAddSeatReview={() => openDiaryModal('full')} /></div>}
+        {activeTab === 'companion' && <ShowCompanionLiveTab showId={showId} isOngoing={isOngoing} />}
       </div>
-
-      {/* 하단 플로팅 액션바 (높이 38px 터치 최적화, safe-area 대응) */}
-      <div className="fixed bottom-[calc(54px+env(safe-area-inset-bottom,0px))] left-1/2 -translate-x-1/2 w-full max-w-[460px] z-40 border-t border-line-base bg-white/95 backdrop-blur-md px-4 py-2">
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            onClick={() => openDiaryModal('quick')}
-            className="h-9 bg-brand text-[12px] font-bold text-white rounded flex items-center justify-center gap-1.5 active:scale-[0.99] transition-transform"
-          >
-            관극 기록하기
-          </button>
-          <button
-            onClick={openReviewForm}
-            className="h-9 border border-line-base bg-surface-base text-[12px] font-semibold text-ink-darkest rounded flex items-center justify-center gap-1.5 hover:border-line-dark transition-colors"
-          >
-            후기 작성
-          </button>
-        </div>
-      </div>
-
-      {showDiaryForm ? (
-        <DiaryFormModal
-          entry={editingDiaryEntry}
-          initialShowId={show.id}
-          initialShowTitle={show.title}
-          initialCastMemo={show.castInfo}
-          mode={diaryMode}
-          onClose={() => {
-            setShowDiaryForm(false)
-            setEditingDiaryEntry(undefined)
-          }}
-          onSaved={handleDiarySaved}
-        />
-      ) : null}
-
-      {showSavedSheet && savedDiaryEntry ? (
-        <DiarySavedSheet
-          entry={savedDiaryEntry}
-          onClose={() => {
-            setShowSavedSheet(false)
-            setSavedDiaryEntry(undefined)
-          }}
-          onExpand={() => {
-            setShowSavedSheet(false)
-            setEditingDiaryEntry(savedDiaryEntry)
-            setDiaryMode('full')
-            setShowDiaryForm(true)
-          }}
-          onWriteReview={() => {
-            setShowSavedSheet(false)
-            setSavedDiaryEntry(undefined)
-            openReviewForm()
-          }}
-        />
-      ) : null}
+      {planOpen && <PlanForm showId={show.id} showTitle={show.title} onClose={closePlan} />}
+      {showDiaryForm && <DiaryFormModal entry={editingDiaryEntry} initialShowId={show.id} initialShowTitle={show.title} mode={diaryMode} onClose={() => { setShowDiaryForm(false); setEditingDiaryEntry(undefined) }} onSaved={handleDiarySaved} />}
+      {showSavedSheet && savedDiaryEntry && <DiarySavedSheet entry={savedDiaryEntry} onClose={() => { setShowSavedSheet(false); setSavedDiaryEntry(undefined) }} onExpand={() => { setShowSavedSheet(false); setEditingDiaryEntry(savedDiaryEntry); setDiaryMode('full'); setShowDiaryForm(true) }} onWriteReview={() => { setShowSavedSheet(false); setSavedDiaryEntry(undefined); openReviewForm() }} />}
     </div>
   )
 }

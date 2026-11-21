@@ -1,65 +1,41 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
-import { Search, User, ArrowLeft } from 'lucide-react'
 
 export default function Navbar() {
   const { isAuthenticated } = useAuthStore()
-  const location = useLocation()
+  const { pathname } = useLocation()
   const navigate = useNavigate()
 
-  const isAuthPage = location.pathname === '/login' || location.pathname === '/signup'
-  const isChatRoom = location.pathname.startsWith('/chat/')
-  if (isAuthPage || isChatRoom) return null
+  if (pathname.startsWith('/chat/')) return null
 
-  const isShowDetail = location.pathname.startsWith('/shows/') && location.pathname !== '/shows'
+  const startRecord = () => {
+    const destination = '/diary?compose=1'
+    navigate(destination)
+  }
 
   return (
-    <header className="flex h-[52px] items-center justify-between border-b border-line-lighter px-4 bg-surface-base sticky top-0 z-40">
-      {isShowDetail ? (
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="p-1 -ml-1 text-ink-muted hover:text-ink-darkest transition-colors rounded"
-            aria-label="이전 페이지로 이동"
-          >
-            <ArrowLeft size={19} />
-          </button>
-          <Link to="/" className="flex items-center gap-1.5 text-[14px] font-semibold tracking-[-0.03em] text-ink-darkest">
-            CurtainCall
-          </Link>
-        </div>
-      ) : (
-        <Link to="/" className="flex items-center gap-2 text-[15px] font-semibold tracking-[-0.055em] text-ink-darkest">
-          <span className="grid h-5 w-5 place-items-center bg-brand font-serif text-[12px] text-white rounded-[2px]">C</span>
-          CurtainCall
+    <header className="site-header">
+      <a href="#main-content" className="skip-link">본문으로 바로가기</a>
+      <div className="page-width site-header-inner">
+        <Link to="/" className="wordmark" aria-label="커튼콜 홈">커튼콜</Link>
+        <nav className="header-links" aria-label="주 메뉴">
+          {[['/', '공연'], ['/shows', '검색'], ['/diary', '내 기록'], ['/plans', '관람 예정']].map(([to, label]) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={to === '/'}
+              className={({ isActive }) => isActive ? 'is-active' : ''}
+            >
+              {label}
+            </NavLink>
+          ))}
+          <span className="nav-divider" aria-hidden="true">|</span>
+          <button type="button" onClick={startRecord}>기록하기</button>
+        </nav>
+        {isAuthenticated && <Link to="/notifications" className="account-link">알림</Link>}
+        <Link to={isAuthenticated ? '/my' : '/login'} className="account-link">
+          {isAuthenticated ? '마이' : '로그인'}
         </Link>
-      )}
-
-      <div className="flex items-center gap-2">
-        <Link
-          to="/shows"
-          className="grid h-8 w-8 place-items-center text-ink-muted hover:text-ink-darkest transition-colors"
-          aria-label="공연 검색"
-        >
-          <Search size={17} />
-        </Link>
-        {isAuthenticated ? (
-          <Link
-            to="/my"
-            className="grid h-8 w-8 place-items-center text-ink-muted hover:text-ink-darkest transition-colors"
-            aria-label="마이페이지"
-          >
-            <User size={17} />
-          </Link>
-        ) : (
-          <Link
-            to="/login"
-            className="text-[11px] font-medium text-ink-muted hover:text-ink-darkest px-2 py-1 transition-colors"
-          >
-            로그인
-          </Link>
-        )}
       </div>
     </header>
   )

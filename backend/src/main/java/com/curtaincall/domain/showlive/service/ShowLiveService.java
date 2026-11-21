@@ -31,12 +31,20 @@ public class ShowLiveService {
     private final ShowLiveMessageRepository messageRepository;
     private final ShowRepository showRepository;
     private final UserRepository userRepository;
+    private final com.curtaincall.domain.safety.UserBlockRepository blocks;
 
     public ShowLiveRoomDto getRoom(Long showId, LocalDate date) {
         Show show = loadShow(showId);
         return roomRepository.findByShowIdAndLiveDate(showId, date)
                 .map(room -> toRoomDto(show, date, room))
                 .orElseGet(() -> toRoomDto(show, date, null));
+    }
+
+    public ShowLiveRoomDto filterBlocked(ShowLiveRoomDto dto, Long userId) {
+        if (userId == null) return dto;
+        var ids = blocks.findByUserId(userId).stream().map(com.curtaincall.domain.safety.UserBlock::getBlockedUserId).collect(java.util.stream.Collectors.toSet());
+        return ShowLiveRoomDto.builder().roomId(dto.getRoomId()).showTitle(dto.getShowTitle()).liveDate(dto.getLiveDate())
+                .messages(dto.getMessages().stream().filter(m -> !ids.contains(m.getSenderId())).toList()).build();
     }
 
     @Transactional
@@ -51,6 +59,7 @@ public class ShowLiveService {
 
     @Transactional
     public ShowLiveMessageDto saveMessage(Long roomId, Long senderId, String content) {
+        if (content == null || content.isBlank() || content.length() > 2000) throw BusinessException.badRequest("메시지는 1~2000자로 입력해 주세요.");
         ShowLiveRoom room = roomRepository.findById(roomId)
                 .orElseThrow(() -> BusinessException.notFound("라이브 채팅방을 찾을 수 없습니다."));
         User sender = userRepository.findById(senderId)

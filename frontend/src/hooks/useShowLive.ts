@@ -28,13 +28,17 @@ export function useShowLive({ roomId, initialMessages }: UseShowLiveOptions) {
   const [messages, setMessages] = useState<ShowLiveMessage[]>(initialMessages);
   const [connected, setConnected] = useState(false);
   const clientRef = useRef<Client | null>(null);
+  const initialRef = useRef(initialMessages);
+  initialRef.current = initialMessages;
   const accessToken = useAuthStore((s) => s.accessToken);
 
   useEffect(() => {
-    setMessages((prev) => mergeMessages(prev, initialMessages));
+    setMessages((prev) => initialMessages.length ? mergeMessages(prev, initialMessages) : prev);
   }, [initialMessages]);
 
   useEffect(() => {
+    setMessages(initialRef.current);
+    setConnected(false);
     if (!accessToken || roomId <= 0) {
       setConnected(false);
       clientRef.current?.deactivate();
@@ -53,6 +57,8 @@ export function useShowLive({ roomId, initialMessages }: UseShowLiveOptions) {
           setMessages((prev) => mergeMessages(prev, [msg]));
         });
       },
+      onWebSocketClose: () => setConnected(false),
+      onStompError: () => setConnected(false),
       onDisconnect: () => setConnected(false),
     });
 

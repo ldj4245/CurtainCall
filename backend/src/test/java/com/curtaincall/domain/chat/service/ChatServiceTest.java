@@ -41,6 +41,8 @@ class ChatServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock private com.curtaincall.domain.safety.UserBlockRepository blocks;
+
     private ChatService chatService;
 
     @BeforeEach
@@ -49,7 +51,8 @@ class ChatServiceTest {
                 chatRoomRepository,
                 chatMessageRepository,
                 companionParticipantRepository,
-                userRepository
+                userRepository,
+                blocks
         );
     }
 

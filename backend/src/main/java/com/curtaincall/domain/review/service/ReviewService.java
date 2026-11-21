@@ -43,6 +43,7 @@ public class ReviewService {
     private final ShowRepository showRepository;
     private final UserRepository userRepository;
     private final CacheManager cacheManager;
+    private final com.curtaincall.domain.notification.NotificationService notificationService;
 
     private void evictShowDetailCache(Long showId) {
         var cache = cacheManager.getCache("showDetail");
@@ -140,6 +141,7 @@ public class ReviewService {
     }
 
     public Page<CommentResponse> getComments(Long reviewId, int page, int size) {
+        if (!reviewRepository.existsById(reviewId)) throw BusinessException.notFound("후기를 찾을 수 없습니다.");
         Page<ReviewComment> rootComments = commentRepository.findRootCommentsWithUser(reviewId, safePageRequest(page, size));
         List<Long> rootCommentIds = rootComments.getContent().stream()
                 .map(ReviewComment::getId)
@@ -190,6 +192,7 @@ public class ReviewService {
                 .content(request.getContent())
                 .build());
 
+        notificationService.reply(parent == null ? review.getUser().getId() : parent.getUser().getId(), userId, comment.getId(), review.getShow().getId());
         return CommentResponse.from(comment);
     }
 

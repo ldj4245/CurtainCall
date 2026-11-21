@@ -11,6 +11,8 @@ import org.springframework.data.jpa.repository.Query;
 import java.util.Optional;
 
 public interface FavoriteShowRepository extends JpaRepository<FavoriteShow, Long> {
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = "show")
+    java.util.List<FavoriteShow> findByUserId(Long userId);
 
     boolean existsByUserIdAndShowId(Long userId, Long showId);
 

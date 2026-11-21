@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useAuthStore } from '../../store/authStore'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { User, RefreshCw, Search } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -11,6 +12,7 @@ interface Props {
 
 export default function ShowCastingTab({ showId, fallbackCastInfo }: Props) {
   const queryClient = useQueryClient()
+  const isAdmin = useAuthStore(state => state.user?.role === 'ADMIN')
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [actorSearch, setActorSearch] = useState('')
 
@@ -79,14 +81,14 @@ export default function ShowCastingTab({ showId, fallbackCastInfo }: Props) {
           <h3 className="text-[13px] font-semibold text-ink-base">
             캐스팅 <span className="text-ink-lightest font-normal">{totalActors}명</span>
           </h3>
-          <button
+          {isAdmin && <button
             onClick={handleRefresh}
             disabled={isRefreshing}
             className="h-7 px-2 text-[11px] text-ink-light hover:text-ink-base border border-line-base flex items-center gap-1 transition-colors rounded"
           >
             <RefreshCw size={11} className={isRefreshing ? 'animate-spin' : ''} />
             <span>{isRefreshing ? '갱신 중' : '정보 갱신'}</span>
-          </button>
+          </button>}
         </div>
 
         {hasCastingData && totalActors > 4 && (
@@ -158,13 +160,13 @@ export default function ShowCastingTab({ showId, fallbackCastInfo }: Props) {
               </Link>
             ))}
           </div>
-          <button
+          {isAdmin && <button
             onClick={handleRefresh}
             disabled={isRefreshing}
             className="text-[11px] text-brand font-medium hover:underline"
           >
             상세 프로필 불러오기
-          </button>
+          </button>}
         </div>
       ) : (
         <p className="py-10 text-center text-[11px] text-ink-lightest">등록된 출연진 정보가 없습니다.</p>

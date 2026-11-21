@@ -30,11 +30,12 @@ public class ShowLiveController {
 
     @GetMapping("/api/shows/{showId}/live")
     public ResponseEntity<ShowLiveRoomDto> getRoom(
+            @AuthenticationPrincipal Long userId,
             @PathVariable Long showId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         LocalDate liveDate = date != null ? date : LocalDate.now();
         ShowLiveRoomDto room = showLiveService.getRoom(showId, liveDate);
-        return ResponseEntity.ok(room);
+        return ResponseEntity.ok(showLiveService.filterBlocked(room, userId));
     }
 
     @PostMapping("/api/shows/{showId}/live")
@@ -47,7 +48,7 @@ public class ShowLiveController {
         }
         LocalDate liveDate = date != null ? date : LocalDate.now();
         ShowLiveRoomDto room = showLiveService.getOrCreateRoom(showId, liveDate);
-        return ResponseEntity.ok(room);
+        return ResponseEntity.ok(showLiveService.filterBlocked(room, userId));
     }
 
     @MessageMapping("/live/{roomId}")

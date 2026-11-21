@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import java.util.Arrays;
+import com.curtaincall.domain.diary.dto.PhotoUrls;
 import java.util.Collections;
 import java.util.List;
 
@@ -36,6 +36,7 @@ public class DiaryService {
     private final ShowRepository showRepository;
     private final UserRepository userRepository;
     private final ImageUploadService imageUploadService;
+    private final com.curtaincall.domain.plan.ViewingPlanService planService;
 
     public Page<DiaryResponse> getMyDiary(Long userId, int page, int size) {
         return diaryEntryRepository
@@ -49,6 +50,13 @@ public class DiaryService {
 
     @Transactional
     public DiaryResponse createDiary(Long userId, DiaryRequest request) {
+        var plan = request.getPlanId() == null ? null : planService.owned(request.getPlanId(), userId);
+        if (plan != null && plan.getDiaryId() != null) {
+            return diaryEntryRepository.findByIdAndUserId(plan.getDiaryId(), userId).map(DiaryResponse::from)
+                    .orElseThrow(() -> BusinessException.badRequest("이미 기록으로 옮긴 일정입니다."));
+        }
+        if (plan != null && !plan.getShow().getId().equals(request.getShowId()))
+            throw BusinessException.badRequest("일정과 기록의 공연이 다릅니다.");
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> BusinessException.notFound("사용자를 찾을 수 없습니다."));
         Show show = showRepository.findById(request.getShowId())
@@ -64,9 +72,11 @@ public class DiaryService {
                 .comment(request.getComment())
                 .ticketPrice(request.getTicketPrice())
                 .isOpen(Boolean.TRUE.equals(request.getIsOpen()))
+                .hasSpoiler(Boolean.TRUE.equals(request.getHasSpoiler()))
                 .photoUrls(joinPhotoUrls(request.getPhotoUrls()))
                 .build());
 
+        if (plan != null) plan.complete(entry.getId());
         return DiaryResponse.from(entry);
     }
 
@@ -77,6 +87,9 @@ public class DiaryService {
 
         List<String> existingPhotoUrls = parsePhotoUrls(entry.getPhotoUrls());
         List<String> updatedPhotoUrls = normalizePhotoUrls(request.getPhotoUrls());
+
+        if (!entry.getShow().getId().equals(request.getShowId()))
+            throw BusinessException.badRequest("기록의 공연은 변경할 수 없습니다.");
 
         entry.update(
                 request.getWatchedDate(),
@@ -89,7 +102,8 @@ public class DiaryService {
                 joinPhotoUrls(updatedPhotoUrls)
         );
 
-        deleteImagesAfterCommit(getRemovedPhotoUrls(existingPhotoUrls, updatedPhotoUrls));
+        entry.updatePublishing(Boolean.TRUE.equals(request.getHasSpoiler()));
+        deleteImagesAfterCommit(userId, getRemovedPhotoUrls(existingPhotoUrls, updatedPhotoUrls));
         return DiaryResponse.from(entry);
     }
 
@@ -99,8 +113,9 @@ public class DiaryService {
                 .orElseThrow(() -> BusinessException.notFound("관극 기록을 찾을 수 없습니다."));
 
         List<String> imageUrls = parsePhotoUrls(entry.getPhotoUrls());
+        planService.restoreDeletedRecord(userId, diaryId);
         diaryEntryRepository.delete(entry);
-        deleteImagesAfterCommit(imageUrls);
+        deleteImagesAfterCommit(userId, imageUrls);
     }
 
     public List<DiaryResponse> getPublicDiaryByShow(Long showId) {
@@ -135,13 +150,16 @@ public class DiaryService {
         if (normalized.isEmpty()) {
             return null;
         }
-        return String.join(",", normalized);
+        return PhotoUrls.write(normalized);
     }
 
     private List<String> normalizePhotoUrls(List<String> photoUrls) {
         if (photoUrls == null || photoUrls.isEmpty()) {
             return List.of();
         }
+        if (photoUrls.size() > 5 || photoUrls.stream().anyMatch(url -> url != null &&
+            (url.length() > 14000000 || !(url.startsWith("https://") || url.startsWith("http://") || url.matches("data:image/(png|jpeg|webp|heic);base64,[A-Za-z0-9+/=\\r\\n]+")))))
+            throw BusinessException.badRequest("지원하지 않는 사진 주소입니다.");
         return photoUrls.stream()
                 .filter(url -> url != null && !url.isBlank())
                 .map(String::trim)
@@ -152,10 +170,7 @@ public class DiaryService {
         if (photoUrls == null || photoUrls.isBlank()) {
             return Collections.emptyList();
         }
-        return Arrays.stream(photoUrls.split(","))
-                .map(String::trim)
-                .filter(url -> !url.isEmpty())
-                .toList();
+        return PhotoUrls.read(photoUrls);
     }
 
     private List<String> getRemovedPhotoUrls(List<String> previous, List<String> current) {
@@ -164,12 +179,12 @@ public class DiaryService {
                 .toList();
     }
 
-    private void deleteImagesAfterCommit(List<String> imageUrls) {
+    private void deleteImagesAfterCommit(Long userId, List<String> imageUrls) {
         if (imageUrls.isEmpty()) {
             return;
         }
 
-        Runnable deleteTask = () -> imageUrls.forEach(imageUploadService::deleteImage);
+        Runnable deleteTask = () -> imageUrls.forEach(url -> imageUploadService.deleteOwnedDiaryImage(url, userId));
         if (!TransactionSynchronizationManager.isSynchronizationActive()) {
             deleteTask.run();
             return;

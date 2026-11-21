@@ -5,7 +5,7 @@ export default {
     extend: {
       colors: {
         brand: {
-          DEFAULT: '#9d2244',
+          DEFAULT: '#242424',
         },
         ink: {
           darkest: '#202020',
@@ -18,21 +18,21 @@ export default {
           lightest: '#999999',
         },
         surface: {
-          base: '#ffffff',
-          alt: '#fbfbfb',
-          muted: '#f6f4f2',
-          background: '#f2f2f1',
+          base: '#fbfbfb',
+          alt: '#f5f5f5',
+          muted: '#eeeeee',
+          background: '#e8e8e8',
         },
         line: {
-          lightest: '#ededed',
-          lighter: '#e7e7e7',
-          light: '#e4e4e4',
-          base: '#dedede',
+          lightest: '#eeeeee',
+          lighter: '#e9e9e9',
+          light: '#e2e2e2',
+          base: '#d8d8d8',
           dark: '#282828',
         }
       },
       fontFamily: {
-        sans: ['Pretendard', 'Apple SD Gothic Neo', 'sans-serif'],
+        sans: ['Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', 'sans-serif'],
         serif: ['Georgia', 'Cambria', 'Times New Roman', 'Times', 'serif'],
       },
       borderRadius: {

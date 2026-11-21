@@ -6,6 +6,8 @@ import { Toaster } from 'react-hot-toast'
 import App from './App.tsx'
 import ErrorBoundary from './components/common/ErrorBoundary.tsx'
 import './index.css'
+import './components/common/InstallApp'
+import { useAuthStore } from './store/authStore'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -15,6 +17,10 @@ const queryClient = new QueryClient({
     },
   },
 })
+
+// Drop cached private data before another account can render it.
+useAuthStore.subscribe((state, previous) => { if (state.user?.id !== previous.user?.id || (!state.accessToken && !!previous.accessToken)) queryClient.clear() })
+if (import.meta.env.PROD && "serviceWorker" in navigator) void navigator.serviceWorker.register("/sw.js")
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

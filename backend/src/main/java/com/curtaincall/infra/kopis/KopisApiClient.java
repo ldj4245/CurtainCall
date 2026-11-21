@@ -31,6 +31,9 @@ public class KopisApiClient {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
     private static final int PAGE_SIZE = 100;
+    private static final Object KOPIS_RATE_LOCK = new Object();
+    private static final long MIN_REQUEST_INTERVAL_MS = 250L;
+    private static long lastRequestAtMs = 0L;
 
     public List<KopisShowDto> fetchShows(LocalDate startDate, LocalDate endDate, String genre) {
         List<KopisShowDto> result = new ArrayList<>();
@@ -54,8 +57,9 @@ public class KopisApiClient {
                 page++;
                 Thread.sleep(300);
             } catch (Exception e) {
-                log.error("KOPIS API 공연 목록 조회 실패 - page: {}, error: {}", page, e.getMessage());
-                break;
+                log.error("KOPIS API 공연 목록 조회 실패 - page: {}, error: {}", page, maskKey(e.getMessage()));
+                if (e instanceof InterruptedException) Thread.currentThread().interrupt();
+                throw new IllegalStateException("공연 목록 갱신에 실패했습니다. 기존 데이터를 유지합니다.", e);
             }
         }
 
@@ -90,14 +94,14 @@ public class KopisApiClient {
                     .dtguidance(getText(el, "dtguidance"))
                     .build();
         } catch (Exception e) {
-            log.error("KOPIS API 공연 상세 조회 실패 - kopisId: {}, error: {}", kopisId, e.getMessage());
+            log.error("KOPIS API 공연 상세 조회 실패 - kopisId: {}, error: {}", kopisId, maskKey(e.getMessage()));
             return null;
         }
     }
 
     /**
      * KOPIS 박스오피스(예매율 기반 인기 순위) 조회
-     * 
+     *
      * @param catecode 장르코드 (GGGA=뮤지컬, AAAA=연극)
      * @param area     지역코드 (11=서울, 빈값=전국)
      * @return kopisId 리스트 (1위부터 순서대로)
@@ -131,7 +135,7 @@ public class KopisApiClient {
             log.info("KOPIS 박스오피스 조회 완료: {}건 (장르: {})", kopisIds.size(), catecode);
             return kopisIds;
         } catch (Exception e) {
-            log.error("KOPIS 박스오피스 조회 실패: {}", e.getMessage());
+            log.error("KOPIS 박스오피스 조회 실패: {}", maskKey(e.getMessage()));
             return List.of();
         }
     }
@@ -152,7 +156,7 @@ public class KopisApiClient {
                 page++;
                 Thread.sleep(300);
             } catch (Exception e) {
-                log.error("KOPIS API 극장 목록 조회 실패 - page: {}, error: {}", page, e.getMessage());
+                log.error("KOPIS API 극장 목록 조회 실패 - page: {}, error: {}", page, maskKey(e.getMessage()));
                 break;
             }
         }
@@ -178,7 +182,7 @@ public class KopisApiClient {
                     .characteristics(getText(el, "fcltychartr"))
                     .build();
         } catch (Exception e) {
-            log.error("KOPIS 극장 상세 조회 실패 - kopisId: {}, error: {}", theaterKopisId, e.getMessage());
+            log.error("KOPIS 극장 상세 조회 실패 - kopisId: {}, error: {}", theaterKopisId, maskKey(e.getMessage()));
             return null;
         }
     }
@@ -224,6 +228,20 @@ public class KopisApiClient {
     }
 
     private Document fetchXml(String urlStr) throws Exception {
+        synchronized (KOPIS_RATE_LOCK) {
+            long now = System.currentTimeMillis();
+            long waitMs = MIN_REQUEST_INTERVAL_MS - (now - lastRequestAtMs);
+            if (waitMs > 0) {
+                try {
+                    Thread.sleep(waitMs);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw ie;
+                }
+            }
+            lastRequestAtMs = System.currentTimeMillis();
+        }
+
         URL url = new URL(urlStr);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("GET");
@@ -235,6 +253,10 @@ public class KopisApiClient {
             DocumentBuilder builder = factory.newDocumentBuilder();
             return builder.parse(is);
         }
+    }
+
+    private String maskKey(String message) {
+        return message == null ? "" : message.replaceAll("service=[^&\\s]+", "service=***");
     }
 
     private String getText(Element el, String tagName) {

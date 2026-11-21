@@ -60,22 +60,14 @@ public class ShowService {
         Show show = showRepository.findById(id)
                 .orElseThrow(() -> BusinessException.notFound("공연을 찾을 수 없습니다."));
 
-        if (show.getStartDate() == null && show.getKopisId() != null) {
-            try {
-                kopisSyncService.syncShow(com.curtaincall.infra.kopis.KopisShowDto.builder().kopisId(show.getKopisId()).build());
-                entityManager.clear();
-                show = showRepository.findById(id).orElse(show);
-            } catch (Exception e) {
-                log.warn("공연 상세 실시간 보완 실패: {}", show.getKopisId());
-            }
-        }
-
         Double averageScore = reviewRepository.getAverageScoreByShowId(id);
         long reviewCount = reviewRepository.countByShowId(id);
 
-        return ShowResponse.fromWithStats(show,
-                averageScore != null ? Math.round(averageScore * 10.0) / 10.0 : null,
-                reviewCount);
+        var ratings = diaryEntryRepository.publicRatings(id);
+        long diaryRatings = ratings == null ? 0 : ratings.getRatingCount();
+        long count = reviewCount + diaryRatings;
+        double sum = (averageScore == null ? 0 : averageScore * reviewCount) + (diaryRatings == 0 || ratings.getAverageRating() == null ? 0 : ratings.getAverageRating() * diaryRatings);
+        return ShowResponse.fromWithStats(show, count == 0 ? null : Math.round(sum / count * 10.0) / 10.0, reviewCount).withRatingCount(count);
     }
 
     @Cacheable(value = "ongoingShows", key = "#limit")
@@ -123,7 +115,7 @@ public class ShowService {
 
         List<ShowResponse> endingSoon = showRepository.findEndingSoon(pageable).stream().map(ShowResponse::from).toList();
 
-        List<ShowResponse> openingThisMonth = showRepository.findOpeningBetween(monthStart, monthEnd, pageable).stream()
+        List<ShowResponse> openingThisMonth = showRepository.findOpeningBetween(LocalDate.now(), monthEnd, pageable).stream()
                 .map(ShowResponse::from)
                 .toList();
 
@@ -196,24 +188,6 @@ public class ShowService {
                 ? showRepository.findOngoingShowsOnDateAndGenre(date, genre)
                 : showRepository.findOngoingShowsOnDate(date);
 
-        // Ensure ongoing shows have dtguidance if missing
-        boolean updatedAny = false;
-        for (Show show : shows) {
-            if ((show.getDtguidance() == null || show.getDtguidance().isBlank()) && show.getKopisId() != null) {
-                try {
-                    kopisSyncService.syncShow(com.curtaincall.infra.kopis.KopisShowDto.builder().kopisId(show.getKopisId()).build());
-                    updatedAny = true;
-                } catch (Exception ignored) {}
-            }
-        }
-
-        if (updatedAny) {
-            entityManager.clear();
-            shows = (genre != null)
-                    ? showRepository.findOngoingShowsOnDateAndGenre(date, genre)
-                    : showRepository.findOngoingShowsOnDate(date);
-        }
-
         Map<String, List<ShowScheduleResponse.ScheduleShowItem>> timeSlotMap = new TreeMap<>();
         Set<Long> countedShowIds = new HashSet<>();
 
@@ -230,6 +204,8 @@ public class ShowService {
                         .genre(show.getGenre() != null ? show.getGenre().name() : null)
                         .genreDisplayName(show.getGenre() != null ? show.getGenre().getDisplayName() : null)
                         .theaterName(show.getTheater() != null ? show.getTheater().getName() : null)
+                        .theaterRegion(show.getTheater() != null ? show.getTheater().getRegion() : null)
+                        .sourceUpdatedAt(show.getUpdatedAt())
                         .posterUrl(show.getPosterUrl())
                         .runtime(show.getRuntime())
                         .priceInfo(show.getPriceInfo())
@@ -315,18 +291,6 @@ public class ShowService {
                 Matcher timeMatcher = Pattern.compile("(\\d{1,2}:\\d{2})").matcher(timeGroup);
                 while (timeMatcher.find()) {
                     String time = normalizeTime(timeMatcher.group(1));
-                    if (isValidShowTime(time) && !times.contains(time)) {
-                        times.add(time);
-                    }
-                }
-            }
-        }
-
-        if (times.isEmpty()) {
-            if (dtguidance.contains(dayName) || (isWeekend && dtguidance.contains("주말")) || (!isWeekend && dtguidance.contains("평일"))) {
-                Matcher tm = Pattern.compile("(\\d{1,2}:\\d{2})").matcher(dtguidance);
-                while (tm.find()) {
-                    String time = normalizeTime(tm.group(1));
                     if (isValidShowTime(time) && !times.contains(time)) {
                         times.add(time);
                     }

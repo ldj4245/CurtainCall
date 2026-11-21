@@ -27,6 +27,7 @@ export default function ShowInfoTab({ show }: Props) {
 
   return (
     <div className="space-y-6">
+      <p className="feed-meta">공연 정보 KOPIS{show.sourceUpdatedAt && ` · DB 갱신 ${show.sourceUpdatedAt.slice(0, 16).replace("T", " ")}`} · 일정 변경은 예매처에서 확인해 주세요.</p>
       {/* 1. 기본 공연 정보 */}
       <div className="border border-line-base bg-surface-base p-4 sm:p-5">
         <h3 className="text-[13px] font-semibold text-ink-base pb-2.5 border-b border-line-base mb-3">
@@ -60,7 +61,7 @@ export default function ShowInfoTab({ show }: Props) {
 
           <div className="grid grid-cols-[68px_1fr] gap-2 py-2">
             <dt className="text-ink-lightest">관람 연령</dt>
-            <dd className="font-medium text-ink-base">{show.ageLimit || '전체 관람가'}</dd>
+            <dd className="font-medium text-ink-base">{show.ageLimit || '정보 확인 중'}</dd>
           </div>
 
           <div className="grid grid-cols-[68px_1fr] gap-2 py-2">
@@ -135,7 +136,7 @@ export default function ShowInfoTab({ show }: Props) {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h4 className="text-[13px] font-semibold text-ink-base">티켓 예매처</h4>
-            <p className="mt-0.5 text-[11px] text-ink-lightest">공식 예매처에서 예매 일정과 좌석을 확인하세요.</p>
+            <p className="mt-0.5 text-[11px] text-ink-lightest">예매처 검색 결과에서 판매 여부를 확인하세요.</p>
           </div>
           <div className="flex flex-wrap gap-2">
             {bookingLinks.map((link) => (

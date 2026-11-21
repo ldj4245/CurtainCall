@@ -31,6 +31,7 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
     private final JwtTokenProvider jwtTokenProvider;
+    private final com.curtaincall.domain.user.repository.UserRepository users;
 
     @Value("${app.frontend-url}")
     private String frontendUrl;
@@ -52,6 +53,8 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui/**", "/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/reviews/*/comments", "/api/shared/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/events").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/shows/**", "/api/theaters/**", "/api/casting/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/shows/*/reviews/**", "/api/shows/*/casting/**", "/api/shows/*/diary-snippets/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/shows/*/casting/refresh").hasRole("ADMIN")
@@ -69,7 +72,7 @@ public class SecurityConfig {
                 .oauth2Login(oauth2 -> oauth2
                         .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
                         .successHandler(oAuth2SuccessHandler))
-                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider),
+                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, users),
                         UsernamePasswordAuthenticationFilter.class)
                 .build();
     }

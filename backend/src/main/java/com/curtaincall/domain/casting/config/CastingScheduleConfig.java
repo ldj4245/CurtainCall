@@ -23,7 +23,7 @@ public class CastingScheduleConfig {
     private final ShowRepository showRepository;
     private final CastingService castingService;
 
-    @Scheduled(cron = "0 0 3 * * *") // 매일 새벽 3시
+    @Scheduled(cron = "0 0 3 * * *", zone = "Asia/Seoul") // 매일 새벽 3시
     public void refreshOngoingShowsCasting() {
         log.info("===== 캐스팅 정보 갱신 시작 =====");
 

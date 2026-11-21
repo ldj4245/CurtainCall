@@ -116,6 +116,11 @@ public class ImageUploadService {
         }
     }
 
+    public void deleteOwnedDiaryImage(String imageUrl, Long userId) {
+        if (cdnUrl == null || imageUrl == null || !imageUrl.startsWith(cdnUrl + "/diary/" + userId + "/")) return;
+        deleteImage(imageUrl);
+    }
+
     private void validateFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("파일이 비어있습니다.");

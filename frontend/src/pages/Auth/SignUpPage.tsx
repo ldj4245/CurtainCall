@@ -4,6 +4,8 @@ import { useForm } from 'react-hook-form'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { authApi } from '../../api/auth'
+import { useAuthStore } from '../../store/authStore'
+import { track } from '../../utils/analytics'
 
 interface SignUpForm {
   nickname: string
@@ -60,9 +62,14 @@ export default function SignUpPage() {
 
     setIsLoading(true)
     try {
-      await authApi.signUp(data.email, data.password, data.nickname)
-      toast.success('회원가입이 완료되었습니다! 로그인해 주세요.')
-      navigate('/login')
+      const result = await authApi.signUp(data.email, data.password, data.nickname)
+      useAuthStore.getState().setAccessToken(result.accessToken)
+      useAuthStore.getState().setUser(await authApi.getMe())
+      track('signup_complete')
+      toast.success('가입되었습니다.')
+      const redirect = sessionStorage.getItem('postLoginRedirect') || '/diary?compose=1'
+      sessionStorage.removeItem('postLoginRedirect')
+      navigate(redirect, { replace: true })
     } catch (error: any) {
       toast.error(error.response?.data?.message || '회원가입에 실패했습니다.')
     } finally {
@@ -71,8 +78,8 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-5 py-12 bg-surface-base">
-      <div className="w-full max-w-[340px]">
+    <div className="auth-screen">
+      <div className="auth-panel">
         {/* 로고 및 타이틀 */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 text-[17px] font-semibold tracking-[-0.055em] text-ink-darkest">
@@ -80,7 +87,7 @@ export default function SignUpPage() {
             CurtainCall
           </Link>
           <h1 className="mt-4 text-[20px] font-semibold tracking-tight text-ink-darker">회원가입</h1>
-          <p className="mt-1 text-[12px] text-ink-muted">나만의 관극 다이어리를 시작해 보세요.</p>
+          <p className="mt-1 text-[12px] text-ink-muted">계정 정보를 입력해 주세요.</p>
         </div>
 
         {/* 폼 */}

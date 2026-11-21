@@ -175,7 +175,7 @@ function EntryDetailModal({ entry, photoIndex, onPhotoIndexChange, onEdit, onClo
                 <Star
                   key={i}
                   size={12}
-                  className={i < entry.rating ? 'fill-brand text-brand' : 'text-line-base'}
+                  className={i < (entry.rating ?? 0) ? 'fill-brand text-brand' : 'text-line-base'}
                 />
               ))}
             </div>

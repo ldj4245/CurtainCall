@@ -42,7 +42,7 @@ public class DiaryEntry extends com.curtaincall.global.common.SoftDeleteEntity {
     @Column(name = "cast_memo", length = 500)
     private String castMemo;
 
-    @Column(nullable = false)
+    @Column
     private Integer rating;
 
     @Column(columnDefinition = "TEXT")
@@ -55,8 +55,26 @@ public class DiaryEntry extends com.curtaincall.global.common.SoftDeleteEntity {
     @Builder.Default
     private Boolean isOpen = false;
 
-    @Column(name = "photo_urls", columnDefinition = "TEXT")
+    @Column(name = "photo_urls", columnDefinition = "LONGTEXT")
     private String photoUrls; // 쉼표로 구분된 이미지 URL 목록 (최대 5장)
+
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean hasSpoiler = false;
+
+    @Column(unique = true, length = 36)
+    private String shareToken;
+
+    public void updatePublishing(boolean spoiler) {
+        this.hasSpoiler = spoiler;
+        // Revocation stays effective even if the entry is made public again later.
+        if (!Boolean.TRUE.equals(this.isOpen)) this.shareToken = null;
+    }
+
+    public String createShareToken() {
+        if (shareToken == null) shareToken = java.util.UUID.randomUUID().toString();
+        return shareToken;
+    }
 
     public void update(LocalDate watchedDate, String seatInfo, String castMemo,
             Integer rating, String comment, Integer ticketPrice, Boolean isOpen, String photoUrls) {

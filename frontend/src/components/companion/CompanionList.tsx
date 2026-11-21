@@ -86,7 +86,7 @@ export default function CompanionList({ showId }: CompanionListProps) {
             <div className="flex items-end justify-between gap-4">
                 <div>
                     <h2 className="flex items-center gap-2 text-[20px] font-semibold tracking-[-0.035em] text-[#172033]">
-                        <HeartHandshake className="h-5 w-5 text-[#9b3155]" />
+                        <HeartHandshake className="h-5 w-5 text-[#333333]" />
                         함께 관극
                     </h2>
                     <p className="mt-1 text-[13px] text-[#697386]">이 공연을 함께 볼 동행을 찾아보세요.</p>
@@ -205,7 +205,7 @@ function CompanionCard({
             <div className="flex justify-between items-start mb-3">
                 <div className="flex items-center gap-2">
                     <span className={`px-2 py-1 text-[10px] font-semibold ${isOpen
-                        ? 'bg-[#f8eff3] text-[#9b3155]'
+                        ? 'bg-[#f2f2f2] text-[#333333]'
                         : 'bg-[#f1f3f5] text-[#697386]'
                         }`}>
                         {isOpen ? '모집 중' : post.status === 'CLOSED' ? '모집 마감' : '기간 만료'}
@@ -252,7 +252,7 @@ function CompanionCard({
                         <span className="font-medium">{post.currentMembers} / {post.maxMembers}명</span>
                         <div className="ml-2 h-1 flex-1 overflow-hidden bg-[#eef0f3]">
                             <div
-                                className={`h-full transition-all ${post.currentMembers >= post.maxMembers || !isOpen ? 'bg-[#aeb7c5]' : 'bg-[#9b3155]'}`}
+                                className={`h-full transition-all ${post.currentMembers >= post.maxMembers || !isOpen ? 'bg-[#aeb7c5]' : 'bg-[#333333]'}`}
                                 style={{ width: `${(post.currentMembers / post.maxMembers) * 100}%` }}
                             />
                         </div>

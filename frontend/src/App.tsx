@@ -3,8 +3,10 @@ import { useEffect, lazy, Suspense } from 'react'
 import { useAuthStore } from './store/authStore'
 import { authApi } from './api/auth'
 import Navbar from './components/common/Navbar'
-import MobileTabBar from './components/common/MobileTabBar'
 
+const PlansPage = lazy(() => import('./pages/Plans/PlansPage'))
+const NotificationsPage = lazy(() => import('./pages/Notifications/NotificationsPage'))
+const SharedRecordPage = lazy(() => import('./pages/Shared/SharedRecordPage'))
 const HomePage = lazy(() => import('./pages/Home/HomePage'))
 const ShowListPage = lazy(() => import('./pages/Shows/ShowListPage'))
 const ShowDetailPage = lazy(() => import('./pages/Shows/ShowDetailPage'))
@@ -36,14 +38,12 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function MainLayout() {
   return (
-    <div className="min-h-screen bg-[#0d1117] flex justify-center selection:bg-brand selection:text-white">
-      {/* 중앙 모바일 웹앱 프레임 (460px) */}
-      <div className="w-full max-w-[460px] min-h-screen bg-surface-base relative flex flex-col shadow-[0_0_50px_rgba(0,0,0,0.6)] sm:border-x sm:border-slate-800/80">
+    <div className="min-h-screen bg-surface-base selection:bg-brand/15 selection:text-brand">
+      <div className="min-h-screen relative flex flex-col">
         <Navbar />
-        <main className="flex-1 pb-20 overflow-x-hidden">
+        <main id="main-content" className="flex-1 pb-8">
           <Outlet />
         </main>
-        <MobileTabBar />
       </div>
     </div>
   )
@@ -51,8 +51,8 @@ function MainLayout() {
 
 function AuthLayout() {
   return (
-    <div className="min-h-screen bg-[#0d1117] flex justify-center">
-      <div className="w-full max-w-[460px] min-h-screen bg-surface-base relative flex flex-col shadow-[0_0_50px_rgba(0,0,0,0.6)] sm:border-x sm:border-slate-800/80">
+    <div className="min-h-screen bg-surface-base flex justify-center">
+      <div className="w-full min-h-screen relative flex flex-col">
         <Outlet />
       </div>
     </div>
@@ -72,7 +72,7 @@ export default function App() {
     <ErrorBoundary>
       <ScrollToTop />
       <Suspense fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#0d1117]">
+        <div className="min-h-screen flex items-center justify-center bg-surface-base">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-700 border-t-brand" />
         </div>
       }>
@@ -89,13 +89,14 @@ export default function App() {
         <Route element={<MainLayout />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/shows" element={<ShowListPage />} />
+          <Route path="/plans" element={<ProtectedRoute><PlansPage /></ProtectedRoute>} />
+          <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+          <Route path="/shared/:token" element={<SharedRecordPage />} />
           <Route path="/shows/:id" element={<ShowDetailPage />} />
           <Route
             path="/diary"
             element={
-              <ProtectedRoute>
-                <DiaryPage />
-              </ProtectedRoute>
+              <DiaryPage />
             }
           />
           <Route

@@ -1,213 +1,115 @@
 import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Plus, List, Calendar, LayoutGrid, Share2, Ticket } from 'lucide-react'
 import { diaryApi } from '../../api/diary'
 import DiaryEntryCard from '../../components/diary/DiaryEntryCard'
 import DiaryCalendar from '../../components/diary/DiaryCalendar'
 import DiaryGalleryView from '../../components/diary/DiaryGalleryView'
 import DiaryFormModal from '../../components/diary/DiaryFormModal'
-import DiaryStats from '../../components/diary/DiaryStats'
+import InstallApp from '../../components/common/InstallApp'
 import ShareCard from '../../components/diary/ShareCard'
 import Pagination from '../../components/common/Pagination'
+import { getThisMonthDiaryCount } from '../../utils/diaryReminder'
 import type { DiaryEntry } from '../../types'
+import { useAuthStore } from '../../store/authStore'
+import { Link } from 'react-router-dom'
 
-type ViewMode = 'list' | 'calendar' | 'gallery'
+type ViewMode = 'list' | 'gallery' | 'calendar'
 
 export default function DiaryPage() {
+  const isAuthenticated = useAuthStore(s => s.isAuthenticated)
+  const [copyEntry, setCopyEntry] = useState<DiaryEntry>()
+  const [params, setParams] = useSearchParams()
   const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [page, setPage] = useState(0)
   const [showForm, setShowForm] = useState(false)
-  const [showShare, setShowShare] = useState(false)
-  const [editEntry, setEditEntry] = useState<DiaryEntry | undefined>(undefined)
-
-  const {
-    data: diaryData,
-    refetch: refetchDiary,
-  } = useQuery({
+  const [showShare, setShowShare] = useState(params.has("month"))
+  const [editEntry, setEditEntry] = useState<DiaryEntry>()
+  const { data: diaryData, isLoading, isError, refetch } = useQuery({
     queryKey: ['diary', 'me', page],
     queryFn: () => diaryApi.getMyDiary(page, 10),
+    enabled: isAuthenticated,
   })
-
-  const { data: stats, refetch: refetchStats } = useQuery({
+  const { data: stats } = useQuery({
     queryKey: ['diary', 'stats'],
     queryFn: diaryApi.getStats,
+    enabled: isAuthenticated,
   })
+  const entries = diaryData?.content ?? []
+  const formOpen = showForm || params.get('compose') === '1'
 
-  const handleEdit = (entry: DiaryEntry) => {
+  const closeForm = () => {
+    setShowForm(false)
+    setEditEntry(undefined)
+    setCopyEntry(undefined)
+    if (params.has('compose')) {
+      const next = new URLSearchParams(params)
+      next.delete('compose')
+      setParams(next, { replace: true })
+    }
+  }
+
+  const openNew = () => {
+    setCopyEntry(undefined)
+    setEditEntry(undefined)
+    setShowForm(true)
+  }
+
+  const edit = (entry: DiaryEntry) => {
+    setCopyEntry(undefined)
     setEditEntry(entry)
     setShowForm(true)
   }
 
-  const entries = diaryData?.content ?? []
-  const recentEntry = entries[0]
-
   return (
-    <>
-      <div className="px-4 py-5 sm:px-5">
-        {/* 헤더 영역 */}
-        <div className="mb-5 flex items-center justify-between border-b border-line-lightest pb-4">
-          <div>
-            <h1 className="text-[20px] font-bold tracking-tight text-ink-darkest">관극 다이어리</h1>
-            <p className="text-[12px] text-ink-muted mt-0.5">내가 관람한 공연들의 티켓과 추억을 기록합니다.</p>
-          </div>
-          <div className="flex items-center gap-2">
-            {entries.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setShowShare(true)}
-                className="h-9 px-3 border border-line-base bg-white rounded-md text-[12px] font-medium text-ink-muted hover:text-ink-darkest hover:border-line-dark transition-colors inline-flex items-center gap-1.5"
-                title="티켓 카드 공유"
-              >
-                <Share2 size={13} />
-                <span className="hidden sm:inline">티켓 카드</span>
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => {
-                setEditEntry(undefined)
-                setShowForm(true)
-              }}
-              className="h-9 px-3.5 bg-brand text-white rounded-md text-[12px] font-semibold hover:bg-brand/90 transition-colors inline-flex items-center gap-1.5 shadow-sm"
-            >
-              <Plus size={15} />
-              <span>기록 남기기</span>
-            </button>
-          </div>
+    <div className="page-width">
+      <header className="page-heading flex flex-wrap items-center justify-between gap-4">
+        <h1>내 관극 기록</h1>
+        <div className="flex items-center gap-2">
+          {entries.length > 0 && <button onClick={() => setShowShare(true)} className="button-secondary">공유 카드</button>}
+          <button onClick={openNew} className="button-primary">기록하기</button>
         </div>
+      </header>
 
-        {/* 통계 요약 카드 */}
-        <div className="mb-6">
-          <DiaryStats stats={stats} />
-        </div>
-
-        {/* 3대 뷰 스위처 탭 */}
-        <div className="flex items-center justify-between border-b border-line-base mb-4">
-          <div className="flex gap-1 -mb-[1px]">
-            <button
-              type="button"
-              onClick={() => setViewMode('list')}
-              className={`flex items-center gap-1.5 px-3 py-2.5 text-[13px] font-medium border-b-2 transition-colors ${
-                viewMode === 'list'
-                  ? 'border-brand font-bold text-brand'
-                  : 'border-transparent text-ink-muted hover:text-ink-darkest'
-              }`}
-            >
-              <List size={14} />
-              목록
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode('calendar')}
-              className={`flex items-center gap-1.5 px-3 py-2.5 text-[13px] font-medium border-b-2 transition-colors ${
-                viewMode === 'calendar'
-                  ? 'border-brand font-bold text-brand'
-                  : 'border-transparent text-ink-muted hover:text-ink-darkest'
-              }`}
-            >
-              <Calendar size={14} />
-              캘린더
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode('gallery')}
-              className={`flex items-center gap-1.5 px-3 py-2.5 text-[13px] font-medium border-b-2 transition-colors ${
-                viewMode === 'gallery'
-                  ? 'border-brand font-bold text-brand'
-                  : 'border-transparent text-ink-muted hover:text-ink-darkest'
-              }`}
-            >
-              <LayoutGrid size={14} />
-              티켓 갤러리
-            </button>
-          </div>
-
-          <span className="text-[11px] text-ink-lighter font-medium">
-            {viewMode === 'list' && `${diaryData?.totalElements ?? 0}건의 기록`}
-          </span>
-        </div>
-
-        {/* 뷰 모드별 콘텐츠 */}
-        {viewMode === 'list' && (
-          <div>
-            {entries.length === 0 ? (
-              <div className="text-center py-14 border border-line-lightest bg-white rounded-md px-4">
-                <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-surface-alt flex items-center justify-center text-ink-lighter">
-                  <Ticket size={24} />
-                </div>
-                <h3 className="text-[15px] font-semibold text-ink-darkest">아직 기록된 관극이 없습니다</h3>
-                <p className="text-[12px] text-ink-muted mt-1 max-w-xs mx-auto">
-                  첫 번째 관람 공연을 기록하고 나만의 감상과 티켓북을 완성해 보세요.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEditEntry(undefined)
-                    setShowForm(true)
-                  }}
-                  className="mt-5 h-9 px-4 bg-brand text-white rounded-md text-[12px] font-semibold hover:bg-brand/90 transition-colors inline-flex items-center gap-1.5 shadow-sm"
-                >
-                  <Plus size={14} />
-                  첫 기록 시작하기
-                </button>
-              </div>
-            ) : (
-              <div className="divide-y divide-line-lightest border-t border-line-lightest">
-                {entries.map((entry) => (
-                  <DiaryEntryCard
-                    key={entry.id}
-                    entry={entry}
-                    onUpdated={() => {
-                      refetchDiary()
-                      refetchStats()
-                    }}
-                    onEdit={() => handleEdit(entry)}
-                  />
-                ))}
-
-                {diaryData && diaryData.totalPages > 1 && (
-                  <div className="mt-6">
-                    <Pagination currentPage={page} totalPages={diaryData.totalPages} onPageChange={setPage} />
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {viewMode === 'calendar' && (
-          <DiaryCalendar onSelectEntry={handleEdit} />
-        )}
-
-        {viewMode === 'gallery' && (
-          <DiaryGalleryView onEdit={handleEdit} />
-        )}
-      </div>
-
-      {showForm && (
-        <DiaryFormModal
-          entry={editEntry}
-          onClose={() => {
-            setShowForm(false)
-            setEditEntry(undefined)
-          }}
-          onSaved={() => {
-            setShowForm(false)
-            setEditEntry(undefined)
-            setPage(0)
-            refetchDiary()
-            refetchStats()
-          }}
-        />
+      {!isAuthenticated && <p className="feed-notice">공연과 관람일을 입력해 보세요. 저장할 때 로그인하면 입력 내용이 이어집니다. <Link to="/shows" className="text-action">공연 찾기</Link></p>}
+      {(stats?.totalCount ?? 0) > 0 && (
+        <dl className="book-summary">
+          <div><dt>전체 기록</dt><dd>{stats?.totalCount}<small>개</small></dd></div>
+          <div><dt>이번 달 관람</dt><dd>{getThisMonthDiaryCount(stats)}<small>회</small></dd></div>
+          <div><dt>누적 지출</dt><dd>{stats?.totalSpent.toLocaleString()}<small>원</small></dd></div>
+        </dl>
       )}
 
-      {showShare && (
-        <ShareCard
-          stats={stats}
-          recentEntry={recentEntry}
-          onClose={() => setShowShare(false)}
-        />
-      )}
-    </>
+      {(stats?.totalCount ?? 0) > 0 && <InstallApp />}
+      <nav className="book-tabs" aria-label="기록 보기 방식">
+        {([
+          { value: 'list', label: '목록' },
+          { value: 'gallery', label: '포스터' },
+          { value: 'calendar', label: '달력' },
+        ] as const).map(({ value, label }) => (
+          <button key={value} aria-pressed={viewMode === value} onClick={() => setViewMode(value)} className={viewMode === value ? 'is-active' : ''}>
+            {label}
+          </button>
+        ))}
+        <span className="ml-auto text-[12px] text-ink-lighter">{diaryData?.totalElements ?? 0}개의 기록</span>
+      </nav>
+
+      {isAuthenticated && (isLoading ? <p className="feed-notice" role="status">불러오는 중...</p>
+        : isError ? <div className="quiet-empty"><p>기록을 불러오지 못했습니다.</p><button onClick={() => refetch()} className="button-secondary">다시 시도</button></div>
+        : entries.length === 0 ? <div className="quiet-empty"><p>관극 기록이 없습니다.</p><button onClick={openNew} className="text-action">기록하기</button></div>
+        : viewMode === 'gallery' ? <DiaryGalleryView onEdit={edit} />
+        : viewMode === 'calendar' ? <DiaryCalendar onSelectEntry={edit} />
+        : <>
+            <div className="diary-feed">
+              {entries.map(entry => <DiaryEntryCard key={entry.id} entry={entry} onCopy={() => { setCopyEntry(entry); setEditEntry(undefined); setShowForm(true) }} onEdit={() => edit(entry)} onUpdated={() => refetch()} />)}
+            </div>
+            {diaryData && diaryData.totalPages > 1 && (
+              <div className="mt-6"><Pagination currentPage={page} totalPages={diaryData.totalPages} onPageChange={setPage} /></div>
+            )}
+          </>)}
+
+      {formOpen && <DiaryFormModal entry={editEntry} copyEntry={copyEntry} mode="quick" onClose={closeForm} onSaved={() => { closeForm(); setPage(0) }} />}
+      {showShare && <ShareCard initialMonth={params.get("month") || undefined} stats={stats} recentEntry={entries[0]} onClose={() => setShowShare(false)} />}
+    </div>
   )
 }

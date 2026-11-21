@@ -33,6 +33,8 @@ public class ShowScheduleResponse {
         private String genre;
         private String genreDisplayName;
         private String theaterName;
+        private String theaterRegion;
+        private java.time.LocalDateTime sourceUpdatedAt;
         private String posterUrl;
         private String runtime;
         private String priceInfo;

@@ -8,8 +8,11 @@ import { authApi } from '../../api/auth'
 import { favoritesApi } from '../../api/favorites'
 import { reviewsApi } from '../../api/reviews'
 
+import ShowCard from '../../components/show/ShowCard'
 import Pagination from '../../components/common/Pagination'
 import ConfirmModal from '../../components/common/ConfirmModal'
+import AccountDataSettings from '../../components/common/AccountDataSettings'
+import RetentionOperations from '../../components/admin/RetentionOperations'
 import AdminOperationsPanel from '../../components/admin/AdminOperationsPanel'
 
 type Tab = 'favorites' | 'reviews' | 'profile'
@@ -74,7 +77,7 @@ export default function MyPage() {
     ]
 
     return (
-        <div className="px-4 py-4 sm:px-5">
+        <div className="page-width account-page">
             <div className="mb-4 flex items-end justify-between border-b border-line-lightest pb-3">
                 <h1 className="text-[18px] font-bold tracking-[-0.04em] text-ink-darker">마이페이지</h1>
                 <button
@@ -102,6 +105,7 @@ export default function MyPage() {
                 </div>
             </div>
 
+            <Link to="/chat" className="text-link mb-5">동행 메시지 보기 →</Link>
             {/* 관극 다이어리 바로가기 배너 */}
             <Link
                 to="/diary"
@@ -109,8 +113,8 @@ export default function MyPage() {
             >
                 <div className="flex items-center justify-between">
                     <div>
-                        <p className="text-[12px] font-semibold text-ink-darkest">나의 관극 다이어리</p>
-                        <p className="text-[11px] text-ink-muted mt-0.5">내가 남긴 티켓과 관람 통계를 확인하세요.</p>
+                        <p className="text-[12px] font-semibold text-ink-darkest">내 관극 기록</p>
+                        <p className="text-[11px] text-ink-muted mt-0.5">관람 기록과 통계</p>
                     </div>
                     <span className="text-[11px] font-medium text-brand">보러가기 ›</span>
                 </div>
@@ -137,20 +141,8 @@ export default function MyPage() {
                     <div>
                         {favorites && favorites.content.length > 0 ? (
                             <>
-                                <div className="grid grid-cols-2 gap-x-3 gap-y-5">
-                                    {favorites.content.map((show: any) => (
-                                        <Link key={show.id} to={`/shows/${show.id}`} className="min-w-0 group">
-                                            <div className="relative aspect-[2/3] overflow-hidden bg-surface-background border border-line-lightest">
-                                                {show.posterImage ? (
-                                                    <img src={show.posterImage} alt={show.title} className="h-full w-full object-cover group-hover:scale-105 transition-transform" />
-                                                ) : (
-                                                    <div className="flex h-full w-full items-center justify-center text-[10px] text-ink-lightest">No Image</div>
-                                                )}
-                                            </div>
-                                            <h3 className="mt-2 truncate text-[12px] font-semibold text-ink-darker group-hover:text-brand transition-colors">{show.title}</h3>
-                                            <p className="mt-0.5 truncate text-[10px] text-ink-lightest">{show.facilityName}</p>
-                                        </Link>
-                                    ))}
+                                <div className="feed-list">
+                                    {favorites.content.map((show, index) => <ShowCard key={show.id} show={show} index={favPage * 8 + index} />)}
                                 </div>
                                 {favorites.totalPages > 1 && (
                                     <div className="mt-6">
@@ -162,7 +154,7 @@ export default function MyPage() {
                             <div className="py-16 text-center">
                                 <Heart size={20} className="mx-auto mb-3 text-line-base" />
                                 <p className="text-[12px] font-semibold text-ink-muted">관심 등록한 공연이 없습니다.</p>
-                                <p className="mt-1 text-[11px] text-ink-lightest">마음에 드는 공연을 찜해보세요.</p>
+                                <p className="mt-1 text-[11px] text-ink-lightest">공연 상세에서 관심 공연을 저장할 수 있습니다.</p>
                                 <button onClick={() => navigate('/shows')} className="mt-4 border border-line-base bg-surface-base px-3.5 py-1.5 text-[11px] text-ink-muted hover:border-line-dark transition-colors">
                                     공연 둘러보기
                                 </button>
@@ -235,6 +227,7 @@ export default function MyPage() {
                                 </div>
                             )}
                         </div>
+                        <AccountDataSettings />
                         <div className="border-t border-line-lightest pt-3">
                             <h3 className="text-[11px] font-semibold text-ink-muted">이메일 계정</h3>
                             <p className="mt-1 text-[12px] text-ink-base">{user?.email}</p>
@@ -244,7 +237,7 @@ export default function MyPage() {
             </div>
 
             {/* 운영자 전용 관리 패널 (ADMIN 권한 보유 시에만 노출) */}
-            {user?.role === 'ADMIN' && <AdminOperationsPanel />}
+            {user?.role === 'ADMIN' && <><AdminOperationsPanel /><RetentionOperations /></>}
 
             {/* 인앱 정보 및 출처 */}
             <div className="mt-12 pt-5 border-t border-line-lightest text-center text-[10px] text-ink-lightest space-y-1">

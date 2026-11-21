@@ -6,10 +6,12 @@ export interface DiaryCreateRequest {
   watchedDate: string
   seatInfo?: string
   castMemo?: string
-  rating: number
+  rating: number | null
   comment?: string
   ticketPrice?: number
   isOpen?: boolean
+  hasSpoiler?: boolean
+  planId?: number
   photoUrls?: string[]
 }
 

@@ -22,9 +22,9 @@ export default function ChatListPage() {
   }
 
   return (
-    <div className="px-4 py-4 sm:px-5">
+    <div className="page-width py-8">
       <p className="text-[10px] text-ink-lightest mb-1.5">홈&nbsp; › &nbsp;<span className="text-ink-light">동행 메시지</span></p>
-      
+
       <div className="mb-5 flex items-end justify-between border-b border-line-lightest pb-3">
         <div>
           <h1 className="text-[18px] font-semibold tracking-[-0.05em] text-ink-darker">동행 메시지</h1>

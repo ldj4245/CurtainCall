@@ -11,9 +11,7 @@ export default function ShowCompanionLiveTab({ showId, isOngoing }: Props) {
     <div className="space-y-6">
       {/* 1. 당일 관람객 실시간 '오늘 라이브' 채팅 */}
       {isOngoing && (
-        <section>
-          <ShowLiveChat showId={showId} />
-        </section>
+        <details><summary className="cursor-pointer text-sm text-ink-muted">당일 채팅 열기</summary><div className="mt-4"><ShowLiveChat showId={showId} /></div></details>
       )}
 
       {/* 2. 동행 매칭 목록 */}

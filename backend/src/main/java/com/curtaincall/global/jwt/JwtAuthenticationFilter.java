@@ -20,6 +20,7 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final com.curtaincall.domain.user.repository.UserRepository users;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
@@ -28,7 +29,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (StringUtils.hasText(token)
                 && jwtTokenProvider.validateToken(token)
-                && jwtTokenProvider.isAccessToken(token)) {
+                && jwtTokenProvider.isAccessToken(token)
+                && users.existsByIdAndDeactivatedFalse(jwtTokenProvider.getUserId(token))) {
             Long userId = jwtTokenProvider.getUserId(token);
             String role = jwtTokenProvider.getRole(token);
             UsernamePasswordAuthenticationToken authentication =

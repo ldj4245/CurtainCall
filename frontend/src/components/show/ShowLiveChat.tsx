@@ -1,3 +1,5 @@
+import { retentionApi } from '../../api/retention';
+import MessageActions from '../../components/common/MessageActions';
 import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
@@ -9,13 +11,14 @@ interface ShowLiveChatProps {
   showId: number;
 }
 
-const TODAY = new Date().toISOString().split('T')[0];
+const TODAY = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 
 export default function ShowLiveChat({ showId }: ShowLiveChatProps) {
   const { isAuthenticated, user } = useAuthStore();
   const draftStorageKey = `show-live-draft-${showId}-${TODAY}`;
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { data: blocked = [] } = useQuery({ queryKey: ["blocks"], queryFn: retentionApi.blocks, enabled: isAuthenticated });
 
   const { data: room, isLoading } = useQuery({
     queryKey: ['show-live', showId, TODAY],
@@ -67,7 +70,7 @@ export default function ShowLiveChat({ showId }: ShowLiveChatProps) {
 
   const formatTime = (iso: string) => {
     if (!iso) return '';
-    const utc = iso.endsWith('Z') ? iso : iso + 'Z';
+    const utc = /[Z+]/.test(iso) ? iso : iso + '+09:00';
     return new Date(utc).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
   };
 
@@ -126,7 +129,7 @@ export default function ShowLiveChat({ showId }: ShowLiveChatProps) {
                 <p className="mt-1 text-[11px] text-ink-lighter">첫 번째 감상을 남겨 보세요.</p>
               </div>
             ) : (
-              messages.map((msg, idx) => {
+              messages.filter(msg => !blocked.some(b => b.blockedUserId === msg.senderId)).map((msg, idx) => {
                 const isMine = msg.senderId === user?.id;
                 return (
                   <div
@@ -156,6 +159,7 @@ export default function ShowLiveChat({ showId }: ShowLiveChatProps) {
                         {msg.content}
                       </div>
                       <span className="px-1 text-[10px] text-ink-lightest">{formatTime(msg.createdAt)}</span>
+                      {!isMine && <MessageActions type="LIVE" messageId={msg.id} senderId={msg.senderId} />}
                     </div>
                   </div>
                 );
@@ -170,7 +174,7 @@ export default function ShowLiveChat({ showId }: ShowLiveChatProps) {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+              onKeyDown={(e) => { if (e.nativeEvent.isComposing) return; if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
               placeholder={connected ? '감상 입력' : '연결 중'}
               disabled={!connected}
               className="h-[34px] flex-1 border border-line-base bg-surface-alt px-3 text-[12px] text-ink-base outline-none focus:border-brand disabled:opacity-50 transition-colors"

@@ -44,6 +44,8 @@ class ReviewServiceTest {
     @Mock
     private CacheManager cacheManager;
 
+    @Mock private com.curtaincall.domain.notification.NotificationService notificationService;
+
     private ReviewService reviewService;
 
     @BeforeEach
@@ -54,7 +56,8 @@ class ReviewServiceTest {
                 likeRepository,
                 showRepository,
                 userRepository,
-                cacheManager
+                cacheManager,
+                notificationService
         );
     }
 

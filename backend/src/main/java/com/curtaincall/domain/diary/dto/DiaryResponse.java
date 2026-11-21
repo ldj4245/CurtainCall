@@ -22,6 +22,7 @@ public class DiaryResponse {
     private String seatInfo;
     private String castMemo;
     private Integer rating;
+    private Boolean hasSpoiler;
     private String comment;
     private Integer ticketPrice;
     private Boolean isOpen;
@@ -30,7 +31,7 @@ public class DiaryResponse {
     private LocalDateTime createdAt;
 
     public static DiaryResponse from(DiaryEntry entry) {
-        List<String> photos = parsePhotoUrls(entry.getPhotoUrls());
+        List<String> photos = PhotoUrls.read(entry.getPhotoUrls());
         String representativeImage = photos.isEmpty()
                 ? entry.getShow().getPosterUrl()
                 : photos.get(0);
@@ -45,6 +46,7 @@ public class DiaryResponse {
                 .seatInfo(entry.getSeatInfo())
                 .castMemo(entry.getCastMemo())
                 .rating(entry.getRating())
+                .hasSpoiler(entry.getHasSpoiler())
                 .comment(entry.getComment())
                 .ticketPrice(entry.getTicketPrice())
                 .isOpen(entry.getIsOpen())
@@ -54,13 +56,4 @@ public class DiaryResponse {
                 .build();
     }
 
-    private static List<String> parsePhotoUrls(String photoUrls) {
-        if (photoUrls == null || photoUrls.isBlank()) {
-            return Collections.emptyList();
-        }
-        return Arrays.stream(photoUrls.split(","))
-                .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .toList();
-    }
 }

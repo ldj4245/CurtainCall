@@ -13,6 +13,16 @@ import java.util.Optional;
 
 public interface DiaryEntryRepository extends JpaRepository<DiaryEntry, Long>, DiaryEntryRepositoryCustom {
 
+    Optional<DiaryEntry> findByShareTokenAndIsOpenTrue(String token);
+
+    @Query("SELECT COUNT(d.rating) AS ratingCount, AVG(d.rating) AS averageRating FROM DiaryEntry d WHERE d.show.id = :showId AND d.isOpen = true")
+    PublicRatings publicRatings(Long showId);
+    interface PublicRatings { long getRatingCount(); Double getAverageRating(); }
+
+    @Query(value = "SELECT d FROM DiaryEntry d JOIN FETCH d.show s JOIN FETCH d.user u WHERE d.show.id = :showId AND d.isOpen = true AND (:seatsOnly = false OR (d.seatInfo IS NOT NULL AND TRIM(d.seatInfo) <> '')) AND (:seat = '' OR LOWER(d.seatInfo) LIKE LOWER(CONCAT('%', :seat, '%'))) ORDER BY d.watchedDate DESC, d.id DESC",
+           countQuery = "SELECT COUNT(d) FROM DiaryEntry d WHERE d.show.id = :showId AND d.isOpen = true AND (:seatsOnly = false OR (d.seatInfo IS NOT NULL AND TRIM(d.seatInfo) <> '')) AND (:seat = '' OR LOWER(d.seatInfo) LIKE LOWER(CONCAT('%', :seat, '%')))")
+    Page<DiaryEntry> findPublicRecords(Long showId, boolean seatsOnly, String seat, Pageable pageable);
+
     @Query(value = "SELECT d FROM DiaryEntry d JOIN FETCH d.show s LEFT JOIN FETCH s.theater WHERE d.user.id = :userId ORDER BY d.watchedDate DESC",
            countQuery = "SELECT COUNT(d) FROM DiaryEntry d WHERE d.user.id = :userId")
     Page<DiaryEntry> findByUserIdOrderByWatchedDateDesc(@Param("userId") Long userId, Pageable pageable);

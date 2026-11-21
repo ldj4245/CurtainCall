@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type ChangeEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   ChevronDown,
@@ -17,6 +17,10 @@ import { castingApi, type CastingRole } from '../../api/casting'
 import type { DiaryEntry } from '../../types'
 import StarRating from '../common/StarRating'
 import { parseTicketText } from '../../utils/ticketParser'
+import { useNavigate } from 'react-router-dom'
+import { useAuthStore } from '../../store/authStore'
+import { localDate, track } from '../../utils/analytics'
+import type { ViewingPlan } from '../../api/retention'
 
 const MAX_PHOTOS = 5
 
@@ -25,6 +29,8 @@ interface Props {
   initialShowId?: number
   initialShowTitle?: string
   initialCastMemo?: string
+  initialPlan?: ViewingPlan
+  copyEntry?: DiaryEntry
   mode?: 'quick' | 'full'
   onClose: () => void
   onSaved: (savedEntry: DiaryEntry) => void
@@ -35,11 +41,22 @@ export default function DiaryFormModal({
   initialShowId,
   initialShowTitle,
   initialCastMemo,
-  mode = 'full',
+  initialPlan,
+  copyEntry,
+  mode = 'quick',
   onClose,
   onSaved,
 }: Props) {
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
+  const isAuthenticated = useAuthStore(s => s.isAuthenticated)
+  const [draft] = useState(() => {
+    if (entry || copyEntry || initialPlan) return undefined
+    try {
+      const value = JSON.parse(sessionStorage.getItem('diary-draft') || 'null') as (DiaryCreateRequest & { showTitle?: string }) | null
+      return value && (!initialShowId || value.showId === initialShowId) ? value : undefined
+    } catch { return undefined }
+  })
   const isQuickMode = mode === 'quick' && !entry
   const isPresetShow = initialShowId != null && !entry
   const hasEntryExtras = Boolean(
@@ -47,16 +64,37 @@ export default function DiaryFormModal({
       (entry.seatInfo || entry.castMemo || entry.ticketPrice || entry.photoUrls?.length || entry.isOpen)
   )
 
-  const [rating, setRating] = useState(entry?.rating ?? 5)
+  const [rating, setRating] = useState<number>(entry?.rating ?? draft?.rating ?? 0)
   const [showSearch, setShowSearch] = useState('')
-  const [selectedShowId, setSelectedShowId] = useState<number | null>(entry?.showId ?? initialShowId ?? null)
-  const [selectedShowTitle, setSelectedShowTitle] = useState(entry?.showTitle ?? initialShowTitle ?? '')
+  const [selectedShowId, setSelectedShowId] = useState<number | null>(entry?.showId ?? initialShowId ?? copyEntry?.showId ?? draft?.showId ?? null)
+  const [selectedShowTitle, setSelectedShowTitle] = useState(entry?.showTitle ?? initialShowTitle ?? copyEntry?.showTitle ?? draft?.showTitle ?? '')
   const [photoUrls, setPhotoUrls] = useState<string[]>(entry?.photoUrls ?? [])
   const [isUploading, setIsUploading] = useState(false)
   const [showExtraFields, setShowExtraFields] = useState(!isQuickMode || hasEntryExtras)
   const [showSmartPaste, setShowSmartPaste] = useState(false)
   const [pasteText, setPasteText] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
+  useEffect(() => {
+    const previousFocus = document.activeElement as HTMLElement | null
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    dialogRef.current?.focus()
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onCloseRef.current()
+      if (event.key !== 'Tab') return
+      const focusable = dialogRef.current?.querySelectorAll<HTMLElement>('button:not(:disabled), input:not([type="hidden"]):not(:disabled), textarea, select, a[href]')
+      const visible = Array.from(focusable ?? []).filter(element => element.getClientRects().length > 0)
+      const first = visible[0]
+      const last = visible[visible.length - 1]
+      if (event.shiftKey && (document.activeElement === first || document.activeElement === dialogRef.current)) { event.preventDefault(); last?.focus() }
+      else if (!event.shiftKey && (document.activeElement === last || document.activeElement === dialogRef.current)) { event.preventDefault(); first?.focus() }
+    }
+    document.addEventListener('keydown', handleKey)
+    return () => { document.body.style.overflow = previousOverflow; document.removeEventListener('keydown', handleKey); previousFocus?.focus() }
+  }, [])
 
   const { data: searchResults } = useQuery({
     queryKey: ['shows', 'search', showSearch],
@@ -73,15 +111,16 @@ export default function DiaryFormModal({
   const defaultValues = useMemo<DiaryCreateRequest>(
     () => ({
       showId: entry?.showId ?? initialShowId ?? 0,
-      watchedDate: entry?.watchedDate ?? new Date().toISOString().slice(0, 10),
-      rating: entry?.rating ?? 5,
-      seatInfo: entry?.seatInfo ?? '',
-      castMemo: entry?.castMemo ?? initialCastMemo ?? '',
-      comment: entry?.comment ?? '',
-      ticketPrice: entry?.ticketPrice,
-      isOpen: entry?.isOpen ?? true,
+      watchedDate: entry?.watchedDate ?? initialPlan?.watchedDate ?? draft?.watchedDate ?? localDate(),
+      rating: entry?.rating ?? draft?.rating ?? null,
+      seatInfo: entry?.seatInfo ?? initialPlan?.seatInfo ?? draft?.seatInfo ?? '',
+      castMemo: entry?.castMemo ?? copyEntry?.castMemo ?? initialCastMemo ?? draft?.castMemo ?? '',
+      comment: entry?.comment ?? draft?.comment ?? '',
+      ticketPrice: entry?.ticketPrice ?? draft?.ticketPrice,
+      isOpen: entry?.isOpen ?? draft?.isOpen ?? false,
+      hasSpoiler: entry?.hasSpoiler ?? draft?.hasSpoiler ?? false,
     }),
-    [entry, initialShowId, initialCastMemo]
+    [entry, initialShowId, initialCastMemo, initialPlan, copyEntry, draft]
   )
 
   const {
@@ -94,6 +133,12 @@ export default function DiaryFormModal({
   })
 
   const currentCastMemo = watch('castMemo') || ''
+  const formValues = watch()
+  useEffect(() => {
+    if (entry) return
+    try { sessionStorage.setItem('diary-draft', JSON.stringify({ ...formValues, showId: selectedShowId, showTitle: selectedShowTitle, rating: rating || null })) } catch { /* Storage can be disabled. */ }
+  }, [entry, formValues, selectedShowId, selectedShowTitle, rating])
+  useEffect(() => { track('diary_start', initialShowId) }, [initialShowId])
 
   const handleActorToggle = (actorName: string) => {
     const actors = currentCastMemo
@@ -146,6 +191,7 @@ export default function DiaryFormModal({
   }
 
   const handlePhotoSelect = async (event: ChangeEvent<HTMLInputElement>) => {
+    if (!isAuthenticated) { toast('사진은 로그인 후 첨부할 수 있습니다.'); return }
     const files = Array.from(event.target.files ?? [])
 
     if (photoUrls.length + files.length > MAX_PHOTOS) {
@@ -176,28 +222,40 @@ export default function DiaryFormModal({
       const payload: DiaryCreateRequest = {
         ...data,
         showId: selectedShowId!,
-        rating,
+        rating: rating || null,
         photoUrls,
+        planId: initialPlan?.id,
       }
 
       return entry ? diaryApi.update(entry.id, payload) : diaryApi.create(payload)
     },
     onSuccess: (savedEntry) => {
+      if (!entry) sessionStorage.removeItem('diary-draft')
+      track('diary_saved', selectedShowId ?? undefined)
       toast.success('저장되었습니다.')
       queryClient.invalidateQueries({ queryKey: ['diary'] })
       queryClient.invalidateQueries({ queryKey: ['diary', 'stats'] })
       queryClient.invalidateQueries({ queryKey: ['diary', 'me', 'recent-home'] })
       queryClient.invalidateQueries({ queryKey: ['show-diary-snippets', selectedShowId] })
+      queryClient.invalidateQueries({ queryKey: ['public-records', selectedShowId] })
+      queryClient.invalidateQueries({ queryKey: ['plans'] })
+      queryClient.invalidateQueries({ queryKey: ['show', selectedShowId] })
       onSaved(savedEntry)
     },
-    onError: () => {
-      toast.error('저장 실패')
+    onError: (error: any) => {
+      track('diary_save_failed', selectedShowId ?? undefined)
+      toast.error(error.response?.data?.message || '저장하지 못했습니다. 입력한 내용은 유지됩니다.')
     },
   })
 
   const onSubmit = (data: DiaryCreateRequest) => {
     if (!selectedShowId) {
       toast.error('공연을 선택해 주세요.')
+      return
+    }
+    if (!isAuthenticated) {
+      sessionStorage.setItem('postLoginRedirect', '/diary?compose=1')
+      navigate('/login')
       return
     }
     mutation.mutate(data)
@@ -208,12 +266,18 @@ export default function DiaryFormModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
       <div
-        className="w-full max-w-xl border border-line-base bg-white rounded-md shadow-2xl overflow-hidden"
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="record-dialog-title"
+        tabIndex={-1}
+        className="record-dialog w-full max-w-xl border border-line-base bg-surface-base rounded-xl shadow-2xl overflow-hidden outline-none"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-line-lightest px-5 py-4">
           <div>
-            <h2 className="text-[17px] font-semibold tracking-tight text-ink-darkest">{title}</h2>
+
+            <h2 id="record-dialog-title" className="text-[22px] font-medium tracking-tight text-ink-darkest">{title}</h2>
           </div>
           <button onClick={onClose} className="p-1 text-ink-lightest hover:text-ink-dark transition-colors" aria-label="기록 작성 닫기">
             <X size={18} />
@@ -326,25 +390,27 @@ export default function DiaryFormModal({
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1.5 block text-[12px] font-semibold text-ink-muted">관람일</label>
-              <input 
-                type="date" 
-                {...register('watchedDate', { required: true })} 
-                className="h-10 w-full border border-line-base bg-white px-3 text-[13px] text-ink-base outline-none" 
+              <input
+                type="date"
+                max={localDate()}
+                {...register('watchedDate', { required: true })}
+                className="h-10 w-full border border-line-base bg-white px-3 text-[13px] text-ink-base outline-none"
               />
             </div>
 
             <div>
-              <label className="mb-1.5 block text-[12px] font-semibold text-ink-muted">평점</label>
+              <label className="mb-1.5 block text-[12px] font-semibold text-ink-muted">평점 (선택)</label>
               <div className="flex h-10 items-center justify-between border border-line-base bg-white px-3">
                 <StarRating value={rating} onChange={setRating} size="sm" />
-                <span className="text-[13px] font-semibold text-ink-base">{rating}.0</span>
+                <button type="button" onClick={() => setRating(0)} className="text-[12px] text-ink-muted">{rating ? `${rating}.0 · 지우기` : '미입력'}</button>
               </div>
             </div>
           </div>
 
           {casting && casting.length > 0 && (
             <div className="space-y-2 border border-line-lightest p-3.5">
-              <label className="text-[12px] font-semibold text-ink-muted">캐스팅</label>
+              <label className="text-[12px] font-semibold text-ink-muted">관람한 배우 선택</label>
+              <p className="feed-meta">전체 출연진입니다. 실제 관람한 회차의 배우만 선택해 주세요.</p>
               <div className="space-y-2">
                 {casting.map((role: CastingRole, rIdx: number) => (
                   <div key={rIdx} className="flex flex-wrap items-center gap-1.5">
@@ -352,7 +418,7 @@ export default function DiaryFormModal({
                       {role.roleName || '배우'}:
                     </span>
                     {role.actors.map((actor, aIdx) => {
-                      const isSelected = currentCastMemo.includes(actor.name)
+                      const isSelected = currentCastMemo.split(',').map(name => name.trim()).includes(actor.name)
                       return (
                         <button
                           key={aIdx}
@@ -379,7 +445,7 @@ export default function DiaryFormModal({
             <textarea
               {...register('comment')}
               rows={3}
-              placeholder="공연을 보고 남기고 싶은 장면과 감상을 적어 보세요."
+              placeholder="감상 입력 (선택)"
               className="min-h-[110px] w-full resize-none border border-line-base bg-surface-alt p-3.5 text-[13px] leading-6 text-ink-base placeholder:text-ink-lighter focus:border-ink-dark focus:bg-white focus:outline-none"
             />
           </div>
@@ -469,14 +535,16 @@ export default function DiaryFormModal({
                   />
                 </div>
 
-                <label className="flex items-center gap-2 pt-1 text-[13px] text-ink-base select-none cursor-pointer">
-                  <input type="checkbox" {...register('isOpen')} className="h-4 w-4 rounded accent-brand" />
-                  <span>다른 관객에게 이 기록 공개</span>
-                </label>
               </div>
             )}
           </div>
 
+          <label className="record-privacy">
+            <span><strong>{watch('isOpen') ? '공개 기록' : '나만 보는 기록'}</strong><small>{watch('isOpen') ? '감상과 사진이 공연 페이지에 표시됩니다.' : '공개를 선택하지 않으면 나에게만 표시됩니다.'}</small></span>
+            <span className="flex items-center gap-2 shrink-0"><input type="checkbox" {...register('isOpen')} className="h-4 w-4 accent-brand" />공개하기</span>
+          </label>
+          {watch('isOpen') && <label className="flex items-center gap-2 text-sm"><input type="checkbox" {...register('hasSpoiler')} />스포일러 포함</label>}
+          {!isAuthenticated && <p className="feed-meta">입력한 내용을 유지한 채 로그인으로 이동합니다.</p>}
           <div className="flex gap-2 border-t border-line-lightest pt-4">
             <button
               type="button"
@@ -490,7 +558,7 @@ export default function DiaryFormModal({
               disabled={mutation.isPending || isUploading}
               className="h-10 flex-1 bg-brand text-white rounded-md text-[13px] font-semibold hover:bg-brand/90 transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
             >
-              {mutation.isPending ? <Loader2 size={15} className="animate-spin" /> : entry ? '수정 완료' : '기록 저장'}
+              {mutation.isPending ? <Loader2 size={15} className="animate-spin" /> : !isAuthenticated ? '로그인 후 저장' : entry ? '수정 완료' : '기록 저장'}
             </button>
           </div>
         </form>

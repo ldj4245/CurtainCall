@@ -31,6 +31,19 @@ public class User extends BaseTimeEntity {
     @Column(name = "profile_image")
     private String profileImage;
 
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean deactivated;
+
+    public void deactivate() {
+        nickname = "탈퇴한 회원";
+        email = java.util.UUID.randomUUID() + "@deleted.invalid";
+        password = null;
+        profileImage = null;
+        role = Role.USER;
+        socialAccounts.clear();
+        deactivated = true;
+    }
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default

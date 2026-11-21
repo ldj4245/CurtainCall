@@ -38,6 +38,8 @@ class DiaryServiceTest {
     @Mock
     private ImageUploadService imageUploadService;
 
+    @Mock private com.curtaincall.domain.plan.ViewingPlanService planService;
+
     private DiaryService diaryService;
 
     @BeforeEach
@@ -46,7 +48,8 @@ class DiaryServiceTest {
                 diaryEntryRepository,
                 showRepository,
                 userRepository,
-                imageUploadService
+                imageUploadService,
+                planService
         );
     }
 
@@ -59,8 +62,8 @@ class DiaryServiceTest {
 
         diaryService.updateDiary(10L, 1L, request);
 
-        verify(imageUploadService).deleteImage("https://cdn.example.com/a.jpg");
-        verify(imageUploadService, never()).deleteImage("https://cdn.example.com/b.jpg");
+        verify(imageUploadService).deleteOwnedDiaryImage("https://cdn.example.com/a.jpg", 10L);
+        verify(imageUploadService, never()).deleteOwnedDiaryImage("https://cdn.example.com/b.jpg", 10L);
     }
 
     @Test
@@ -71,8 +74,8 @@ class DiaryServiceTest {
 
         diaryService.deleteDiary(10L, 1L);
 
-        verify(imageUploadService).deleteImage("https://cdn.example.com/a.jpg");
-        verify(imageUploadService).deleteImage("https://cdn.example.com/b.jpg");
+        verify(imageUploadService).deleteOwnedDiaryImage("https://cdn.example.com/a.jpg", 10L);
+        verify(imageUploadService).deleteOwnedDiaryImage("https://cdn.example.com/b.jpg", 10L);
     }
 
     @Test
@@ -91,7 +94,7 @@ class DiaryServiceTest {
         assertThat(response.getItems().get(0).getDiaryId()).isEqualTo(1L);
         assertThat(response.getItems().get(0).getUserNickname()).isEqualTo("테스터");
         assertThat(response.getItems().get(0).getRepresentativeImageUrl()).isEqualTo("https://cdn.example.com/a.jpg");
-        assertThat(response.getItems().get(1).getRepresentativeImageUrl()).isEqualTo("https://poster.example.com/20.jpg");
+        assertThat(response.getItems().get(1).getRepresentativeImageUrl()).isNull();
     }
 
     private DiaryEntry diaryEntry(Long id, String photoUrls) {

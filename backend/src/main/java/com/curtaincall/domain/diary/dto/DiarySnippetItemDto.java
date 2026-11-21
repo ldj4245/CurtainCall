@@ -19,14 +19,15 @@ public class DiarySnippetItemDto {
     private String seatInfo;
     private String castMemo;
     private Integer rating;
+    private Boolean hasSpoiler;
     private String comment;
     private String representativeImageUrl;
     private List<String> photoUrls;
 
     public static DiarySnippetItemDto from(DiaryEntry entry) {
-        List<String> photos = parsePhotoUrls(entry.getPhotoUrls());
+        List<String> photos = PhotoUrls.read(entry.getPhotoUrls());
         String representativeImage = photos.isEmpty()
-                ? (entry.getShow() != null ? entry.getShow().getPosterUrl() : null)
+                ? null
                 : photos.get(0);
 
         return DiarySnippetItemDto.builder()
@@ -36,19 +37,11 @@ public class DiarySnippetItemDto {
                 .seatInfo(entry.getSeatInfo())
                 .castMemo(entry.getCastMemo())
                 .rating(entry.getRating())
+                .hasSpoiler(entry.getHasSpoiler())
                 .comment(entry.getComment())
                 .representativeImageUrl(representativeImage)
                 .photoUrls(photos)
                 .build();
     }
 
-    private static List<String> parsePhotoUrls(String photoUrls) {
-        if (photoUrls == null || photoUrls.isBlank()) {
-            return Collections.emptyList();
-        }
-        return Arrays.stream(photoUrls.split(","))
-                .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .toList();
-    }
 }

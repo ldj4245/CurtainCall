@@ -44,3 +44,7 @@ DEPLOY_GUIDE.md
 
 # Local Codex memory
 .project-memory/
+
+# Local scratch / playwright artifacts
+.playwright-cli/
+output/

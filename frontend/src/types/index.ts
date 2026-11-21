@@ -7,6 +7,7 @@ export interface User {
 }
 
 export interface Show {
+  sourceUpdatedAt?: string
   id: number
   kopisId: string
   title: string
@@ -29,6 +30,7 @@ export interface Show {
   castList?: string[]
   introImages?: string[]
   averageScore?: number
+  ratingCount?: number
   reviewCount?: number
   diaryCount?: number
 }
@@ -41,6 +43,8 @@ export interface ShowHomeSections {
 }
 
 export interface ScheduleShowItem {
+  theaterRegion?: string
+  sourceUpdatedAt?: string
   id: number
   kopisId: string
   title: string
@@ -87,9 +91,10 @@ export interface DiaryEntry {
   watchedDate: string
   seatInfo?: string
   castMemo?: string
-  rating: number
+  rating: number | null
   comment?: string
   ticketPrice?: number
+  hasSpoiler?: boolean
   isOpen: boolean
   photoUrls: string[]
   representativeImageUrl?: string
@@ -114,12 +119,13 @@ export interface DiaryStats {
 }
 
 export interface DiarySnippet {
+  hasSpoiler?: boolean
   diaryId: number
   userNickname: string
   watchedDate: string
   seatInfo?: string
   castMemo?: string
-  rating: number
+  rating: number | null
   comment?: string
   representativeImageUrl?: string
   photoUrls?: string[]

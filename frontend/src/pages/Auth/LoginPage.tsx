@@ -18,7 +18,8 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>()
-  const fromPath = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname
+  const from = (location.state as { from?: { pathname?: string; search?: string } } | null)?.from
+  const fromPath = from?.pathname ? from.pathname + (from.search ?? '') : undefined
 
   const getPostLoginPath = () => fromPath || sessionStorage.getItem('postLoginRedirect') || '/'
 
@@ -35,7 +36,7 @@ export default function LoginPage() {
       setUser(await authApi.getMe())
       const redirectPath = getPostLoginPath()
       sessionStorage.removeItem('postLoginRedirect')
-      toast.success('반갑습니다! 로그인되었습니다.')
+      toast.success('로그인되었습니다.')
       navigate(redirectPath)
     } catch (error: any) {
       toast.error(error.response?.data?.message || '로그인에 실패했습니다. 이메일과 비밀번호를 확인해 주세요.')
@@ -45,8 +46,8 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-5 py-12 bg-surface-base">
-      <div className="w-full max-w-[340px]">
+    <div className="auth-screen">
+      <div className="auth-panel">
         {/* 로고 및 타이틀 */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 text-[17px] font-semibold tracking-[-0.055em] text-ink-darkest">
@@ -54,7 +55,7 @@ export default function LoginPage() {
             CurtainCall
           </Link>
           <h1 className="mt-4 text-[20px] font-semibold tracking-tight text-ink-darker">로그인</h1>
-          <p className="mt-1 text-[12px] text-ink-muted">나의 관극 기록과 동행을 만나보세요.</p>
+          <p className="mt-1 text-[12px] text-ink-muted">로그인 후 관극 기록을 이용할 수 있습니다.</p>
         </div>
 
         {/* 폼 */}
@@ -118,7 +119,7 @@ export default function LoginPage() {
           className="w-full h-10 flex items-center justify-center gap-2 border border-line-base bg-white rounded text-[12px] font-medium text-ink-darker hover:border-line-dark hover:bg-surface-alt transition-colors shadow-sm"
         >
           <span className="h-2 w-2 rounded-full bg-[#FEE500]" />
-          카카오로 3초 만에 시작하기
+          카카오 로그인
         </button>
 
         {/* 회원가입 이동 */}

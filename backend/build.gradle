@@ -71,6 +71,17 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
+// Use the same frontend entry for server-rendered sharing metadata and the SPA.
+tasks.named('processResources') {
+    def frontendDist = file('../frontend/dist')
+    inputs.dir(frontendDist).optional()
+    doLast {
+        if (frontendDist.exists()) {
+            copy { from frontendDist; into new File(destinationDir, 'static') }
+        }
+    }
+}
+
 bootJar {
     archiveFileName = 'app.jar'
 }

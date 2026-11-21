@@ -1,67 +1,22 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { BookOpen, Home, Search, UserRound } from 'lucide-react'
+import { Link, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
-import toast from 'react-hot-toast'
 
 export default function MobileTabBar() {
-  const location = useLocation()
-  const navigate = useNavigate()
+  const { pathname } = useLocation()
   const { isAuthenticated } = useAuthStore()
-  const loginLinkState = { from: { pathname: location.pathname } }
-
-  if (location.pathname.startsWith('/chat/')) {
-    return null
-  }
-
+  if (pathname.startsWith('/chat/')) return null
   const tabs = [
-    { to: '/', label: '홈', active: location.pathname === '/' },
-    { to: '/shows', label: '공연 찾기', active: location.pathname.startsWith('/shows') },
-    {
-      to: isAuthenticated ? '/diary' : '/login',
-      state: isAuthenticated ? undefined : loginLinkState,
-      label: '관극 기록',
-      active: isAuthenticated && location.pathname.startsWith('/diary'),
-    },
-    {
-      to: isAuthenticated ? '/chat' : '/login',
-      state: isAuthenticated ? undefined : loginLinkState,
-      label: '동행',
-      active: isAuthenticated && location.pathname.startsWith('/chat'),
-    },
-    {
-      to: isAuthenticated ? '/my' : '/login',
-      state: isAuthenticated ? undefined : loginLinkState,
-      label: '마이',
-      active: isAuthenticated && location.pathname.startsWith('/my'),
-    },
+    { to: '/', label: '홈', icon: Home, active: pathname === '/' },
+    { to: '/shows', label: '공연', icon: Search, active: pathname.startsWith('/shows') },
+    { to: '/diary', label: '내 기록', icon: BookOpen, active: pathname.startsWith('/diary') },
+    { to: '/my', label: '마이', icon: UserRound, active: pathname.startsWith('/my') || pathname.startsWith('/chat') },
   ]
-
   return (
-    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[460px] z-50 border-t border-line-base bg-surface-base/95 backdrop-blur-md shadow-[0_-4px_16px_rgba(0,0,0,0.04)]">
-      <ul className="grid h-[54px] grid-cols-5 pb-[env(safe-area-inset-bottom)]">
-        {tabs.map(({ to, state, label, active }) => (
-          <li key={label}>
-            <Link
-              to={to}
-              state={state}
-              onClick={(e) => {
-                const requiresAuthTab = (label === '관극 기록' || label === '동행' || label === '마이') && !isAuthenticated
-                if (!requiresAuthTab) return
-                e.preventDefault()
-                sessionStorage.setItem('postLoginRedirect', `${location.pathname}${location.search}`)
-                toast('로그인이 필요합니다.')
-                navigate('/login', { state: loginLinkState })
-              }}
-              className={`flex h-full flex-col items-center justify-center border-t-2 text-[11px] transition-colors ${
-                active 
-                  ? 'border-brand font-bold text-ink-darkest' 
-                  : 'border-transparent text-ink-muted hover:text-ink-darkest'
-              }`}
-            >
-              {label}
-            </Link>
-          </li>
-        ))}
-      </ul>
+    <nav className="mobile-navigation md:hidden" aria-label="모바일 주 메뉴">
+      {tabs.map(({ to, label, icon: Icon, active }) => <Link key={to} to={to} aria-current={active ? 'page' : undefined}
+        onClick={() => { if (!isAuthenticated && (to === '/diary' || to === '/my')) sessionStorage.setItem('postLoginRedirect', to) }}
+        className={`mobile-nav-link ${active ? 'is-active' : ''}`}><Icon size={21} strokeWidth={active ? 2 : 1.5} /><span>{label}</span></Link>)}
     </nav>
   )
 }

@@ -1,3 +1,5 @@
+import { retentionApi } from '../../api/retention';
+import MessageActions from '../../components/common/MessageActions';
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -14,6 +16,7 @@ export default function ChatRoomPage() {
   const draftStorageKey = `chat-draft-${roomIdNumber}`;
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { data: blocked = [] } = useQuery({ queryKey: ["blocks"], queryFn: retentionApi.blocks });
 
   const { data: initialMessages = [], isLoading } = useQuery({
     queryKey: ['chat-messages', roomIdNumber],
@@ -81,7 +84,7 @@ export default function ChatRoomPage() {
 
   const formatTime = (isoString: string) => {
     if (!isoString) return '';
-    const utc = isoString.endsWith('Z') ? isoString : isoString + 'Z';
+    const utc = /[Z+]/.test(isoString) ? isoString : isoString + '+09:00';
     return new Date(utc).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
   };
 
@@ -137,7 +140,7 @@ export default function ChatRoomPage() {
           </div>
         )}
 
-        {messages.map((msg, idx) => {
+        {messages.filter(msg => !blocked.some(b => b.blockedUserId === msg.senderId)).map((msg, idx) => {
           const isMine = msg.senderId === currentUser?.id;
           const isSystem = msg.type === 'ENTER' || msg.type === 'LEAVE';
 
@@ -182,6 +185,7 @@ export default function ChatRoomPage() {
                   {msg.content}
                 </div>
                 <span className="px-1 text-[9px] text-[#999]">{formatTime(msg.createdAt)}</span>
+                {!isMine && <MessageActions type="CHAT" messageId={msg.id} senderId={msg.senderId} />}
               </div>
             </div>
           );
@@ -194,6 +198,7 @@ export default function ChatRoomPage() {
         <div className="flex items-center gap-2 mx-auto max-w-4xl">
           <input
             type="text"
+            maxLength={2000}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}

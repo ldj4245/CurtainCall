@@ -13,6 +13,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
@@ -33,6 +34,7 @@ public class KopisSyncService {
     private final CastMemberRepository castMemberRepository;
     private final ShowLiveRoomRepository showLiveRoomRepository;
     private final org.springframework.cache.CacheManager cacheManager;
+    private final TransactionTemplate transactionTemplate;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy.MM.dd");
     private static final DateTimeFormatter KST_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -49,7 +51,7 @@ public class KopisSyncService {
         return lastSyncStatus;
     }
 
-    @Scheduled(cron = "0 0 4 * * *") // 매일 새벽 4시 (KST)
+    @Scheduled(cron = "0 0 4 * * *", zone = "Asia/Seoul") // 매일 새벽 4시 (KST)
     @CacheEvict(value = { "showsSearch", "showDetail", "ongoingShows", "popularShows" }, allEntries = true)
     public void syncShows() {
         log.info("KOPIS 공연 동기화 및 일일 유지보수 시작 (KST 새벽 4시)");
@@ -58,11 +60,13 @@ public class KopisSyncService {
 
         // 1. 공연 상태 자동 보정 (종료일 경과 -> ENDED, 시작일 도래 -> ONGOING)
         try {
-            int endedCount = showRepository.updateEndedShows(today);
-            int startedCount = showRepository.updateStartedShows(today);
-            if (endedCount > 0 || startedCount > 0) {
-                log.info("공연 상태 자동 갱신 완료: 공연종료 전환 {}건, 공연중 전환 {}건", endedCount, startedCount);
-            }
+            transactionTemplate.executeWithoutResult(status -> {
+                int endedCount = showRepository.updateEndedShows(today);
+                int startedCount = showRepository.updateStartedShows(today);
+                if (endedCount > 0 || startedCount > 0) {
+                    log.info("공연 상태 자동 갱신 완료: 공연종료 전환 {}건, 공연중 전환 {}건", endedCount, startedCount);
+                }
+            });
         } catch (Exception e) {
             log.error("공연 상태 자동 갱신 실패: {}", e.getMessage());
         }
@@ -70,6 +74,7 @@ public class KopisSyncService {
         // 2. KOPIS 신규/예정 공연 수집 (향후 3개월)
         LocalDate threeMonthsLater = today.plusMonths(3);
         int totalSynced = 0;
+        int failedGenres = 0;
         for (String genre : GENRES) {
             try {
                 List<KopisShowDto> shows = kopisApiClient.fetchShows(today.minusMonths(1), threeMonthsLater, genre);
@@ -80,6 +85,7 @@ public class KopisSyncService {
                     totalSynced++;
                 }
             } catch (Exception e) {
+                failedGenres++;
                 log.error("KOPIS 공연 동기화 실패 - genre: {}, error: {}", genre, e.getMessage());
             }
         }
@@ -95,7 +101,7 @@ public class KopisSyncService {
         }
 
         lastSyncTime = ZonedDateTime.now(ZoneId.of("Asia/Seoul")).format(KST_FORMATTER);
-        lastSyncStatus = "정상 완료 (" + totalSynced + "건 점검)";
+        lastSyncStatus = failedGenres > 0 ? "부분 실패 (" + failedGenres + "개 장르, " + totalSynced + "건 반영)" : "정상 완료 (" + totalSynced + "건 점검)";
         log.info("KOPIS 일일 유지보수 및 공연 동기화 완료: {}", lastSyncTime);
     }
 
@@ -113,7 +119,7 @@ public class KopisSyncService {
         return oldShowIds.size();
     }
 
-    @Scheduled(cron = "0 0 3 * * MON") // 매주 월요일 새벽 3시
+    @Scheduled(cron = "0 0 3 * * MON", zone = "Asia/Seoul") // 매주 월요일 새벽 3시
     @Transactional
     public void syncTheaters() {
         log.info("KOPIS 극장 동기화 시작");
@@ -297,7 +303,6 @@ public class KopisSyncService {
         }
     }
 
-    @org.springframework.context.event.EventListener(org.springframework.boot.context.event.ApplicationReadyEvent.class)
     public void initSyncIfEmpty() {
         if (showRepository.count() == 0) {
             log.info("DB가 비어있습니다. 초기 데이터를 동기화합니다 (약 3~5분 소요)...");

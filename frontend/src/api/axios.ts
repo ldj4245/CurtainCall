@@ -32,7 +32,8 @@ async function resetSession() {
 
   useAuthStore.getState().logout()
 
-  if (window.location.pathname !== '/login') {
+  if (window.location.pathname !== '/login' && window.location.pathname !== '/signup') {
+    sessionStorage.setItem('postLoginRedirect', window.location.pathname + window.location.search)
     window.location.href = '/login'
   }
 }
@@ -47,6 +48,7 @@ api.interceptors.response.use(
       return Promise.reject(error)
     }
 
+    if (!useAuthStore.getState().accessToken) return Promise.reject(error)
     originalRequest._retry = true
 
     try {

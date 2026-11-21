@@ -22,12 +22,16 @@ public class DiaryRequest {
     @Size(max = 500, message = "캐스트 메모는 500자 이내로 입력해주세요.")
     private String castMemo;
 
-    @NotNull(message = "평점은 필수입니다.")
     @Min(value = 1, message = "평점은 1 이상이어야 합니다.")
     @Max(value = 5, message = "평점은 5 이하이어야 합니다.")
     private Integer rating;
 
+    @Size(max = 2000)
     private String comment;
+
+    private Boolean hasSpoiler = false;
+
+    private Long planId;
 
     @Min(value = 0, message = "티켓 가격은 0 이상이어야 합니다.")
     private Integer ticketPrice;

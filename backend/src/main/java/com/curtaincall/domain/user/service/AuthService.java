@@ -112,6 +112,7 @@ public class AuthService {
     }
 
     private AuthTokens issueTokens(User user) {
+        if (user.isDeactivated()) throw BusinessException.unauthorized("탈퇴한 계정입니다.");
         String accessToken = jwtTokenProvider.createAccessToken(
                 user.getId(),
                 user.getEmail(),
