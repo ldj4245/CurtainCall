@@ -14,12 +14,6 @@ spring:
         format_sql: true
         dialect: org.hibernate.dialect.H2Dialect
 
-  batch:
-    jdbc:
-      initialize-schema: always
-    job:
-      enabled: false
-
 jwt:
   secret: curtaincall-test-secret-key-for-hs-256-algorithm-that-is-long-enough
   access-expiration: 3600000

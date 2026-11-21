@@ -13,8 +13,10 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -22,6 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 @Slf4j
 @Component
@@ -34,9 +37,24 @@ public class KopisApiClient {
     @Value("${kopis.base-url}")
     private String baseUrl;
 
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
     private static final int PAGE_SIZE = 100;
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final Set<String> HTTPS_BOOKING_HOSTS = Set.of(
+            "ticket.interpark.com",
+            "tickets.interpark.com",
+            "www.ticketlink.co.kr",
+            "ticketlink.co.kr",
+            "ticket.yes24.com",
+            "ticket.melon.com",
+            "booking.naver.com",
+            "www.sac.or.kr",
+            "www.sejongpac.or.kr",
+            "www.charlottetheater.co.kr",
+            "www.lgart.com",
+            "www.bscc.or.kr"
+    );
     private static final Object KOPIS_RATE_LOCK = new Object();
     private static final long MIN_REQUEST_INTERVAL_MS = 250L;
     private static long lastRequestAtMs = 0L;
@@ -115,9 +133,10 @@ public class KopisApiClient {
      * @return kopisId 리스트 (1위부터 순서대로)
      */
     public List<String> fetchBoxOffice(String catecode, String area) {
-        // 박스오피스 API 조회 시작일, 종료일 (최근 7일)
-        String stdate = LocalDate.now().minusDays(7).format(DATE_FORMATTER);
-        String eddate = LocalDate.now().minusDays(1).format(DATE_FORMATTER);
+        // 박스오피스 API 조회 시작일, 종료일 (최근 7일, KST 기준)
+        LocalDate today = LocalDate.now(KST);
+        String stdate = today.minusDays(7).format(DATE_FORMATTER);
+        String eddate = today.minusDays(1).format(DATE_FORMATTER);
 
         // KOPIS OpenAPI 박스오피스 요청 파라미터 (stdate: 시작일, eddate: 종료일)
         String urlStr = String.format(
@@ -258,8 +277,16 @@ public class KopisApiClient {
 
         try (InputStream is = conn.getInputStream()) {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+            factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+            factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+            factory.setXIncludeAware(false);
+            factory.setExpandEntityReferences(false);
             DocumentBuilder builder = factory.newDocumentBuilder();
             return builder.parse(is);
+        } finally {
+            conn.disconnect();
         }
     }
 
@@ -307,7 +334,10 @@ public class KopisApiClient {
             if (rawUrl == null) {
                 continue;
             }
-            String url = rawUrl.trim();
+            String url = normalizeBookingUrl(rawUrl);
+            if (url == null) {
+                continue;
+            }
             String lowerUrl = url.toLowerCase(Locale.ROOT);
             if (!(lowerUrl.startsWith("http://") || lowerUrl.startsWith("https://"))) {
                 continue;
@@ -322,6 +352,24 @@ public class KopisApiClient {
         } catch (Exception e) {
             return "[]";
         }
+    }
+
+    public static String normalizeBookingUrl(String rawUrl) {
+        if (rawUrl == null || rawUrl.isBlank()) {
+            return null;
+        }
+        String trimmed = rawUrl.trim();
+        if (trimmed.regionMatches(true, 0, "http://", 0, 7)) {
+            try {
+                String host = URI.create(trimmed).getHost();
+                if (host != null && HTTPS_BOOKING_HOSTS.contains(host.toLowerCase(Locale.ROOT))) {
+                    return "https://" + trimmed.substring(7);
+                }
+            } catch (Exception ignored) {
+                // Keep original URL if host cannot be parsed safely.
+            }
+        }
+        return trimmed;
     }
 
     private String normalizeBookingVendorName(String rawName) {

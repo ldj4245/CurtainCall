@@ -68,7 +68,7 @@ public class PublicPageController {
         var xml = new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?><urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">");
         String safeBase = org.springframework.web.util.HtmlUtils.htmlEscape(baseUrl);
         xml.append("<url><loc>").append(safeBase).append("/</loc></url>");
-        for (var s : shows.findAll(org.springframework.data.domain.PageRequest.of(0, 49999))) xml.append("<url><loc>").append(safeBase).append("/shows/").append(s.getId()).append("</loc></url>");
+        for (Long id : shows.findAllIds(org.springframework.data.domain.PageRequest.of(0, 49999))) xml.append("<url><loc>").append(safeBase).append("/shows/").append(id).append("</loc></url>");
         return xml.append("</urlset>").toString();
     }
 }

@@ -150,7 +150,7 @@ public class Show extends BaseTimeEntity {
         }
 
         public static Status determineStatus(LocalDate startDate, LocalDate endDate, String kopisStatus) {
-            LocalDate today = LocalDate.now();
+            LocalDate today = LocalDate.now(java.time.ZoneId.of("Asia/Seoul"));
             if (endDate != null && endDate.isBefore(today)) {
                 return ENDED;
             }

@@ -12,11 +12,6 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        dialect: org.hibernate.dialect.MySQL8Dialect
-
-  batch:
-    jdbc:
-      initialize-schema: ${SPRING_BATCH_JDBC_INITIALIZE_SCHEMA:never}
 
 app:
   frontend-url: ${FRONTEND_URL}
@@ -25,6 +20,12 @@ logging:
   level:
     com.curtaincall: ${APP_LOG_LEVEL:INFO}
     org.hibernate.SQL: WARN
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
 
 jwt:
   secret: ${JWT_SECRET}

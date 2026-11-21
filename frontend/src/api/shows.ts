@@ -31,6 +31,9 @@ export const showsApi = {
   getPopular: (limit = 8, genre?: string) =>
     api.get<Show[]>('/shows/popular', { params: { limit, ...(genre ? { genre } : {}) } }).then((r) => r.data),
 
+  getEndingSoon: (limit = 20, genre?: string) =>
+    api.get<Show[]>('/shows/ending-soon', { params: { limit, ...(genre ? { genre } : {}) } }).then((r) => r.data),
+
   getHomeSections: (limit = 8) =>
     api.get<ShowHomeSections>('/shows/home-sections', { params: { limit } }).then((r) => r.data),
 

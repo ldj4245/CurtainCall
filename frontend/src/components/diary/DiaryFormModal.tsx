@@ -20,6 +20,7 @@ import { parseTicketText } from '../../utils/ticketParser'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
 import { localDate, track } from '../../utils/analytics'
+import { compressImageFile } from '../../utils/imageCompress'
 import type { ViewingPlan } from '../../api/retention'
 
 const MAX_PHOTOS = 5
@@ -201,10 +202,15 @@ export default function DiaryFormModal({
 
     setIsUploading(true)
     try {
-      const urls = await Promise.all(files.map((file) => diaryApi.uploadImage(file)))
+      const processed = await Promise.all(files.map((file) => compressImageFile(file)))
+      const urls = await Promise.all(processed.map((file) => diaryApi.uploadImage(file)))
       setPhotoUrls((prev) => [...prev, ...urls])
-    } catch {
-      toast.error('업로드 실패')
+    } catch (error: unknown) {
+      const message =
+        typeof error === 'object' && error !== null && 'response' in error
+          ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined
+      toast.error(message || '사진 업로드에 실패했습니다.')
     } finally {
       setIsUploading(false)
       if (fileInputRef.current) {
@@ -223,6 +229,7 @@ export default function DiaryFormModal({
         ...data,
         showId: selectedShowId!,
         rating: rating || null,
+        ticketPrice: typeof data.ticketPrice === 'number' && Number.isFinite(data.ticketPrice) ? data.ticketPrice : undefined,
         photoUrls,
         planId: initialPlan?.id,
       }
@@ -331,7 +338,7 @@ export default function DiaryFormModal({
                 <span className="text-[10px] text-ink-lighter">선택한 공연</span>
                 <p className="mt-1 text-[14px] font-semibold text-ink-base">{selectedShowTitle}</p>
               </div>
-              {!isPresetShow && !isQuickMode && (
+              {!isPresetShow && !entry && (
                 <button
                   type="button"
                   onClick={() => {

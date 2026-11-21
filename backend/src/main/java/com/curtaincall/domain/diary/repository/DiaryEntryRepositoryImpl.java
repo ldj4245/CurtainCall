@@ -10,6 +10,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -67,7 +68,7 @@ public class DiaryEntryRepositoryImpl implements DiaryEntryRepositoryCustom {
                                 .select(watchedYear, watchedMonth, diary.count())
                                 .from(diary)
                                 .where(diary.user.id.eq(userId)
-                                                .and(diary.watchedDate.goe(LocalDate.now().minusMonths(12))))
+                                                .and(diary.watchedDate.goe(LocalDate.now(ZoneId.of("Asia/Seoul")).minusMonths(12))))
                                 .groupBy(watchedYear, watchedMonth)
                                 .fetch();
 

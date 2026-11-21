@@ -7,9 +7,8 @@ spring:
       max-file-size: 20MB
       max-request-size: 50MB
 
-  batch:
-    job:
-      enabled: false
+  jpa:
+    open-in-view: false
 
   security:
     oauth2:

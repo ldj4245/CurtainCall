@@ -33,6 +33,7 @@ export interface Show {
   bookingLinks?: OfficialBookingLink[]
   status: 'ONGOING' | 'ENDED' | 'UPCOMING'
   statusDisplayName: string
+  popularityRank?: number | null
   ageLimit?: string
   castList?: string[]
   introImages?: string[]

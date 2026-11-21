@@ -50,16 +50,24 @@ export default function ShowDetailPage() {
   const [showPlan, setShowPlan] = useState(false)
   useEffect(() => { if (showId > 0) track("show_view", showId) }, [showId])
 
+  useEffect(() => {
+    if (!isAuthenticated && params.get('plan') === '1' && Number.isFinite(showId) && showId > 0) {
+      sessionStorage.setItem('postLoginRedirect', `/shows/${showId}?plan=1`)
+      toast('관람 예정을 등록하려면 로그인해 주세요.')
+      navigate('/login', { state: { from: { pathname: `/shows/${showId}`, search: '?plan=1' } }, replace: true })
+    }
+  }, [isAuthenticated, navigate, params, showId])
+
   const { data: show, isLoading, isError, refetch } = useQuery({
     queryKey: ['show', showId],
     queryFn: () => showsApi.getById(showId),
-    enabled: Number.isFinite(showId),
+    enabled: Number.isFinite(showId) && showId > 0,
   })
 
   const { data: favStatus } = useQuery({
     queryKey: ['favorite-status', id],
     queryFn: () => favoritesApi.getStatus(showId),
-    enabled: Number.isFinite(showId) && isAuthenticated,
+    enabled: Number.isFinite(showId) && showId > 0 && isAuthenticated,
   })
 
   const toggleFav = useMutation({
@@ -189,7 +197,13 @@ export default function ShowDetailPage() {
       <section className="detail-overview">
         <Poster src={show.posterUrl} title={show.title} className="detail-poster aspect-[3/4]" />
         <div className="detail-summary">
-          <p className="eyebrow">{show.genreDisplayName || '공연'}<span className="!tracking-normal">{show.statusDisplayName}</span></p>
+          <p className="eyebrow">
+            <span>{show.genreDisplayName || '공연'}</span>
+            <span className="!tracking-normal">{show.statusDisplayName}</span>
+            {show.popularityRank != null && show.popularityRank <= 20 && (
+              <span className="!tracking-normal">박스오피스 {show.popularityRank}위</span>
+            )}
+          </p>
           <h1>{show.title}</h1>
           <p className="detail-theater">
             {show.theaterName || '공연장 미정'}

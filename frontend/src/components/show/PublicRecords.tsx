@@ -121,11 +121,14 @@ export default function PublicRecords({ showId, seatsOnly: defaultSeatsOnly = fa
 function Photos({ photos = [] }: { photos?: string[] }) {
   return photos.length ? (
     <div className="mt-3 flex gap-2 overflow-x-auto">
-      {photos.map((photo, i) => (
-        <a href={photo} key={i} target="_blank" rel="noreferrer">
-          <img src={photo} alt={`첨부 사진 ${i + 1}`} loading="lazy" className="h-28 max-w-48 object-contain" />
-        </a>
-      ))}
+      {photos.map((photo, i) => {
+        const img = <img src={photo} alt={`첨부 사진 ${i + 1}`} loading="lazy" className="h-28 max-w-48 object-contain" />
+        return photo.startsWith('http://') || photo.startsWith('https://') ? (
+          <a href={photo} key={i} target="_blank" rel="noreferrer">{img}</a>
+        ) : (
+          <div key={i} className="shrink-0">{img}</div>
+        )
+      })}
     </div>
   ) : null
 }

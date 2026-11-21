@@ -17,8 +17,8 @@ public class SpaForwardController {
         "/chat",
         "/chat/**",
         "/login",
-        "/signup", "/my", "/plans", "/notifications", "/demo", "/shared/**",
-        "/oauth2/callback", "/mockup"
+        "/signup", "/my", "/plans", "/notifications", "/shared/**",
+        "/oauth2/callback"
     })
     public String forwardSpaRoutes(HttpServletRequest request) {
         String uri = request.getRequestURI();

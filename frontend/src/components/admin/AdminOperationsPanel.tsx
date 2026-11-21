@@ -40,7 +40,7 @@ export default function AdminOperationsPanel() {
   })
 
   const pruneEnded = useMutation({
-    mutationFn: () => adminApi.pruneEnded(30),
+    mutationFn: () => adminApi.pruneEnded(180),
     onMutate: () => setActiveAction('prune'),
     onSuccess: (data) => {
       toast.success(data.message || '오래된 종료 공연이 정리되었습니다.')
@@ -80,7 +80,7 @@ export default function AdminOperationsPanel() {
         </div>
 
         <div className="rounded border border-line-lightest bg-white p-2.5">
-          <p className="text-[10px] text-ink-lightest">DB 용량 방어 (5MB 제한)</p>
+          <p className="text-[10px] text-ink-lightest">DB 사용량 (추정)</p>
           <p className="mt-1 font-semibold text-emerald-700 text-[11px]">
             {stats?.estimatedDbUsageMb || '계산 중...'}
           </p>
@@ -137,13 +137,13 @@ export default function AdminOperationsPanel() {
             className="flex items-center justify-center gap-1.5 rounded border border-rose-200 bg-white py-2 text-[11px] font-medium text-rose-700 hover:border-rose-400 hover:bg-rose-50 transition-all disabled:opacity-50"
           >
             <Trash2 size={12} className={activeAction === 'prune' ? 'animate-spin text-rose-600' : 'text-rose-500'} />
-            30일 지난 미참조 공연 정리
+            180일 지난 미참조 공연 정리
           </button>
         </div>
       </div>
 
       <p className="mt-2.5 text-[9.5px] text-ink-lightest leading-relaxed">
-        * 매일 새벽 4시(KST)에 위 3가지 작업이 무인으로 자동 실행됩니다. 즉각적인 반영이 필요할 때만 위 버튼을 눌러주세요.
+        * 매일 새벽 4시(KST)에 KOPIS 공연 동기화 및 180일 경과 미참조 공연 정리가, 오전 6시에 박스오피스 순위 갱신이 자동 실행됩니다.
       </p>
     </div>
   )

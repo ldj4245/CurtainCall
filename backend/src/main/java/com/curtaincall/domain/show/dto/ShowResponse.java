@@ -2,6 +2,7 @@ package com.curtaincall.domain.show.dto;
 
 import com.curtaincall.domain.show.entity.Show;
 import com.curtaincall.domain.theater.RegionNormalizer;
+import com.curtaincall.infra.kopis.KopisApiClient;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
@@ -42,6 +43,7 @@ public class ShowResponse {
     private List<BookingLinkItem> bookingLinks;
     private String status;
     private String statusDisplayName;
+    private Integer popularityRank;
     private String ageLimit;
     private List<String> introImages;
     private Double averageScore;
@@ -86,6 +88,7 @@ public class ShowResponse {
                 .bookingLinks(parseBookingLinks(show.getBookingLinks()))
                 .status(show.getStatus().name())
                 .statusDisplayName(show.getStatus().getDisplayName())
+                .popularityRank(show.getPopularityRank() != null && show.getPopularityRank() < 999 ? show.getPopularityRank() : null)
                 .ageLimit(cleanBlank(show.getAgeLimit()))
                 .introImages(parseIntroImages(show.getIntroImages()))
                 .diaryCount(null)
@@ -132,7 +135,11 @@ public class ShowResponse {
             return Collections.emptyList();
         }
         try {
-            return OBJECT_MAPPER.readValue(rawJson, new TypeReference<List<BookingLinkItem>>() {});
+            List<BookingLinkItem> items = OBJECT_MAPPER.readValue(rawJson, new TypeReference<List<BookingLinkItem>>() {});
+            return items.stream()
+                    .map(item -> new BookingLinkItem(item.getName(), KopisApiClient.normalizeBookingUrl(item.getUrl())))
+                    .filter(item -> item.getUrl() != null)
+                    .toList();
         } catch (Exception e) {
             return Collections.emptyList();
         }

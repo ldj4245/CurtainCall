@@ -2,8 +2,10 @@ package com.curtaincall.domain.show.repository;
 
 import com.curtaincall.domain.show.entity.QShow;
 import com.curtaincall.domain.show.entity.Show;
+import com.curtaincall.domain.theater.RegionNormalizer;
 import com.curtaincall.domain.theater.entity.QTheater;
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -38,10 +40,11 @@ public class ShowRepositoryImpl implements ShowRepositoryCustom {
             builder.and(show.status.eq(status));
         }
         if (region != null && !region.isBlank()) {
+            String normalizedRegion = RegionNormalizer.normalize(region, null);
+            String targetRegion = normalizedRegion != null ? normalizedRegion : region.trim();
             builder.and(
-                    theater.region.containsIgnoreCase(region)
-                            .or(theater.address.containsIgnoreCase(region))
-                            .or(show.title.containsIgnoreCase(region)));
+                    theater.region.eq(targetRegion)
+                            .or(theater.region.isNull().and(theater.address.containsIgnoreCase(targetRegion))));
         }
 
         NumberExpression<Integer> statusOrder = new CaseBuilder()
@@ -49,11 +52,15 @@ public class ShowRepositoryImpl implements ShowRepositoryCustom {
                 .when(show.status.eq(Show.Status.UPCOMING)).then(1)
                 .otherwise(2);
 
+        OrderSpecifier<?>[] orderSpecifiers = status == Show.Status.UPCOMING
+                ? new OrderSpecifier<?>[] { show.startDate.asc(), show.popularityRank.asc(), show.id.desc() }
+                : new OrderSpecifier<?>[] { statusOrder.asc(), show.popularityRank.asc(), show.startDate.desc() };
+
         List<Show> content = queryFactory
                 .selectFrom(show)
                 .leftJoin(show.theater, theater).fetchJoin()
                 .where(builder)
-                .orderBy(statusOrder.asc(), show.startDate.desc())
+                .orderBy(orderSpecifiers)
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();

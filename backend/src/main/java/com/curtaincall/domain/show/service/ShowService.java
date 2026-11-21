@@ -21,7 +21,6 @@ import com.curtaincall.domain.show.dto.ShowScheduleResponse;
 import com.curtaincall.domain.theater.RegionNormalizer;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.function.Function;
@@ -37,11 +36,11 @@ public class ShowService {
 
     private static final int MAX_PAGE_SIZE = 50;
     private static final int MAX_HOME_LIMIT = 20;
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final ShowRepository showRepository;
     private final ReviewRepository reviewRepository;
     private final DiaryEntryRepository diaryEntryRepository;
-    private final com.curtaincall.infra.kopis.KopisSyncService kopisSyncService;
 
     @Cacheable(value = "showsSearch", key = "{#keyword, #genre, #status, #region, #page, #size}")
     public Page<ShowResponse> searchShows(String keyword, String genre, String status, String region, int page,
@@ -54,12 +53,8 @@ public class ShowService {
                 .map(ShowResponse::from);
     }
 
-    @jakarta.persistence.PersistenceContext
-    private jakarta.persistence.EntityManager entityManager;
-
-    @Transactional
     public ShowResponse getShow(Long id) {
-        Show show = showRepository.findById(id)
+        Show show = showRepository.findByIdWithTheater(id)
                 .orElseThrow(() -> BusinessException.notFound("공연을 찾을 수 없습니다."));
 
         Double averageScore = reviewRepository.getAverageScoreByShowId(id);
@@ -75,25 +70,42 @@ public class ShowService {
     @Cacheable(value = "ongoingShows", key = "#limit")
     public List<ShowResponse> getOngoingShows(int limit) {
         Pageable pageable = PageRequest.of(0, safeSize(limit, MAX_HOME_LIMIT));
-        return showRepository.findTop10ByStatusOngoing(pageable)
+        return showRepository.findTop10ByStatusOngoing(LocalDate.now(KST), pageable)
                 .stream().map(ShowResponse::from).toList();
     }
 
-    @Cacheable(value = "popularShows", key = "{#limit, #genre}")
+    @Cacheable(value = "ongoingShows", key = "{'ending', #limit, (#genre != null && !#genre.isBlank()) ? #genre.trim().toUpperCase() : 'ALL'}")
+    public List<ShowResponse> getEndingSoonShows(int limit, String genre) {
+        Pageable pageable = PageRequest.of(0, safeSize(limit, MAX_HOME_LIMIT));
+        LocalDate today = LocalDate.now(KST);
+        Show.Genre genreEnum = parseEnum(Show.Genre.class, genre);
+        List<Show> shows = genreEnum != null
+                ? showRepository.findEndingSoonByGenre(today, genreEnum, pageable)
+                : showRepository.findEndingSoon(today, pageable);
+        return shows.stream().map(ShowResponse::from).toList();
+    }
+
+    @Cacheable(value = "popularShows", key = "{#limit, (#genre != null && !#genre.isBlank()) ? #genre.trim().toUpperCase() : 'ALL'}")
     public List<ShowResponse> getPopularShows(int limit, String genre) {
         Pageable pageable = PageRequest.of(0, safeSize(limit, MAX_HOME_LIMIT));
         Show.Genre genreEnum = parseEnum(Show.Genre.class, genre);
 
         List<Show> shows;
         if (genreEnum != null) {
-            shows = showRepository.findPopularOngoingByGenre(genreEnum, pageable);
+            shows = showRepository.findPopularActiveByGenre(genreEnum, pageable);
             if (shows.isEmpty()) {
                 shows = showRepository.findByGenreAndStatusWithTheaterList(genreEnum, Show.Status.ONGOING, pageable);
             }
+            if (shows.isEmpty()) {
+                shows = showRepository.findByGenreAndStatusWithTheaterList(genreEnum, Show.Status.UPCOMING, pageable);
+            }
         } else {
-            shows = showRepository.findPopularOngoing(pageable);
+            shows = showRepository.findPopularActive(pageable);
             if (shows.isEmpty()) {
                 shows = showRepository.findByStatusWithTheaterList(Show.Status.ONGOING, pageable);
+            }
+            if (shows.isEmpty()) {
+                shows = showRepository.findByStatusWithTheaterList(Show.Status.UPCOMING, pageable);
             }
         }
         return shows.stream().map(ShowResponse::from).toList();
@@ -103,11 +115,9 @@ public class ShowService {
     public ShowHomeSectionsResponse getHomeSections(int limit) {
         int size = safeSize(limit, MAX_HOME_LIMIT);
         Pageable pageable = PageRequest.of(0, size);
-        YearMonth thisMonth = YearMonth.now();
-        LocalDate monthStart = thisMonth.atDay(1);
-        LocalDate monthEnd = thisMonth.atEndOfMonth();
+        LocalDate today = LocalDate.now(KST);
 
-        List<ShowResponse> popular = showRepository.findPopularOngoing(pageable).stream().map(ShowResponse::from).toList();
+        List<ShowResponse> popular = showRepository.findPopularActive(pageable).stream().map(ShowResponse::from).toList();
         if (popular.isEmpty()) {
             popular = showRepository.findByStatusWithTheaterList(Show.Status.ONGOING, pageable).stream().map(ShowResponse::from).toList();
         }
@@ -115,9 +125,9 @@ public class ShowService {
             popular = showRepository.findAllWithTheaterList(pageable).stream().map(ShowResponse::from).toList();
         }
 
-        List<ShowResponse> endingSoon = showRepository.findEndingSoon(pageable).stream().map(ShowResponse::from).toList();
+        List<ShowResponse> endingSoon = showRepository.findEndingSoon(today, pageable).stream().map(ShowResponse::from).toList();
 
-        List<ShowResponse> openingThisMonth = showRepository.findOpeningBetween(LocalDate.now(), monthEnd, pageable).stream()
+        List<ShowResponse> openingThisMonth = showRepository.findOpeningBetween(today, today.plusDays(30), pageable).stream()
                 .map(ShowResponse::from)
                 .toList();
 
@@ -181,9 +191,9 @@ public class ShowService {
                 .toList();
     }
 
-    @Transactional
+    @Cacheable(value = "todaySchedule", key = "{#targetDate != null ? #targetDate.toString() : T(java.time.LocalDate).now(T(java.time.ZoneId).of('Asia/Seoul')).toString(), (#genreStr != null && !#genreStr.isBlank()) ? #genreStr.trim().toUpperCase() : 'ALL'}")
     public ShowScheduleResponse getTodaySchedule(LocalDate targetDate, String genreStr) {
-        LocalDate date = (targetDate != null) ? targetDate : LocalDate.now(ZoneId.of("Asia/Seoul"));
+        LocalDate date = (targetDate != null) ? targetDate : LocalDate.now(KST);
         Show.Genre genre = parseEnum(Show.Genre.class, genreStr);
 
         List<Show> shows = (genre != null)

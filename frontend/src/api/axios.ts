@@ -15,6 +15,9 @@ const defaultConfig = {
 const api = axios.create(defaultConfig)
 const sessionClient = axios.create(defaultConfig)
 
+let refreshPromise: Promise<string> | null = null
+let resetPromise: Promise<void> | null = null
+
 api.interceptors.request.use((config) => {
   const token = useAuthStore.getState().accessToken
   if (token) {
@@ -24,18 +27,40 @@ api.interceptors.request.use((config) => {
 })
 
 async function resetSession() {
-  try {
-    await sessionClient.post('/auth/logout')
-  } catch {
-    // 로그아웃 정리 요청이 실패해도 로컬 세션은 정리합니다.
-  }
+  if (!resetPromise) {
+    resetPromise = (async () => {
+      try {
+        await sessionClient.post('/auth/logout')
+      } catch {
+        // 로그아웃 정리 요청이 실패해도 로컬 세션은 정리합니다.
+      }
 
-  useAuthStore.getState().logout()
+      useAuthStore.getState().logout()
 
-  if (window.location.pathname !== '/login' && window.location.pathname !== '/signup') {
-    sessionStorage.setItem('postLoginRedirect', window.location.pathname + window.location.search)
-    window.location.href = '/login'
+      if (window.location.pathname !== '/login' && window.location.pathname !== '/signup') {
+        sessionStorage.setItem('postLoginRedirect', window.location.pathname + window.location.search)
+        window.location.href = '/login'
+      }
+    })().finally(() => {
+      resetPromise = null
+    })
   }
+  return resetPromise
+}
+
+function refreshAccessToken(): Promise<string> {
+  if (!refreshPromise) {
+    refreshPromise = sessionClient
+      .post<TokenResponse>('/auth/refresh')
+      .then(({ data }) => {
+        useAuthStore.getState().setAccessToken(data.accessToken)
+        return data.accessToken
+      })
+      .finally(() => {
+        refreshPromise = null
+      })
+  }
+  return refreshPromise
 }
 
 api.interceptors.response.use(
@@ -52,11 +77,10 @@ api.interceptors.response.use(
     originalRequest._retry = true
 
     try {
-      const { data } = await sessionClient.post<TokenResponse>('/auth/refresh')
-      useAuthStore.getState().setAccessToken(data.accessToken)
+      const accessToken = await refreshAccessToken()
 
       originalRequest.headers = AxiosHeaders.from(originalRequest.headers)
-      originalRequest.headers.set('Authorization', `Bearer ${data.accessToken}`)
+      originalRequest.headers.set('Authorization', `Bearer ${accessToken}`)
 
       return api(originalRequest)
     } catch (refreshError) {

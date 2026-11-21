@@ -45,16 +45,16 @@ public class BoxOfficeScheduler {
         if (environment.acceptsProfiles(Profiles.of("test"))) {
             return;
         }
-        boolean emptyAtBoot = showRepository.count() == 0;
+        boolean needsInitialCatalogSync = showRepository.count() < 100;
         CompletableFuture.runAsync(() -> {
             try {
                 refreshBoxOffice();
             } catch (Exception e) {
                 log.warn("서버 시작 시 박스오피스 갱신 실패 (무시): {}", e.getMessage());
             }
-            if (emptyAtBoot) {
+            if (needsInitialCatalogSync) {
                 try {
-                    kopisSyncService.syncShows();
+                    kopisSyncService.syncShows(3);
                     clearPopularShowsCache();
                 } catch (Exception e) {
                     log.warn("서버 시작 시 전체 공연 동기화 실패 (무시): {}", e.getMessage());
@@ -81,7 +81,7 @@ public class BoxOfficeScheduler {
         log.info("=== KOPIS 박스오피스 인기 순위 갱신 시작 ===");
 
         // 1. 짧은 트랜잭션으로 오늘 날짜 기준 공연 상태 보정 후 즉시 커밋(락 해제)
-        java.time.LocalDate today = java.time.LocalDate.now();
+        java.time.LocalDate today = java.time.LocalDate.now(java.time.ZoneId.of("Asia/Seoul"));
         transactionTemplate.executeWithoutResult(status -> {
             int endedCount = showRepository.updateEndedShows(today);
             int startedCount = showRepository.updateStartedShows(today);
@@ -127,12 +127,7 @@ public class BoxOfficeScheduler {
 
         // 3. 짧은 트랜잭션으로 순위 일괄 갱신
         transactionTemplate.executeWithoutResult(status -> {
-            List<Show> allRanked = showRepository.findAll();
-            for (Show s : allRanked) {
-                if (s.getPopularityRank() != null && s.getPopularityRank() < 999) {
-                    s.updatePopularityRank(999);
-                }
-            }
+            showRepository.resetAllPopularityRanks();
 
             for (int i = 0; i < musicalCount; i++) {
                 String kopisId = musicalRanking.get(i);
@@ -162,7 +157,7 @@ public class BoxOfficeScheduler {
 
     private void clearPopularShowsCache() {
         if (cacheManager != null) {
-            String[] caches = { "popularShows", "homeShowSections", "ongoingShows", "showsSearch" };
+            String[] caches = { "popularShows", "homeShowSections", "ongoingShows", "showsSearch", "todaySchedule" };
             for (String name : caches) {
                 Cache cache = cacheManager.getCache(name);
                 if (cache != null) {

@@ -52,6 +52,6 @@ public class ProductAnalyticsController {
             "plans", allPlans.size(), "completedPlans", allPlans.stream().filter(p -> p.getDiaryId() != null).count(),
             "events90d", events.findByCreatedAtAfter(now.minusDays(90)).stream().collect(Collectors.groupingBy(ProductEvent::getName, Collectors.counting())));
     }
-    @Scheduled(cron = "0 0 4 * * *", zone = "Asia/Seoul") @Transactional
+    @Scheduled(cron = "0 15 3 * * *", zone = "Asia/Seoul") @Transactional
     public void purge() { events.deleteByCreatedAtBefore(LocalDateTime.now().minusDays(90)); }
 }

@@ -4,6 +4,7 @@ import com.curtaincall.domain.show.dto.ShowResponse;
 import com.curtaincall.domain.show.entity.Show;
 import com.curtaincall.domain.theater.RegionNormalizer;
 import com.curtaincall.domain.theater.entity.Theater;
+import com.curtaincall.infra.kopis.KopisApiClient;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
@@ -85,5 +86,43 @@ class ShowInfoAndScheduleTest {
                 .hasSize(1)
                 .extracting(ShowResponse.BookingLinkItem::getName, ShowResponse.BookingLinkItem::getUrl)
                 .containsExactly(org.assertj.core.groups.Tuple.tuple("NOL 티켓(인터파크)", "https://ticket.interpark.com/1"));
+    }
+
+    @Test
+    void normalizeBookingUrlPromotesMajorVendorsToHttpsAndExposesPopularityRank() {
+        assertThat(KopisApiClient.normalizeBookingUrl("http://ticket.interpark.com/Global/Play/Goods/GoodsInfo.asp?GoodsCode=1"))
+                .isEqualTo("https://ticket.interpark.com/Global/Play/Goods/GoodsInfo.asp?GoodsCode=1");
+        assertThat(KopisApiClient.normalizeBookingUrl("http://www.ticketlink.co.kr/product/60000"))
+                .isEqualTo("https://www.ticketlink.co.kr/product/60000");
+        assertThat(KopisApiClient.normalizeBookingUrl("http://ticket.yes24.com/Perf/50000"))
+                .isEqualTo("https://ticket.yes24.com/Perf/50000");
+        assertThat(KopisApiClient.normalizeBookingUrl("http://unknown-local-venue.kr/book"))
+                .isEqualTo("http://unknown-local-venue.kr/book");
+
+        Show rankedUpcoming = Show.builder()
+                .id(10L)
+                .kopisId("PF100")
+                .title("오페라의 유령")
+                .genre(Show.Genre.MUSICAL)
+                .status(Show.Status.UPCOMING)
+                .popularityRank(1)
+                .bookingLinks("[{\"name\":\"티켓링크\",\"url\":\"http://www.ticketlink.co.kr/product/1\"}]")
+                .build();
+
+        ShowResponse rankedDto = ShowResponse.from(rankedUpcoming);
+        assertThat(rankedDto.getPopularityRank()).isEqualTo(1);
+        assertThat(rankedDto.getBookingLinks())
+                .extracting(ShowResponse.BookingLinkItem::getUrl)
+                .containsExactly("https://www.ticketlink.co.kr/product/1");
+
+        Show unranked = Show.builder()
+                .id(11L)
+                .kopisId("PF101")
+                .title("일반 공연")
+                .genre(Show.Genre.PLAY)
+                .status(Show.Status.ONGOING)
+                .popularityRank(999)
+                .build();
+        assertThat(ShowResponse.from(unranked).getPopularityRank()).isNull();
     }
 }

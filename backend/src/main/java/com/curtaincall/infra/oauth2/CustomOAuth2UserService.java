@@ -40,7 +40,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         return new CustomOAuth2User(user.getId(), user.getEmail(), user.getRole(), attributes, userNameAttributeName);
     }
 
-    private User saveOrUpdate(OAuth2UserInfo userInfo) {
+    User saveOrUpdate(OAuth2UserInfo userInfo) {
         return socialAccountRepository.findByProviderAndProviderId(userInfo.getProvider(), userInfo.getId())
                 .map(socialAccount -> {
                     User user = socialAccount.getUser();
@@ -83,10 +83,20 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     }
 
     private void syncSocialProfile(User user, OAuth2UserInfo userInfo) {
-        user.updateProfile(
-                userInfo.getName() != null ? userInfo.getName() : user.getNickname(),
-                userInfo.getImageUrl()
-        );
+        String nextNickname = user.getNickname();
+        if ((nextNickname == null || nextNickname.isBlank() || "회원".equals(nextNickname))
+                && userInfo.getName() != null && !userInfo.getName().isBlank()) {
+            nextNickname = userInfo.getName();
+        }
+        String nextProfileImage = user.getProfileImage();
+        if ((nextProfileImage == null || nextProfileImage.isBlank())
+                && userInfo.getImageUrl() != null && !userInfo.getImageUrl().isBlank()) {
+            nextProfileImage = userInfo.getImageUrl();
+        }
+        if (!java.util.Objects.equals(nextNickname, user.getNickname())
+                || !java.util.Objects.equals(nextProfileImage, user.getProfileImage())) {
+            user.updateProfile(nextNickname, nextProfileImage);
+        }
     }
 
     private void syncLinkedUserProfile(User user, OAuth2UserInfo userInfo) {

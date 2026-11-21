@@ -30,20 +30,29 @@ public interface ShowRepository extends JpaRepository<Show, Long>, ShowRepositor
     @Query("SELECT s FROM Show s JOIN FETCH s.theater t ORDER BY s.startDate DESC")
     Page<Show> findAllWithTheater(Pageable pageable);
 
-    @Query("SELECT s FROM Show s LEFT JOIN FETCH s.theater WHERE s.status = 'ONGOING' AND s.endDate >= CURRENT_DATE ORDER BY s.endDate ASC")
-    List<Show> findTop10ByStatusOngoing(Pageable pageable);
+    @Query("SELECT s FROM Show s LEFT JOIN FETCH s.theater WHERE s.id = :id")
+    Optional<Show> findByIdWithTheater(@Param("id") Long id);
 
-    @Query("SELECT s FROM Show s JOIN FETCH s.theater WHERE s.status = 'ONGOING' AND s.popularityRank IS NOT NULL AND s.popularityRank < 999 ORDER BY s.popularityRank ASC")
-    List<Show> findPopularOngoing(Pageable pageable);
+    @Query("SELECT s.id FROM Show s ORDER BY s.id DESC")
+    List<Long> findAllIds(Pageable pageable);
 
-    @Query("SELECT s FROM Show s JOIN FETCH s.theater WHERE s.status = 'ONGOING' AND s.genre = :genre AND s.popularityRank IS NOT NULL AND s.popularityRank < 999 ORDER BY s.popularityRank ASC")
-    List<Show> findPopularOngoingByGenre(@Param("genre") Show.Genre genre, Pageable pageable);
+    @Query("SELECT s FROM Show s LEFT JOIN FETCH s.theater WHERE s.status = 'ONGOING' AND s.endDate >= :today ORDER BY s.endDate ASC")
+    List<Show> findTop10ByStatusOngoing(@Param("today") LocalDate today, Pageable pageable);
+
+    @Query("SELECT s FROM Show s LEFT JOIN FETCH s.theater WHERE s.status <> 'ENDED' AND s.popularityRank IS NOT NULL AND s.popularityRank < 999 ORDER BY s.popularityRank ASC, s.id ASC")
+    List<Show> findPopularActive(Pageable pageable);
+
+    @Query("SELECT s FROM Show s LEFT JOIN FETCH s.theater WHERE s.status <> 'ENDED' AND s.genre = :genre AND s.popularityRank IS NOT NULL AND s.popularityRank < 999 ORDER BY s.popularityRank ASC, s.id ASC")
+    List<Show> findPopularActiveByGenre(@Param("genre") Show.Genre genre, Pageable pageable);
 
     @Query("SELECT s FROM Show s LEFT JOIN FETCH s.theater WHERE s.status = :status AND s.genre = :genre ORDER BY s.startDate DESC")
     List<Show> findByGenreAndStatusWithTheaterList(@Param("genre") Show.Genre genre, @Param("status") Show.Status status, Pageable pageable);
 
-    @Query("SELECT s FROM Show s LEFT JOIN FETCH s.theater WHERE s.status = 'ONGOING' AND s.endDate >= CURRENT_DATE ORDER BY s.endDate ASC")
-    List<Show> findEndingSoon(Pageable pageable);
+    @Query("SELECT s FROM Show s LEFT JOIN FETCH s.theater WHERE s.status = 'ONGOING' AND s.endDate >= :today ORDER BY s.endDate ASC, s.popularityRank ASC")
+    List<Show> findEndingSoon(@Param("today") LocalDate today, Pageable pageable);
+
+    @Query("SELECT s FROM Show s LEFT JOIN FETCH s.theater WHERE s.status = 'ONGOING' AND s.genre = :genre AND s.endDate >= :today ORDER BY s.endDate ASC, s.popularityRank ASC")
+    List<Show> findEndingSoonByGenre(@Param("today") LocalDate today, @Param("genre") Show.Genre genre, Pageable pageable);
 
     @Query("SELECT s FROM Show s LEFT JOIN FETCH s.theater WHERE s.startDate BETWEEN :startDate AND :endDate ORDER BY s.startDate ASC")
     List<Show> findOpeningBetween(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate, Pageable pageable);
@@ -65,6 +74,10 @@ public interface ShowRepository extends JpaRepository<Show, Long>, ShowRepositor
 
     @Query("SELECT s FROM Show s LEFT JOIN FETCH s.theater WHERE s.bookingLinks IS NULL AND s.status IN :statuses ORDER BY s.popularityRank ASC")
     List<Show> findByBookingLinksIsNullAndStatusIn(@Param("statuses") List<Show.Status> statuses);
+
+    @Modifying
+    @Query("UPDATE Show s SET s.popularityRank = 999 WHERE s.popularityRank IS NULL OR s.popularityRank < 999")
+    int resetAllPopularityRanks();
 
     @Modifying
     @Query("UPDATE Show s SET s.status = 'ENDED' WHERE s.status = 'ONGOING' AND s.endDate < :today")

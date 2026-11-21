@@ -47,9 +47,10 @@ public class AdminController {
         long totalUsers = userRepository.count();
         long totalDiaries = diaryEntryRepository.count();
 
-        // 5MB 무료 쿼터 대비 대략적인 용량 계산 (공연당 약 1.6KB + 극장/다이어리 등)
+        // 대략적인 테이블 데이터 크기 추정 (공연당 약 1.6KB + 극장/다이어리 등)
         double estimatedMb = (totalShows * 1.6 + totalTheaters * 0.8 + totalDiaries * 1.0) / 1024.0 + 0.3;
-        String dbUsage = String.format("%.2f MB / 5.00 MB (%.1f%%)", estimatedMb, (estimatedMb / 5.0) * 100);
+        String dbUsage = String.format("약 %.2f MB (공연 %d · 극장 %d · 기록 %d)",
+                estimatedMb, totalShows, totalTheaters, totalDiaries);
 
         String kstNow = ZonedDateTime.now(ZoneId.of("Asia/Seoul")).format(KST_FORMATTER) + " (KST)";
 
@@ -79,14 +80,15 @@ public class AdminController {
     @PostMapping("/sync/shows")
     public ResponseEntity<Map<String, String>> syncShows(
             @RequestParam(defaultValue = "3") int months) {
-        kopisSyncService.syncShows();
-        return ResponseEntity.ok(Map.of("message", "KOPIS 신규 공연 동기화 및 점검이 완료되었습니다."));
+        int safeMonths = Math.max(1, Math.min(months, 12));
+        kopisSyncService.syncShows(safeMonths);
+        return ResponseEntity.ok(Map.of("message", "KOPIS " + safeMonths + "개월 공연 동기화 및 점검이 완료되었습니다."));
     }
 
-    @Operation(summary = "오래된 미참조 종료 공연 정리 (5MB DB 용량 확보)")
+    @Operation(summary = "오래된 미참조 종료 공연 정리")
     @PostMapping("/prune-ended")
     public ResponseEntity<Map<String, Object>> pruneEndedShows(
-            @RequestParam(defaultValue = "30") int daysAfterEnd) {
+            @RequestParam(defaultValue = "180") int daysAfterEnd) {
         int deleted = kopisSyncService.pruneOldEndedShows(daysAfterEnd);
         return ResponseEntity.ok(Map.of(
                 "message", "종료 후 " + daysAfterEnd + "일 경과한 미참조 공연 " + deleted + "건을 정리했습니다.",

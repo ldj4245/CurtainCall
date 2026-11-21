@@ -158,7 +158,7 @@ public class DiaryService {
             return List.of();
         }
         if (photoUrls.size() > 5 || photoUrls.stream().anyMatch(url -> url != null &&
-            (url.length() > 14000000 || !(url.startsWith("https://") || url.startsWith("http://") || url.matches("data:image/(png|jpeg|webp|heic);base64,[A-Za-z0-9+/=\\r\\n]+")))))
+            (url.length() > 3_000_000 || !(url.startsWith("https://") || url.startsWith("http://") || url.matches("data:image/(png|jpeg|webp|heic);base64,[A-Za-z0-9+/=\\r\\n]+")))))
             throw BusinessException.badRequest("지원하지 않는 사진 주소입니다.");
         return photoUrls.stream()
                 .filter(url -> url != null && !url.isBlank())

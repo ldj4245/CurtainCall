@@ -64,6 +64,14 @@ public class ShowController {
         return ResponseEntity.ok(showService.getPopularShows(limit, genre));
     }
 
+    @Operation(summary = "곧 막공 공연 목록 (종료일 임박순)")
+    @GetMapping("/ending-soon")
+    public ResponseEntity<List<ShowResponse>> getEndingSoonShows(
+            @RequestParam(defaultValue = "20") int limit,
+            @RequestParam(required = false) String genre) {
+        return ResponseEntity.ok(showService.getEndingSoonShows(limit, genre));
+    }
+
     @Operation(summary = "홈 큐레이션 섹션", description = "KOPIS 인기 공연, 곧 끝나는 공연, 이번 달 개막, 기록 많은 공연을 조회합니다.")
     @GetMapping("/home-sections")
     public ResponseEntity<ShowHomeSectionsResponse> getHomeSections(

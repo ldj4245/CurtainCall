@@ -19,11 +19,14 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.time.LocalDate;
+import java.time.ZoneId;
 
 @Slf4j
 @RestController
 @RequiredArgsConstructor
 public class ShowLiveController {
+
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final ShowLiveService showLiveService;
     private final SimpMessagingTemplate messagingTemplate;
@@ -33,7 +36,7 @@ public class ShowLiveController {
             @AuthenticationPrincipal Long userId,
             @PathVariable Long showId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        LocalDate liveDate = date != null ? date : LocalDate.now();
+        LocalDate liveDate = date != null ? date : LocalDate.now(KST);
         ShowLiveRoomDto room = showLiveService.getRoom(showId, liveDate);
         return ResponseEntity.ok(showLiveService.filterBlocked(room, userId));
     }
@@ -46,7 +49,7 @@ public class ShowLiveController {
         if (userId == null) {
             throw BusinessException.unauthorized("인증이 필요합니다.");
         }
-        LocalDate liveDate = date != null ? date : LocalDate.now();
+        LocalDate liveDate = date != null ? date : LocalDate.now(KST);
         ShowLiveRoomDto room = showLiveService.getOrCreateRoom(showId, liveDate);
         return ResponseEntity.ok(showLiveService.filterBlocked(room, userId));
     }

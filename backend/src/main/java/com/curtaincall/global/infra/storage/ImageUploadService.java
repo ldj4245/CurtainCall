@@ -25,7 +25,8 @@ public class ImageUploadService {
     private static final List<String> ALLOWED_CONTENT_TYPES = List.of(
             "image/jpeg", "image/png", "image/webp", "image/heic"
     );
-    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB (S3)
+    private static final long MAX_EMBEDDED_FILE_SIZE = 2 * 1024 * 1024; // 2MB (Base64 fallback)
 
     private final S3Client s3Client;
     private final String bucket;
@@ -127,6 +128,9 @@ public class ImageUploadService {
         }
         if (file.getSize() > MAX_FILE_SIZE) {
             throw new IllegalArgumentException("파일 크기는 10MB 이하여야 합니다.");
+        }
+        if (!s3Configured && file.getSize() > MAX_EMBEDDED_FILE_SIZE) {
+            throw new IllegalArgumentException("사진 파일은 2MB 이하로 올려 주세요.");
         }
         if (!ALLOWED_CONTENT_TYPES.contains(file.getContentType())) {
             throw new IllegalArgumentException("지원하지 않는 파일 형식입니다. (jpeg, png, webp, heic만 가능)");
