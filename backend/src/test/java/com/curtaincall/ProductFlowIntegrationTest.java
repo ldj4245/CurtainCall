@@ -195,4 +195,103 @@ class ProductFlowIntegrationTest {
         assertThat(metrics.get("completedPlans").asLong()).isGreaterThanOrEqualTo(1L);
         assertThat(metrics.get("events90d").get("show_view").asLong()).isGreaterThanOrEqualTo(1L);
     }
+
+    @Test void communityCrudLikesRepliesNotificationsAndAccountDeletion() throws Exception {
+        request(get("/api/community/posts/my"), null, null, 401);
+        request(get("/api/community/posts"), null, null, 200);
+
+        var createBody = Map.of(
+                "category", "INFO",
+                "showId", show.getId(),
+                "title", "관람 동선 정보 공유합니다",
+                "content", "지하철역 출구에서 공연장까지 도보 이동 시간 정리입니다."
+        );
+        var created = request(post("/api/community/posts"), token, createBody, 201);
+        long postId = created.get("id").asLong();
+        assertThat(created.get("category").asText()).isEqualTo("INFO");
+        assertThat(created.get("showId").asLong()).isEqualTo(show.getId());
+        assertThat(created.get("author").asBoolean()).isTrue();
+
+        var listed = request(get("/api/community/posts")
+                .param("category", "INFO")
+                .param("keyword", "통합 점검 공연"), null, null, 200);
+        assertThat(listed.get("content")).anySatisfy(item ->
+                assertThat(item.get("id").asLong()).isEqualTo(postId));
+
+        var viewedOnce = request(get("/api/community/posts/" + postId), null, null, 200);
+        assertThat(viewedOnce.get("viewCount").asInt()).isEqualTo(1);
+        var viewedWithoutCount = request(get("/api/community/posts/" + postId)
+                .param("countView", "false"), token, null, 200);
+        assertThat(viewedWithoutCount.get("viewCount").asInt()).isEqualTo(1);
+
+        var updateBody = Map.of(
+                "category", "QUESTION",
+                "showId", show.getId(),
+                "title", "시야 관련 질문으로 수정합니다",
+                "content", "1층 중블 앞열 시야가 어떤지 궁금합니다."
+        );
+        request(put("/api/community/posts/" + postId), otherToken, updateBody, 403);
+        request(delete("/api/community/posts/" + postId), otherToken, null, 403);
+        var updated = request(put("/api/community/posts/" + postId), token, updateBody, 200);
+        assertThat(updated.get("category").asText()).isEqualTo("QUESTION");
+        assertThat(updated.get("title").asText()).isEqualTo("시야 관련 질문으로 수정합니다");
+
+        var likedOnce = request(post("/api/community/posts/" + postId + "/like"), otherToken, null, 200);
+        assertThat(likedOnce.get("liked").asBoolean()).isTrue();
+        assertThat(likedOnce.get("likeCount").asInt()).isEqualTo(1);
+        var unliked = request(post("/api/community/posts/" + postId + "/like"), otherToken, null, 200);
+        assertThat(unliked.get("liked").asBoolean()).isFalse();
+        assertThat(unliked.get("likeCount").asInt()).isEqualTo(0);
+        var reLiked = request(post("/api/community/posts/" + postId + "/like"), otherToken, null, 200);
+        assertThat(reLiked.get("liked").asBoolean()).isTrue();
+        assertThat(reLiked.get("likeCount").asInt()).isEqualTo(1);
+
+        request(put("/api/notifications/preferences"), token,
+                Map.of("plans", false, "favorites", false, "replies", true, "monthly", false), 200);
+
+        var commentByOther = request(post("/api/community/posts/" + postId + "/comments"), otherToken,
+                Map.of("content", "좋은 정보 감사합니다."), 201);
+        long otherCommentId = commentByOther.get("id").asLong();
+
+        var ownerComment = request(post("/api/community/posts/" + postId + "/comments"), token,
+                Map.of("content", "추가 질문도 댓글로 남겨주세요."), 201);
+        long ownerCommentId = ownerComment.get("id").asLong();
+
+        var replyByOther = request(post("/api/community/posts/" + postId + "/comments"), otherToken,
+                Map.of("content", "혹시 인터미션 시간도 아시나요?", "parentId", ownerCommentId), 201);
+        long replyId = replyByOther.get("id").asLong();
+
+        request(post("/api/community/posts/" + postId + "/comments"), token,
+                Map.of("content", "대댓글의 대댓글 불가 확인", "parentId", replyId), 400);
+
+        var notifications = request(get("/api/notifications"), token, null, 200);
+        assertThat(notifications.size()).isEqualTo(2);
+        assertThat(notifications.get(0).get("path").asText()).isEqualTo("/community/" + postId);
+
+        var comments = request(get("/api/community/posts/" + postId + "/comments"), null, null, 200);
+        assertThat(comments.get("content").size()).isEqualTo(2);
+        assertThat(comments.get("content").get(1).get("replies").size()).isEqualTo(1);
+
+        var admin = users.save(User.builder().nickname("커뮤니티관리자").email(UUID.randomUUID() + "@example.test")
+                .password("unused").role(User.Role.ADMIN).build());
+        String adminToken = jwt.createAccessToken(admin.getId(), admin.getEmail(), "ADMIN");
+        request(delete("/api/community/comments/" + otherCommentId), adminToken, null, 204);
+
+        var otherPost = request(post("/api/community/posts"), otherToken,
+                Map.of("category", "FREE", "title", "다른 회원의 자유글입니다", "content", "오늘 관극 분위기 좋았습니다."), 201);
+        long otherPostId = otherPost.get("id").asLong();
+        var ownerLikedOther = request(post("/api/community/posts/" + otherPostId + "/like"), token, null, 200);
+        assertThat(ownerLikedOther.get("likeCount").asInt()).isEqualTo(1);
+        request(post("/api/community/posts/" + otherPostId + "/comments"), token,
+                Map.of("content", "저도 공감합니다."), 201);
+
+        request(delete("/api/users/me"), token, Map.of("confirmation", "탈퇴"), 204);
+
+        request(get("/api/community/posts/" + postId), null, null, 404);
+        var otherPostAfter = request(get("/api/community/posts/" + otherPostId).param("countView", "false"), null, null, 200);
+        assertThat(otherPostAfter.get("likeCount").asInt()).isZero();
+        var otherPostCommentsAfter = request(get("/api/community/posts/" + otherPostId + "/comments"), null, null, 200);
+        assertThat(otherPostCommentsAfter.get("content").get(0).get("content").asText()).isEqualTo("[삭제된 댓글]");
+        assertThat(otherPostCommentsAfter.get("content").get(0).get("authorNickname").asText()).isEqualTo("탈퇴한 회원");
+    }
 }

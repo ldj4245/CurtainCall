@@ -1,6 +1,6 @@
 # CurtainCall
 
-뮤지컬·연극 공연 정보 탐색, 관극 기록, 후기 웹 서비스
+뮤지컬·연극 공연 정보 탐색, 관극 기록, 후기 및 공통 커뮤니티 웹 서비스
 
 [https://thecurtaincall.me](https://thecurtaincall.me)
 
@@ -14,7 +14,8 @@
   - 로그인 전 임시 작성 및 가입·로그인 후 이어쓰기, 목록·포스터·달력 보기, 재관람 빠른 복사
   - 관람 예정 일정 등록 및 관람 후 기록 전환(기록 삭제 시 일정 전환 가능 상태 복원)
   - 월간 공유 카드(PNG) 생성 및 단건 공개 링크 발급(비공개 전환·삭제·탈퇴 시 기존 링크 폐기)
-- **후기 · 시야**
+- **커뮤니티 · 후기 · 시야**
+  - 전체 회원 공통 커뮤니티 게시판(자유·후기·정보·질문 카테고리, 관련 공연 선택 태그, 키워드 검색, 공감·댓글·1단 답글 및 답글 알림)
   - 공연별 공개 관극 기록·좌석 시야 검색 및 세부 평점 후기·댓글 열람
 - **계정 · 알림 · 데이터**
   - 이메일 및 카카오 OAuth2 로그인(JWT, 네이버·구글 OAuth2 확장 설정 포함)
@@ -60,6 +61,7 @@ curtaincall/
 │   │   ├── admin/         운영자·시스템 현황 조회
 │   │   ├── analytics/     행동 이벤트 수집·집계
 │   │   ├── casting/       출연진 정보 (KOPIS 출연진·PlayDB 선택 연동)
+│   │   ├── community/     공통 커뮤니티 게시판·댓글·대댓글·공감
 │   │   ├── diary/         관극 다이어리·통계·달력·공유 링크
 │   │   ├── favorite/      관심 공연
 │   │   ├── notification/  알림·수신 설정
@@ -78,7 +80,7 @@ curtaincall/
 │       ├── infra/storage/ 이미지 저장소 처리
 │       └── jwt/           JWT 발급·검증 필터
 └── frontend/src/
-    ├── pages/             Home·Shows·Diary·Plans·Notifications·Shared·MyPage·Auth
+    ├── pages/             Home·Shows·Community·Diary·Plans·Notifications·Shared·MyPage·Auth
     ├── components/        show·diary·plan·review·admin·common
     ├── api/               Axios API 모듈
     ├── store/             Zustand 인증 상태

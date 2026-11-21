@@ -52,6 +52,8 @@ public class SecurityConfig {
                         .requestMatchers(request -> !request.getRequestURI().startsWith("/api")).permitAll()
                         .requestMatchers("/swagger-ui/**", "/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/community/posts/my").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/community/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/reviews/*/comments", "/api/shared/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/events").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/shows/**", "/api/theaters/**", "/api/casting/**").permitAll()

@@ -209,6 +209,7 @@ export default function HomePage() {
       )}
       <footer className="site-footer">
         <Link to="/shows">공연 검색</Link>
+        <Link to="/community">커뮤니티</Link>
         <Link to="/diary">내 기록</Link>
         <span>공연 정보 KOPIS</span>
       </footer>

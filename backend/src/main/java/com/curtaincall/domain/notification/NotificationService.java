@@ -70,6 +70,15 @@ public class NotificationService {
         var p = preference(owner);
         if (p.isReplies()) add(owner, "reply:" + commentId, "작성한 후기에 댓글이 달렸습니다.", "/shows/" + showId + "?tab=reviews");
     }
+    public void communityComment(Long owner, Long writer, Long commentId, Long postId, boolean isReply) {
+        if (owner.equals(writer)) return;
+        var p = preference(owner);
+        if (p.isReplies()) add(
+                owner,
+                "community:" + commentId,
+                isReply ? "작성한 커뮤니티 댓글에 답글이 달렸습니다." : "작성한 커뮤니티 글에 댓글이 달렸습니다.",
+                "/community/" + postId);
+    }
     public void seen(Long user, Long id) {
         notifications.findByIdAndUserId(id, user).orElseThrow(() -> BusinessException.notFound("알림을 찾을 수 없습니다.")).markSeen();
     }

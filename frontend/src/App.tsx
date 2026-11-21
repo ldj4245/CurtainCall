@@ -10,6 +10,9 @@ const SharedRecordPage = lazy(() => import('./pages/Shared/SharedRecordPage'))
 const HomePage = lazy(() => import('./pages/Home/HomePage'))
 const ShowListPage = lazy(() => import('./pages/Shows/ShowListPage'))
 const ShowDetailPage = lazy(() => import('./pages/Shows/ShowDetailPage'))
+const CommunityListPage = lazy(() => import('./pages/Community/CommunityListPage'))
+const CommunityDetailPage = lazy(() => import('./pages/Community/CommunityDetailPage'))
+const CommunityEditorPage = lazy(() => import('./pages/Community/CommunityEditorPage'))
 const DiaryPage = lazy(() => import('./pages/Diary/DiaryPage'))
 const MyPage = lazy(() => import('./pages/MyPage/MyPage'))
 const LoginPage = lazy(() => import('./pages/Auth/LoginPage'))
@@ -85,6 +88,10 @@ export default function App() {
         <Route element={<MainLayout />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/shows" element={<ShowListPage />} />
+          <Route path="/community" element={<CommunityListPage />} />
+          <Route path="/community/new" element={<ProtectedRoute><CommunityEditorPage /></ProtectedRoute>} />
+          <Route path="/community/:id" element={<CommunityDetailPage />} />
+          <Route path="/community/:id/edit" element={<ProtectedRoute><CommunityEditorPage /></ProtectedRoute>} />
           <Route path="/plans" element={<ProtectedRoute><PlansPage /></ProtectedRoute>} />
           <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
           <Route path="/shared/:token" element={<SharedRecordPage />} />

@@ -15,7 +15,7 @@ export default function Navbar() {
       <div className="page-width site-header-inner">
         <Link to="/" className="wordmark" aria-label="커튼콜 홈">커튼콜</Link>
         <nav className="header-links" aria-label="주 메뉴">
-          {[['/', '공연'], ['/shows', '검색'], ['/diary', '내 기록'], ['/plans', '관람 예정']].map(([to, label]) => (
+          {[['/', '공연'], ['/shows', '검색'], ['/community', '커뮤니티'], ['/diary', '내 기록'], ['/plans', '관람 예정']].map(([to, label]) => (
             <NavLink
               key={to}
               to={to}

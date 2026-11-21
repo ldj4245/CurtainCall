@@ -10,6 +10,8 @@ public class SpaForwardController {
     @RequestMapping(value = {
         "/shows",
         "/shows/**",
+        "/community",
+        "/community/**",
         "/diary",
         "/diary/**",
         "/mypage",

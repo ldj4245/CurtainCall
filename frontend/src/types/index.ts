@@ -175,6 +175,46 @@ export interface Comment {
   createdAt: string
 }
 
+export type CommunityCategory = 'FREE' | 'REVIEW' | 'INFO' | 'QUESTION'
+
+export interface CommunityPostSummary {
+  id: number
+  category: CommunityCategory
+  categoryDisplayName: string
+  title: string
+  showId?: number | null
+  showTitle?: string | null
+  authorId: number
+  authorNickname: string
+  viewCount: number
+  likeCount: number
+  commentCount: number
+  liked: boolean
+  createdAt: string
+}
+
+export interface CommunityPostDetail extends CommunityPostSummary {
+  content: string
+  showPosterUrl?: string | null
+  author: boolean
+  updatedAt: string
+}
+
+export interface CommunityComment {
+  id: number
+  authorId: number
+  authorNickname: string
+  content: string
+  parentId?: number | null
+  replies: CommunityComment[]
+  createdAt: string
+}
+
+export interface CommunityLikeResult {
+  liked: boolean
+  likeCount: number
+}
+
 export interface PageResponse<T> {
   content: T[]
   totalElements: number

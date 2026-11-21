@@ -95,6 +95,7 @@ public interface ShowRepository extends JpaRepository<Show, Long>, ShowRepositor
            "AND NOT EXISTS (SELECT 1 FROM reviews r WHERE r.show_id = s.id) " +
            "AND NOT EXISTS (SELECT 1 FROM favorite_shows f WHERE f.show_id = s.id) " +
            "AND NOT EXISTS (SELECT 1 FROM viewing_plans p WHERE p.show_id = s.id) " +
+           "AND NOT EXISTS (SELECT 1 FROM community_posts cp WHERE cp.show_id = s.id) " +
            "LIMIT :limit", nativeQuery = true)
     List<Long> findOldUnreferencedEndedShowIds(@Param("cutoffDate") LocalDate cutoffDate, @Param("limit") int limit);
 
