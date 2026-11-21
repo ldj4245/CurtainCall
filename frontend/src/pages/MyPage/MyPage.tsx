@@ -107,7 +107,6 @@ export default function MyPage() {
       <nav className="flex flex-wrap gap-5 border-b border-line-lightest py-3 text-[13px]" aria-label="내 활동 바로가기">
         <Link to="/diary" className="text-ink-base hover:underline">내 관극 기록</Link>
         <Link to="/plans" className="text-ink-base hover:underline">관람 예정</Link>
-        <Link to="/chat" className="text-ink-base hover:underline">동행 메시지</Link>
         <Link to="/notifications" className="text-ink-base hover:underline">알림</Link>
       </nav>
 

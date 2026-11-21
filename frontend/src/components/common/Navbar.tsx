@@ -1,12 +1,9 @@
-import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
 
 export default function Navbar() {
   const { isAuthenticated } = useAuthStore()
-  const { pathname } = useLocation()
   const navigate = useNavigate()
-
-  if (pathname.startsWith('/chat/')) return null
 
   const startRecord = () => {
     navigate('/diary?compose=1')
@@ -34,7 +31,6 @@ export default function Navbar() {
         <div className="header-account">
           {isAuthenticated ? (
             <>
-              <NavLink to="/chat" className={({ isActive }) => isActive ? 'is-active' : ''}>메시지</NavLink>
               <NavLink to="/notifications" className={({ isActive }) => isActive ? 'is-active' : ''}>알림</NavLink>
               <NavLink to="/my" className={({ isActive }) => isActive ? 'is-active' : ''}>마이</NavLink>
             </>

@@ -14,15 +14,13 @@ public class SpaForwardController {
         "/diary/**",
         "/mypage",
         "/mypage/**",
-        "/chat",
-        "/chat/**",
         "/login",
         "/signup", "/my", "/plans", "/notifications", "/shared/**",
         "/oauth2/callback"
     })
     public String forwardSpaRoutes(HttpServletRequest request) {
         String uri = request.getRequestURI();
-        if (uri.startsWith("/api") || uri.startsWith("/ws") || uri.startsWith("/swagger") || uri.startsWith("/api-docs")) {
+        if (uri.startsWith("/api") || uri.startsWith("/swagger") || uri.startsWith("/api-docs")) {
             return null;
         }
         return "forward:/index.html";

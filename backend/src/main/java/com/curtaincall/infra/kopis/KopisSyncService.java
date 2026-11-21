@@ -3,7 +3,6 @@ package com.curtaincall.infra.kopis;
 import com.curtaincall.domain.casting.repository.CastMemberRepository;
 import com.curtaincall.domain.show.entity.Show;
 import com.curtaincall.domain.show.repository.ShowRepository;
-import com.curtaincall.domain.showlive.repository.ShowLiveRoomRepository;
 import com.curtaincall.domain.theater.RegionNormalizer;
 import com.curtaincall.domain.theater.entity.Theater;
 import com.curtaincall.domain.theater.repository.TheaterRepository;
@@ -32,7 +31,6 @@ public class KopisSyncService {
     private final ShowRepository showRepository;
     private final TheaterRepository theaterRepository;
     private final CastMemberRepository castMemberRepository;
-    private final ShowLiveRoomRepository showLiveRoomRepository;
     private final CacheManager cacheManager;
     private final TransactionTemplate transactionTemplate;
 
@@ -125,7 +123,6 @@ public class KopisSyncService {
             }
             log.info("종료 후 {}일 경과한 미참조 공연 정리 시작 (대상: {}건)", daysAfterEnd, oldShowIds.size());
             castMemberRepository.deleteAllByShowIdIn(oldShowIds);
-            showLiveRoomRepository.deleteAllByShowIdIn(oldShowIds);
             showRepository.deleteAllByIdInBatch(oldShowIds);
             return oldShowIds.size();
         });

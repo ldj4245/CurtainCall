@@ -34,10 +34,6 @@ class ProductFlowIntegrationTest {
     @Autowired ShowRepository shows;
     @Autowired DiaryEntryRepository diaries;
     @Autowired JwtTokenProvider jwt;
-    @org.springframework.boot.test.web.server.LocalServerPort int port;
-    @Autowired com.curtaincall.domain.companion.repository.CompanionPostRepository posts;
-    @Autowired com.curtaincall.domain.companion.repository.CompanionParticipantRepository participants;
-    @Autowired com.curtaincall.domain.chat.repository.ChatRoomRepository rooms;
     @MockBean KopisApiClient kopis;
     @MockBean KopisSyncService sync;
     User owner, other;
@@ -137,18 +133,13 @@ class ProductFlowIntegrationTest {
         request(delete("/api/reviews/" + review.get("id").asLong()), token, null, 204);
         request(get(comments), null, null, 404);
     }
-    @Test void websocketInfoAndMetadataWorkWithoutSpaInterception() throws Exception {
-        mvc.perform(get("/ws/info")).andExpect(status().isOk()).andExpect(jsonPath("websocket").value(true));
+    @Test void metadataEndpointsWorkWithoutSpaInterception() throws Exception {
         mvc.perform(get("/shows/" + show.getId())).andExpect(status().isOk()).andExpect(content().string(org.hamcrest.Matchers.containsString("application/ld+json")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("&lt;안전&gt;")));
         mvc.perform(get("/robots.txt")).andExpect(status().isOk());
         mvc.perform(get("/sitemap.xml")).andExpect(status().isOk()).andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("shared"))));
     }
     @Test void deletingAccountRevokesTokensPublicLinksAndErasesRecords() throws Exception {
-        var authored = posts.save(com.curtaincall.domain.companion.entity.CompanionPost.builder().author(owner).show(show)
-            .title("탈퇴 점검").content("삭제될 동행 내용").performanceDate(LocalDate.now()).performanceTime("14:00").maxMembers(3).build());
-        participants.save(com.curtaincall.domain.companion.entity.CompanionParticipant.builder().companionPost(authored).user(owner).build());
-        rooms.save(com.curtaincall.domain.chat.entity.ChatRoom.of(authored));
         var entry = request(post("/api/diary"), token, record(true), 201);
         String path = request(post("/api/diary/" + entry.get("id").asLong() + "/share"), token, null, 200).get("path").asText();
         request(post("/api/plans"), token, Map.of("showId", show.getId(), "watchedDate", LocalDate.now().toString(), "reminder", true), 200);
@@ -157,7 +148,6 @@ class ProductFlowIntegrationTest {
         assertThat(diaries.countByUserId(owner.getId())).isZero();
         request(get("/api/diary/me"), token, null, 401);
         request(get("/api" + path), null, null, 404);
-        assertThat(posts.existsById(authored.getId())).isFalse();
     }
 
     @Test void onlyPublicRatingsAffectShowAverage() throws Exception {
@@ -179,51 +169,6 @@ class ProductFlowIntegrationTest {
         var photos = com.curtaincall.domain.diary.dto.PhotoUrls.read(legacy);
         assertThat(photos).containsExactly(image, "https://example.test/a,b.jpg", image);
         assertThat(com.curtaincall.domain.diary.dto.PhotoUrls.read(com.curtaincall.domain.diary.dto.PhotoUrls.write(photos))).isEqualTo(photos);
-    }
-
-    @Test void websocketRequiresAuthenticationAndMembershipAndRespectsBlock() throws Exception {
-        var post = posts.save(com.curtaincall.domain.companion.entity.CompanionPost.builder().author(owner).show(show)
-            .title("동행 점검").content("동행 내용").performanceDate(LocalDate.now()).performanceTime("14:00").maxMembers(3).build());
-        participants.save(com.curtaincall.domain.companion.entity.CompanionParticipant.builder().companionPost(post).user(owner).build());
-        var room = rooms.save(com.curtaincall.domain.chat.entity.ChatRoom.of(post));
-        var client = new org.springframework.web.socket.messaging.WebSocketStompClient(new org.springframework.web.socket.sockjs.client.SockJsClient(
-            List.of(new org.springframework.web.socket.sockjs.client.WebSocketTransport(new org.springframework.web.socket.client.standard.StandardWebSocketClient()))));
-        client.setMessageConverter(new org.springframework.messaging.converter.MappingJackson2MessageConverter());
-        var headers = new org.springframework.web.socket.WebSocketHttpHeaders(); headers.add("Origin", "http://localhost:3000");
-        var ownerHeaders = new org.springframework.messaging.simp.stomp.StompHeaders(); ownerHeaders.add("Authorization", "Bearer " + token);
-        var otherHeaders = new org.springframework.messaging.simp.stomp.StompHeaders(); otherHeaders.add("Authorization", "Bearer " + otherToken);
-        try {
-            assertThatThrownBy(() -> client.connectAsync("http://localhost:" + port + "/ws", headers,
-                new org.springframework.messaging.simp.stomp.StompHeaders(), new org.springframework.messaging.simp.stomp.StompSessionHandlerAdapter() {}).get(5, TimeUnit.SECONDS)).isInstanceOf(Exception.class);
-            var denied = new CountDownLatch(1);
-            var outsider = client.connectAsync("http://localhost:" + port + "/ws", headers, otherHeaders,
-                new org.springframework.messaging.simp.stomp.StompSessionHandlerAdapter() {
-                    @Override public void handleFrame(org.springframework.messaging.simp.stomp.StompHeaders h, Object payload) { denied.countDown(); }
-                    @Override public void handleTransportError(org.springframework.messaging.simp.stomp.StompSession s, Throwable e) { denied.countDown(); }
-                }).get(5, TimeUnit.SECONDS);
-            outsider.subscribe("/sub/chat/" + room.getId(), new org.springframework.messaging.simp.stomp.StompFrameHandler() {
-                public java.lang.reflect.Type getPayloadType(org.springframework.messaging.simp.stomp.StompHeaders h) { return Map.class; }
-                public void handleFrame(org.springframework.messaging.simp.stomp.StompHeaders h, Object payload) {}
-            });
-            assertThat(denied.await(5, TimeUnit.SECONDS)).isTrue();
-            var received = new LinkedBlockingQueue<Map<?, ?>>();
-            var member = client.connectAsync("http://localhost:" + port + "/ws", headers, ownerHeaders,
-                new org.springframework.messaging.simp.stomp.StompSessionHandlerAdapter() {}).get(5, TimeUnit.SECONDS);
-            member.subscribe("/sub/chat/" + room.getId(), new org.springframework.messaging.simp.stomp.StompFrameHandler() {
-                public java.lang.reflect.Type getPayloadType(org.springframework.messaging.simp.stomp.StompHeaders h) { return Map.class; }
-                public void handleFrame(org.springframework.messaging.simp.stomp.StompHeaders h, Object payload) { received.add((Map<?, ?>) payload); }
-            });
-            member.send("/pub/chat/" + room.getId(), Map.of("content", "연결 확인", "type", "TALK"));
-            var message = received.poll(5, TimeUnit.SECONDS);
-            assertThat(message).isNotNull(); assertThat(message.get("content")).isEqualTo("연결 확인");
-            participants.save(com.curtaincall.domain.companion.entity.CompanionParticipant.builder().companionPost(post).user(other).build());
-            request(put("/api/blocks/" + other.getId()), token, null, 200);
-            var writer = client.connectAsync("http://localhost:" + port + "/ws", headers, otherHeaders,
-                new org.springframework.messaging.simp.stomp.StompSessionHandlerAdapter() {}).get(5, TimeUnit.SECONDS);
-            writer.send("/pub/chat/" + room.getId(), Map.of("content", "차단된 메시지", "type", "TALK"));
-            assertThat(received.poll(1, TimeUnit.SECONDS)).isNull();
-            writer.disconnect(); member.disconnect();
-        } finally { client.stop(); }
     }
 
     @Test void favoritesIncludeShowsWithoutTheaterAndExportAndMetricsWork() throws Exception {

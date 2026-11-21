@@ -61,7 +61,7 @@ public class PublicPageController {
     @GetMapping(value = "/robots.txt", produces = MediaType.TEXT_PLAIN_VALUE)
     @ResponseBody public String robots() {
         if (baseUrl.contains("localhost") || baseUrl.contains("127.0.0.1")) return "User-agent: *\nDisallow: /\n";
-        return "User-agent: *\nDisallow: /api/\nDisallow: /shared/\nDisallow: /diary\nDisallow: /my\nDisallow: /plans\nDisallow: /notifications\nDisallow: /chat\nDisallow: /login\nDisallow: /signup\nSitemap: " + baseUrl + "/sitemap.xml\n";
+        return "User-agent: *\nDisallow: /api/\nDisallow: /shared/\nDisallow: /diary\nDisallow: /my\nDisallow: /plans\nDisallow: /notifications\nDisallow: /login\nDisallow: /signup\nSitemap: " + baseUrl + "/sitemap.xml\n";
     }
     @GetMapping(value = "/sitemap.xml", produces = MediaType.APPLICATION_XML_VALUE)
     @ResponseBody public String sitemap() {

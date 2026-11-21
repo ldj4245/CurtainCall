@@ -22,8 +22,4 @@ export const retentionApi = {
   shared: (token: string) => api.get<DiaryEntry>(`/shared/${token}`).then(r => r.data),
   records: (showId: number, page = 0, seatsOnly = false, seat = '') =>
     api.get<PageResponse<DiarySnippet>>(`/shows/${showId}/public-records`, { params: { page, size: 10, seatsOnly, seat } }).then(r => r.data),
-  blocks: () => api.get<Array<{ blockedUserId: number }>>('/blocks').then(r => r.data),
-  block: (id: number) => api.put(`/blocks/${id}`),
-  unblock: (id: number) => api.delete(`/blocks/${id}`),
-  report: (type: 'CHAT' | 'LIVE', targetId: number, reason: string) => api.post('/reports', { type, targetId, reason }),
 }

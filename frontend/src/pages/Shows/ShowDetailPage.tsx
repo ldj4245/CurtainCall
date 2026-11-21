@@ -13,17 +13,15 @@ import DiarySavedSheet from '../../components/diary/DiarySavedSheet'
 import ShowCastingTab from '../../components/show/ShowCastingTab'
 import ShowInfoTab from '../../components/show/ShowInfoTab'
 import ShowReviewsTab from '../../components/show/ShowReviewsTab'
-import ShowCompanionLiveTab from '../../components/show/ShowCompanionLiveTab'
 import { useAuthStore } from '../../store/authStore'
 import type { DiaryEntry } from '../../types'
 import { summarizePriceRange } from '../../utils/showUtils'
 
-type DetailTab = 'info' | 'reviews' | 'companion'
+type DetailTab = 'info' | 'reviews'
 
 const TAB_ITEMS: { key: DetailTab; label: string }[] = [
   { key: 'info', label: '공연 정보' },
   { key: 'reviews', label: '후기 · 시야' },
-  { key: 'companion', label: '동행 · 당일 톡' },
 ]
 
 export default function ShowDetailPage() {
@@ -34,7 +32,7 @@ export default function ShowDetailPage() {
   const { isAuthenticated } = useAuthStore()
 
   const [params, setParams] = useSearchParams()
-  const activeTab: DetailTab = params.get('tab') === 'reviews' ? 'reviews' : params.get('tab') === 'companion' ? 'companion' : 'info'
+  const activeTab: DetailTab = params.get('tab') === 'reviews' ? 'reviews' : 'info'
   const setActiveTab = (tab: DetailTab) => {
     const next = new URLSearchParams(params)
     if (tab === 'info') next.delete('tab')
@@ -168,7 +166,6 @@ export default function ShowDetailPage() {
     )
   }
 
-  const isOngoing = show.status === 'ONGOING'
   const priceSummary = summarizePriceRange(show.priceInfo)
   const runtimeText = show.runtime?.trim()
   const ageText = show.ageLimit?.trim()
@@ -239,7 +236,6 @@ export default function ShowDetailPage() {
       <div className="detail-tab-content">
         {activeTab === 'info' && <div className="detail-info-grid"><ShowInfoTab show={show} /><div className="detail-casting-panel"><ShowCastingTab showId={showId} fallbackCastInfo={show.castInfo} /></div></div>}
         {activeTab === 'reviews' && <ShowReviewsTab show={show} showId={showId} onWriteDiary={() => openDiaryModal('quick')} showReviewForm={showReviewForm} onCloseReviewForm={() => setShowReviewForm(false)} />}
-        {activeTab === 'companion' && <ShowCompanionLiveTab showId={showId} isOngoing={isOngoing} />}
       </div>
       {planOpen && <PlanForm showId={show.id} showTitle={show.title} onClose={closePlan} />}
       {showDiaryForm && <DiaryFormModal entry={editingDiaryEntry} initialShowId={show.id} initialShowTitle={show.title} mode={diaryMode} onClose={() => { setShowDiaryForm(false); setEditingDiaryEntry(undefined) }} onSaved={handleDiarySaved} />}
