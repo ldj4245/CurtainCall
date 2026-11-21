@@ -8,7 +8,6 @@ import { useAuthStore } from '../../store/authStore'
 import { diaryApi } from '../../api/diary'
 import { localDate } from '../../utils/analytics'
 import type { Show } from '../../types'
-import Poster from '../../components/common/Poster'
 import ShowCard from '../../components/show/ShowCard'
 import TodayScheduleSection from '../../components/show/TodayScheduleSection'
 
@@ -27,12 +26,6 @@ const COLLECTIONS = [
 
 type CollectionType = (typeof COLLECTIONS)[number][0]
 
-function formatPeriod(start?: string, end?: string) {
-  if (!start) return ''
-  const s = start.replace(/-/g, '.')
-  return end ? `${s} ~ ${end.replace(/-/g, '.')}` : s
-}
-
 function PopularRankSection({
   heading,
   shows,
@@ -48,9 +41,6 @@ function PopularRankSection({
     return heading ? null : <p className="feed-notice">등록된 공연이 없습니다.</p>
   }
 
-  const topFour = shows.slice(0, 4)
-  const rest = shows.slice(4)
-
   return (
     <section className="popular-section">
       {heading && (
@@ -64,30 +54,11 @@ function PopularRankSection({
         </div>
       )}
 
-      <div className="popular-top-grid">
-        {topFour.map((show, i) => (
-          <Link key={show.id} to={`/shows/${show.id}`} className="popular-top-card">
-            <div className="popular-top-poster">
-              <Poster src={show.posterUrl} title={show.title} className="w-full h-full" />
-            </div>
-            <div className="popular-top-meta">
-              <span className="popular-rank">{show.popularityRank ?? i + 1}</span>
-              {show.status === 'UPCOMING' && <span>공연예정</span>}
-            </div>
-            <h3 className="popular-top-title">{show.title}</h3>
-            <p className="popular-top-sub">{show.theaterName || '공연장 미정'}</p>
-            <p className="popular-top-sub">{formatPeriod(show.startDate, show.endDate)}</p>
-          </Link>
+      <div className="feed-list" aria-label={heading || '인기 공연 목록'}>
+        {shows.map((show, idx) => (
+          <ShowCard key={show.id} show={show} rank={show.popularityRank ?? idx + 1} />
         ))}
       </div>
-
-      {rest.length > 0 && (
-        <div className="feed-list">
-          {rest.map((show, idx) => (
-            <ShowCard key={show.id} show={show} rank={show.popularityRank ?? idx + 5} />
-          ))}
-        </div>
-      )}
     </section>
   )
 }
