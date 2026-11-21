@@ -294,4 +294,51 @@ class ProductFlowIntegrationTest {
         assertThat(otherPostCommentsAfter.get("content").get(0).get("content").asText()).isEqualTo("[삭제된 댓글]");
         assertThat(otherPostCommentsAfter.get("content").get(0).get("authorNickname").asText()).isEqualTo("탈퇴한 회원");
     }
+
+    @Test void authRefreshRotationRevocationAndUnifiedLoginErrors() throws Exception {
+        String email = "sec-" + UUID.randomUUID() + "@example.test";
+        var signupRes = mvc.perform(post("/api/auth/signup")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json.writeValueAsString(Map.of(
+                        "email", email,
+                        "password", "Password123!",
+                        "nickname", "보안점검"
+                ))))
+                .andExpect(status().isCreated())
+                .andReturn();
+        var firstRefresh = signupRes.getResponse().getCookie("refreshToken");
+        assertThat(firstRefresh).isNotNull();
+
+        var missingRes = request(post("/api/auth/login"), null,
+                Map.of("email", "missing-" + UUID.randomUUID() + "@example.test", "password", "Password123!"), 401);
+        var wrongPwRes = request(post("/api/auth/login"), null,
+                Map.of("email", email, "password", "WrongPassword1!"), 401);
+        assertThat(missingRes.get("message").asText()).isEqualTo(wrongPwRes.get("message").asText());
+
+        var rotatedRes = mvc.perform(post("/api/auth/refresh").cookie(firstRefresh))
+                .andExpect(status().isOk())
+                .andReturn();
+        var secondRefresh = rotatedRes.getResponse().getCookie("refreshToken");
+        assertThat(secondRefresh).isNotNull();
+        assertThat(secondRefresh.getValue()).isNotEqualTo(firstRefresh.getValue());
+
+        // Reusing a rotated refresh token triggers family revocation.
+        mvc.perform(post("/api/auth/refresh").cookie(firstRefresh))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/auth/refresh").cookie(secondRefresh))
+                .andExpect(status().isUnauthorized());
+
+        var loginRes = mvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json.writeValueAsString(Map.of("email", email, "password", "Password123!"))))
+                .andExpect(status().isOk())
+                .andReturn();
+        var loginRefresh = loginRes.getResponse().getCookie("refreshToken");
+        assertThat(loginRefresh).isNotNull();
+
+        mvc.perform(post("/api/auth/logout").cookie(loginRefresh))
+                .andExpect(status().isNoContent());
+        mvc.perform(post("/api/auth/refresh").cookie(loginRefresh))
+                .andExpect(status().isUnauthorized());
+    }
 }

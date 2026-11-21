@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Optional;
 
 @Tag(name = "Auth", description = "Authentication APIs")
 @RestController
@@ -80,7 +81,8 @@ public class AuthController {
 
     @Operation(summary = "Logout")
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(HttpServletResponse response) {
+    public ResponseEntity<Void> logout(HttpServletRequest request, HttpServletResponse response) {
+        extractOptionalRefreshToken(request).ifPresent(authService::logout);
         clearRefreshCookie(response);
         return ResponseEntity.noContent().build();
     }
@@ -93,15 +95,20 @@ public class AuthController {
     }
 
     private String extractRefreshToken(HttpServletRequest request) {
+        return extractOptionalRefreshToken(request)
+                .orElseThrow(() -> BusinessException.unauthorized("리프레시 토큰 쿠키가 필요합니다."));
+    }
+
+    private Optional<String> extractOptionalRefreshToken(HttpServletRequest request) {
         if (request.getCookies() == null) {
-            throw BusinessException.unauthorized("리프레시 토큰 쿠키가 필요합니다.");
+            return Optional.empty();
         }
 
         return Arrays.stream(request.getCookies())
                 .filter(cookie -> REFRESH_TOKEN_COOKIE.equals(cookie.getName()))
                 .map(Cookie::getValue)
-                .findFirst()
-                .orElseThrow(() -> BusinessException.unauthorized("리프레시 토큰 쿠키가 필요합니다."));
+                .filter(value -> value != null && !value.isBlank())
+                .findFirst();
     }
 
     private void addRefreshCookie(HttpServletResponse response, String refreshToken) {

@@ -29,18 +29,20 @@
 | Backend | Java 17, Spring Boot 3.2, Spring Security, Spring Data JPA, QueryDSL, Caffeine Cache |
 | Frontend | React 18, TypeScript, Vite, Tailwind CSS, Zustand, TanStack Query |
 | Database | MySQL 8.0 (테스트 환경 H2) |
-| Infra & CI | Oracle Cloud Infrastructure Always Free, Caddy 2, systemd, GitHub Actions |
+| Infra & CI | Oracle Cloud Infrastructure Always Free, Cloudflare Free, Caddy 2, systemd, fail2ban, GitHub Actions |
 
 ## 운영 아키텍처
 
-Oracle Cloud Infrastructure Tokyo(`ap-tokyo-1`) Always Free VM 2대 분리 구성으로 운영한다.
+Oracle Cloud Infrastructure Tokyo(`ap-tokyo-1`) Always Free VM 2대 분리 구성 앞단에 Cloudflare DNS 프록시를 배치해 운영한다.
 
 ```text
 사용자
-  │ HTTPS (:80 -> :443 자동 리다이렉트)
+  │ HTTPS
   ▼
-App VM (Caddy 2 자동 TLS)
-  └── Spring Boot (:8080, systemd, React 정적 번들 포함)
+Cloudflare Free (원본 IP 은닉 · Full Strict SSL · Rate Limiting)
+  ▼
+App VM (Caddy 2 · 보안 헤더/HSTS/CSP · 요청 크기 제한)
+  └── Spring Boot (127.0.0.1:8080, systemd 샌드박스, IP Rate Limit, React 정적 번들 포함)
        ├── /          React SPA & 공개 HTML 메타데이터
        ├── /api/      REST API
        └── /oauth2/   소셜 로그인 콜백
@@ -50,6 +52,9 @@ App VM (Caddy 2 자동 TLS)
             └── Kakao OAuth2 (Naver / Google 확장 설정)
 ```
 
+- **보안 구성**:
+  - **인증·세션**: JWT + HttpOnly `refreshToken` 쿠키(Refresh Token SHA-256 서버 저장·회전·로그아웃 폐기·재사용 탐지 시 전체 세션 무효화), 로그인 오류 통일, OAuth2 1회용 코드 원자적 소비
+  - **방어·호스트**: Cloudflare + 앱 엔드포인트별 IP Rate Limiting(`RateLimitFilter`), 이미지 업로드 매직 바이트 시그니처 검증, 멀티파트/요청 크기 상한(`5MB`/`6MB`), 양 VM `fail2ban`·SSH 공개키 전용(`PermitRootLogin no`)·`systemd` 실행 권한 격리
 - **이미지 저장**: 외부 오브젝트 스토리지(S3 호환) 설정이 비어 있으면 추가 스토리지 비용 없이 Base64 데이터 URI 폴백(클라이언트 리사이즈·2MB 상한)으로 동작한다.
 
 ## 프로젝트 구조
@@ -78,7 +83,8 @@ curtaincall/
 │       ├── config/        Security·SPA·공개 메타 설정
 │       ├── exception/     전역 예외 처리
 │       ├── infra/storage/ 이미지 저장소 처리
-│       └── jwt/           JWT 발급·검증 필터
+│       ├── jwt/           JWT 발급·검증 필터
+│       └── security/      IP 기반 API Rate Limit 필터
 └── frontend/src/
     ├── pages/             Home·Shows·Community·Diary·Plans·Notifications·Shared·MyPage·Auth
     ├── components/        show·diary·plan·review·admin·common

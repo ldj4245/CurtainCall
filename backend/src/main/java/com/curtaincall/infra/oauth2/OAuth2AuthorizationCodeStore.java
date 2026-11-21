@@ -23,10 +23,9 @@ public class OAuth2AuthorizationCodeStore {
     }
 
     public Optional<Long> consume(String code) {
-        Long userId = codes.getIfPresent(code);
-        if (userId != null) {
-            codes.invalidate(code);
+        if (code == null || code.isBlank()) {
+            return Optional.empty();
         }
-        return Optional.ofNullable(userId);
+        return Optional.ofNullable(codes.asMap().remove(code));
     }
 }

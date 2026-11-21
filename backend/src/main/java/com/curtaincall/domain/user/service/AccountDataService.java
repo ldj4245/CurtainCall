@@ -38,7 +38,8 @@ public class AccountDataService {
             "update community_posts set like_count = greatest(like_count - 1, 0) where id in (select post_id from community_post_likes where user_id = :id)",
             "delete from community_post_likes where user_id = :id",
             "update community_posts set title = '', content = '', show_id = null, deleted_at = CURRENT_TIMESTAMP where user_id = :id",
-            "update community_comments set content = '[삭제된 댓글]' where user_id = :id"))
+            "update community_comments set content = '[삭제된 댓글]' where user_id = :id",
+            "delete from refresh_tokens where user_id = :id"))
             em.createNativeQuery(statement).setParameter("id", id).executeUpdate();
         user.deactivate();
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {

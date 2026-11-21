@@ -4,8 +4,8 @@ spring:
 
   servlet:
     multipart:
-      max-file-size: 20MB
-      max-request-size: 50MB
+      max-file-size: 5MB
+      max-request-size: 6MB
 
   jpa:
     open-in-view: false
@@ -86,3 +86,5 @@ server:
 app:
   admin:
     emails: ${ADMIN_EMAILS:}
+  security:
+    rate-limit-enabled: ${RATE_LIMIT_ENABLED:true}

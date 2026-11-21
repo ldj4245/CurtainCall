@@ -25,6 +25,8 @@ kopis:
 
 app:
   frontend-url: http://localhost:3000
+  security:
+    rate-limit-enabled: false
 
 storage:
   do-spaces:

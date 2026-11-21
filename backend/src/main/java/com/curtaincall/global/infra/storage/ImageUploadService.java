@@ -14,19 +14,20 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
 @Service
 public class ImageUploadService {
 
-    private static final List<String> ALLOWED_CONTENT_TYPES = List.of(
-            "image/jpeg", "image/png", "image/webp", "image/heic"
-    );
-    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB (S3)
+    private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB (S3)
     private static final long MAX_EMBEDDED_FILE_SIZE = 2 * 1024 * 1024; // 2MB (Base64 fallback)
+    private static final Set<String> HEIC_BRANDS = Set.of(
+            "heic", "heix", "hevc", "hevx", "heim", "heis", "mif1", "msf1"
+    );
 
     private final S3Client s3Client;
     private final String bucket;
@@ -70,36 +71,44 @@ public class ImageUploadService {
     }
 
     public String uploadImage(MultipartFile file, String folder) {
-        validateFile(file);
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("파일이 비어있습니다.");
+        }
+        if (file.getSize() > MAX_FILE_SIZE) {
+            throw new IllegalArgumentException("파일 크기는 5MB 이하여야 합니다.");
+        }
+        if (!s3Configured && file.getSize() > MAX_EMBEDDED_FILE_SIZE) {
+            throw new IllegalArgumentException("사진 파일은 2MB 이하로 올려 주세요.");
+        }
+
+        byte[] bytes;
+        try {
+            bytes = file.getBytes();
+        } catch (IOException e) {
+            throw new RuntimeException("이미지 읽기 중 오류가 발생했습니다.", e);
+        }
+
+        ImageFormat format = detectImageType(bytes);
+        if (format == null) {
+            throw new IllegalArgumentException("지원하지 않는 파일 형식입니다. (jpeg, png, webp, heic만 가능)");
+        }
 
         if (!s3Configured) {
-            try {
-                byte[] bytes = file.getBytes();
-                String base64 = Base64.getEncoder().encodeToString(bytes);
-                String mimeType = file.getContentType() != null ? file.getContentType() : "image/jpeg";
-                return "data:" + mimeType + ";base64," + base64;
-            } catch (IOException e) {
-                throw new RuntimeException("이미지 인코딩 중 오류가 발생했습니다.", e);
-            }
+            String base64 = Base64.getEncoder().encodeToString(bytes);
+            return "data:" + format.mimeType() + ";base64," + base64;
         }
 
-        String extension = getExtension(file.getOriginalFilename());
-        String key = folder + "/" + UUID.randomUUID() + "." + extension;
+        String key = folder + "/" + UUID.randomUUID() + "." + format.extension();
+        PutObjectRequest request = PutObjectRequest.builder()
+                .bucket(bucket)
+                .key(key)
+                .contentType(format.mimeType())
+                .contentLength((long) bytes.length)
+                .acl("public-read")
+                .build();
 
-        try {
-            PutObjectRequest request = PutObjectRequest.builder()
-                    .bucket(bucket)
-                    .key(key)
-                    .contentType(file.getContentType())
-                    .contentLength(file.getSize())
-                    .acl("public-read")
-                    .build();
-
-            s3Client.putObject(request, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
-            return cdnUrl + "/" + key;
-        } catch (IOException e) {
-            throw new RuntimeException("이미지 업로드 중 오류가 발생했습니다.", e);
-        }
+        s3Client.putObject(request, RequestBody.fromBytes(bytes));
+        return cdnUrl + "/" + key;
     }
 
     public void deleteImage(String imageUrl) {
@@ -122,25 +131,40 @@ public class ImageUploadService {
         deleteImage(imageUrl);
     }
 
-    private void validateFile(MultipartFile file) {
-        if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("파일이 비어있습니다.");
+    static ImageFormat detectImageType(byte[] bytes) {
+        if (bytes == null) {
+            return null;
         }
-        if (file.getSize() > MAX_FILE_SIZE) {
-            throw new IllegalArgumentException("파일 크기는 10MB 이하여야 합니다.");
+        if (bytes.length >= 3
+                && (bytes[0] & 0xFF) == 0xFF
+                && (bytes[1] & 0xFF) == 0xD8
+                && (bytes[2] & 0xFF) == 0xFF) {
+            return new ImageFormat("image/jpeg", "jpg");
         }
-        if (!s3Configured && file.getSize() > MAX_EMBEDDED_FILE_SIZE) {
-            throw new IllegalArgumentException("사진 파일은 2MB 이하로 올려 주세요.");
+        if (bytes.length >= 8
+                && (bytes[0] & 0xFF) == 0x89
+                && bytes[1] == 0x50
+                && bytes[2] == 0x4E
+                && bytes[3] == 0x47
+                && bytes[4] == 0x0D
+                && bytes[5] == 0x0A
+                && bytes[6] == 0x1A
+                && bytes[7] == 0x0A) {
+            return new ImageFormat("image/png", "png");
         }
-        if (!ALLOWED_CONTENT_TYPES.contains(file.getContentType())) {
-            throw new IllegalArgumentException("지원하지 않는 파일 형식입니다. (jpeg, png, webp, heic만 가능)");
+        if (bytes.length >= 12
+                && bytes[0] == 'R' && bytes[1] == 'I' && bytes[2] == 'F' && bytes[3] == 'F'
+                && bytes[8] == 'W' && bytes[9] == 'E' && bytes[10] == 'B' && bytes[11] == 'P') {
+            return new ImageFormat("image/webp", "webp");
         }
+        if (bytes.length >= 12 && bytes[4] == 'f' && bytes[5] == 't' && bytes[6] == 'y' && bytes[7] == 'p') {
+            String brand = new String(bytes, 8, 4, StandardCharsets.US_ASCII);
+            if (HEIC_BRANDS.contains(brand)) {
+                return new ImageFormat("image/heic", "heic");
+            }
+        }
+        return null;
     }
 
-    private String getExtension(String filename) {
-        if (filename == null || !filename.contains(".")) {
-            return "jpg";
-        }
-        return filename.substring(filename.lastIndexOf('.') + 1).toLowerCase();
-    }
+    record ImageFormat(String mimeType, String extension) {}
 }

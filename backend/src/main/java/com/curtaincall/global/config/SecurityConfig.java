@@ -2,6 +2,7 @@ package com.curtaincall.global.config;
 
 import com.curtaincall.global.jwt.JwtAuthenticationFilter;
 import com.curtaincall.global.jwt.JwtTokenProvider;
+import com.curtaincall.global.security.RateLimitFilter;
 import com.curtaincall.infra.oauth2.CustomOAuth2UserService;
 import com.curtaincall.infra.oauth2.OAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,9 @@ public class SecurityConfig {
     @Value("${app.frontend-url}")
     private String frontendUrl;
 
+    @Value("${app.security.rate-limit-enabled:true}")
+    private boolean rateLimitEnabled;
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -43,6 +47,7 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        var jwtFilter = new JwtAuthenticationFilter(jwtTokenProvider, users);
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -71,8 +76,8 @@ public class SecurityConfig {
                 .oauth2Login(oauth2 -> oauth2
                         .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
                         .successHandler(oAuth2SuccessHandler))
-                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, users),
-                        UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new RateLimitFilter(rateLimitEnabled), JwtAuthenticationFilter.class)
                 .build();
     }
 
