@@ -49,11 +49,15 @@
   .feed-more { display: block; padding: 14px 0 20px 35px; font-size: 13px; color: #555; }
   .feed-more a:hover { text-decoration: underline; }
   .schedule-times { margin-top: 5px; padding-bottom: 8px; }.schedule-date { margin-top: 4px; font-size: 12px; color: #888; }
+  .schedule-group { margin-top: 18px; border-top: 1px solid #e5e5e5; }.schedule-group-time { padding-top: 14px; font-size: 13px; font-weight: 600; color: #242424; font-variant-numeric: tabular-nums; }
   .site-footer { display: flex; flex-wrap: wrap; gap: 16px; padding-block: 16px; margin-top: 8px; border-top: 1px solid #e3e3e3; color: #999; font-size: 12px; }
   .site-footer a:hover { color: #333; text-decoration: underline; }
   .skip-link { position: absolute; top: -100px; left: 15px; z-index: 60; padding: 10px; background: white; }.skip-link:focus { top: 8px; }
-  .button-primary, .button-secondary { display: inline-flex; justify-content: center; align-items: center; gap: 6px; min-height: 31px; padding: 5px 11px; border: 1px solid #ccc; border-radius: 2px; background: #f7f7f7; color: #333; font-size: 12px; font-weight: 400; }
-  .button-primary:hover, .button-secondary:hover { background: #eee; border-color: #aaa; }
+  .button-primary, .button-secondary { display: inline-flex; justify-content: center; align-items: center; gap: 6px; min-height: 36px; padding: 6px 12px; border-radius: 2px; font-size: 12px; transition: background-color .15s, border-color .15s; }
+  .button-primary { border: 1px solid #242424; background: #242424; color: #fff; font-weight: 500; }
+  .button-primary:hover { background: #111; border-color: #111; }
+  .button-secondary { border: 1px solid #ccc; background: #fff; color: #333; font-weight: 400; }
+  .button-secondary:hover { background: #f3f3f3; border-color: #999; }
   .text-link, .text-action { display: inline-flex; align-items: center; gap: 5px; min-height: 28px; font-size: 12px; color: #666; }
   .text-link:hover, .text-action:hover { color: #111; text-decoration: underline; }
   .icon-button { display: inline-flex; justify-content: center; align-items: center; width: 32px; height: 32px; color: #777; }
@@ -74,7 +78,7 @@
   .detail-overview { display: grid; grid-template-columns: 140px minmax(0,1fr) 190px; gap: 25px; align-items: start; padding-top: 24px; }.detail-summary h1 { margin-top: 7px; font-size: 22px; font-weight: 600; line-height: 1.5; }.detail-theater { margin-top: 7px; font-size: 13px; color: #777; }.detail-summary dl { margin-top: 17px; font-size: 12px; line-height: 1.6; color: #666; }.detail-summary dl > div { display: flex; gap: 13px; margin-block: 6px; }.detail-summary dt { min-width: 60px; color: #999; }
   .detail-record-card { padding-top: 3px; }.detail-record-card h2 { font-size: 14px; font-weight: 600; }.detail-record-card > p { margin: 8px 0 14px; font-size: 12px; line-height: 1.5; color: #888; }.detail-record-card button { font-size: 12px; }
   .booking-note { display: flex; justify-content: space-between; align-items: center; gap: 15px; margin-top: 20px; padding-block: 12px; border-bottom: 1px solid #e4e4e4; font-size: 12px; color: #888; }.booking-note > span:last-child { display: flex; align-items: center; gap: 5px; color: #555; }
-  .detail-info-grid { display: grid; grid-template-columns: minmax(0,1.6fr) minmax(0,1fr); gap: 24px; }.detail-casting-panel { align-self: start; padding: 0; }.detail-tab-content { padding-bottom: 30px; }.detail-mobile-action { padding-top: 16px; }
+  .detail-info-grid { display: grid; grid-template-columns: minmax(0,1.6fr) minmax(0,1fr); gap: 24px; }.detail-casting-panel { align-self: start; padding: 0; }.detail-tab-content { padding-bottom: 30px; }.detail-mobile-action { padding-top: 16px; display: flex; flex-wrap: wrap; gap: 8px; }
   .detail-info-grid > div:first-child > div { border: 0; padding: 0; }.detail-info-grid > div:first-child h3 { border-color: #e5e5e5; }
   .account-page { max-width: 900px; padding-top: 24px; }.account-page > div:first-child h1 { font-size: 19px; font-weight: 600; }.account-page > div:first-child { padding-bottom: 15px; }.account-page > div:nth-child(2) { box-shadow: none; border: 0; background: transparent; padding-inline: 0; }
   .auth-screen { display: flex; align-items: flex-start; justify-content: center; min-height: 100dvh; padding: 70px 24px; }.auth-panel { width: 100%; max-width: 350px; }.auth-panel input { background: #fff; border-radius: 0; }

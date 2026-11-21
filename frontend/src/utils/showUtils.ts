@@ -58,14 +58,14 @@ export function getBookingLinks(title: string): BookingLink[] {
   return [
     {
       provider: 'interpark',
-      name: '인터파크 티켓',
+      name: 'NOL 티켓(인터파크)',
       url: `https://tickets.interpark.com/search?keyword=${encoded}`,
       badgeColor: 'bg-[#ff2f6e] text-white hover:bg-[#e0245e]',
     },
     {
       provider: 'yes24',
       name: 'YES24 티켓',
-      url: `http://ticket.yes24.com/New/Search/Search.aspx?searchtext=${encoded}`,
+      url: `https://ticket.yes24.com/New/Search/Search.aspx?searchtext=${encoded}`,
       badgeColor: 'bg-[#0074e4] text-white hover:bg-[#0060be]',
     },
     {
@@ -75,6 +75,46 @@ export function getBookingLinks(title: string): BookingLink[] {
       badgeColor: 'bg-[#00cd3c] text-white hover:bg-[#00b334]',
     },
   ]
+}
+
+export function formatDtguidance(dtguidance?: string | null): string[] {
+  if (!dtguidance || !dtguidance.trim()) return []
+  const matches = [...dtguidance.matchAll(/([^()]+?)\(([^)]+)\)/g)]
+  if (matches.length === 0) return [dtguidance.trim()]
+  return matches
+    .map((m) => {
+      const days = m[1]
+        .replace(/^[,/\s]+/, '')
+        .replace(/([월화수목금토일])요일/g, '$1')
+        .replace(/\s*~\s*/g, '~')
+        .replace(/\bHOL\b/gi, '공휴일')
+        .trim()
+      const times = m[2]
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean)
+        .join(', ')
+      return days && times ? `${days} ${times}` : `${m[1].trim()}(${m[2].trim()})`
+    })
+    .filter(Boolean)
+}
+
+export function summarizePriceRange(priceInfo?: string | null): string | null {
+  if (!priceInfo || !priceInfo.trim()) return null
+  const trimmed = priceInfo.trim()
+  if (trimmed === '전석무료' || trimmed === '무료') return '무료'
+  const matches = [...trimmed.matchAll(/([0-9][0-9,]*)\s*원/g)]
+  if (matches.length === 0) return trimmed
+  const values = matches
+    .map((m) => Number(m[1].replace(/,/g, '')))
+    .filter((n) => Number.isFinite(n) && n > 0)
+  if (values.length === 0) return trimmed
+  const min = Math.min(...values)
+  const max = Math.max(...values)
+  if (min === max) {
+    return trimmed.includes('전석') ? `전석 ${min.toLocaleString()}원` : `${min.toLocaleString()}원`
+  }
+  return `${min.toLocaleString()}원 ~ ${max.toLocaleString()}원`
 }
 
 export interface RuntimeBreakdown {

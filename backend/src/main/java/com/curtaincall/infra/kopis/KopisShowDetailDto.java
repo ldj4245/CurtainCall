@@ -22,4 +22,6 @@ public class KopisShowDetailDto {
     private String status;
     private String introImages;
     private String dtguidance;
+    private String area;
+    private String bookingLinks;
 }

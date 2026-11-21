@@ -53,7 +53,19 @@ export default function ShowCastingTab({ showId, fallbackCastInfo }: Props) {
   const castingList = Array.isArray(casting) ? casting : []
   const hasCastingData = castingList.length > 0
   const fallbackList = fallbackCastInfo
-    ? fallbackCastInfo.split(/[,/]+/).map((s) => s.trim()).filter(Boolean)
+    ? fallbackCastInfo
+        .split(/[,/]+/)
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .map((raw) => {
+          const match = raw.match(/^(.*?)\s+(등|외)$/)
+          if (match && match[1].trim()) {
+            return { name: match[1].trim(), suffix: match[2] }
+          }
+          const cleaned = raw.replace(/\s*(등|외)$/, '').trim()
+          return { name: cleaned || raw, suffix: '' }
+        })
+        .filter((item) => Boolean(item.name))
     : []
 
   const filteredCasting = hasCastingData
@@ -149,15 +161,17 @@ export default function ShowCastingTab({ showId, fallbackCastInfo }: Props) {
         )
       ) : fallbackList.length > 0 ? (
         <div>
-          <div className="flex flex-wrap gap-1.5 mb-4">
-            {fallbackList.map((name, i) => (
-              <Link
-                key={i}
-                to={`/shows?keyword=${encodeURIComponent(name)}`}
-                className="text-[11px] text-ink-muted px-2.5 py-1 border border-line-base hover:border-line-dark transition-colors"
-              >
-                {name}
-              </Link>
+          <div className="flex flex-wrap items-center gap-1.5 mb-4">
+            {fallbackList.map((item, i) => (
+              <span key={i} className="inline-flex items-center gap-1">
+                <Link
+                  to={`/shows?keyword=${encodeURIComponent(item.name)}`}
+                  className="text-[11px] text-ink-muted px-2.5 py-1 border border-line-base hover:border-line-dark transition-colors"
+                >
+                  {item.name}
+                </Link>
+                {item.suffix && <span className="text-[11px] text-ink-lightest">{item.suffix}</span>}
+              </span>
             ))}
           </div>
           {isAdmin && <button
@@ -172,9 +186,11 @@ export default function ShowCastingTab({ showId, fallbackCastInfo }: Props) {
         <p className="py-10 text-center text-[11px] text-ink-lightest">등록된 출연진 정보가 없습니다.</p>
       )}
 
-      <p className="mt-6 pt-3 text-[10px] text-ink-lightest">
-        ※ 캐스팅 일정은 변동될 수 있습니다. 출처: PlayDB / KOPIS
-      </p>
+      {(hasCastingData || fallbackList.length > 0) && (
+        <p className="mt-6 pt-3 text-[10px] text-ink-lightest">
+          ※ 캐스팅 일정은 변동될 수 있습니다. 출처: {hasCastingData ? 'PlayDB' : 'KOPIS'}
+        </p>
+      )}
     </div>
   )
 }

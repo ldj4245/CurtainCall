@@ -6,6 +6,11 @@ export interface User {
   role: 'USER' | 'ADMIN'
 }
 
+export interface OfficialBookingLink {
+  name: string
+  url: string
+}
+
 export interface Show {
   sourceUpdatedAt?: string
   id: number
@@ -24,6 +29,8 @@ export interface Show {
   castInfo?: string
   priceInfo?: string
   runtime?: string
+  dtguidance?: string
+  bookingLinks?: OfficialBookingLink[]
   status: 'ONGOING' | 'ENDED' | 'UPCOMING'
   statusDisplayName: string
   ageLimit?: string

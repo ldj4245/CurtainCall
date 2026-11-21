@@ -1,8 +1,13 @@
 package com.curtaincall.domain.show.dto;
 
 import com.curtaincall.domain.show.entity.Show;
+import com.curtaincall.domain.theater.RegionNormalizer;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -10,8 +15,10 @@ import java.util.Collections;
 import java.util.List;
 
 @Getter
-@Builder
+@Builder(toBuilder = true)
 public class ShowResponse {
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private java.time.LocalDateTime sourceUpdatedAt;
     private Long id;
@@ -31,6 +38,8 @@ public class ShowResponse {
     private List<String> castList;
     private String priceInfo;
     private String runtime;
+    private String dtguidance;
+    private List<BookingLinkItem> bookingLinks;
     private String status;
     private String statusDisplayName;
     private String ageLimit;
@@ -41,6 +50,15 @@ public class ShowResponse {
 
     public ShowResponse withRatingCount(long count) { this.ratingCount = count; return this; }
     private Long diaryCount;
+
+    @Getter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class BookingLinkItem {
+        private String name;
+        private String url;
+    }
 
     public static ShowResponse from(Show show) {
         return ShowResponse.builder()
@@ -53,83 +71,42 @@ public class ShowResponse {
                 .startDate(show.getStartDate())
                 .endDate(show.getEndDate())
                 .theaterId(show.getTheater() != null ? show.getTheater().getId() : null)
-                .theaterName(show.getTheater() != null ? show.getTheater().getName() : null)
-                .theaterRegion(show.getTheater() != null ? show.getTheater().getRegion() : null)
-                .theaterAddress(show.getTheater() != null ? show.getTheater().getAddress() : null)
+                .theaterName(show.getTheater() != null ? cleanBlank(show.getTheater().getName()) : null)
+                .theaterRegion(show.getTheater() != null
+                        ? RegionNormalizer.normalize(show.getTheater().getRegion(), show.getTheater().getAddress())
+                        : null)
+                .theaterAddress(show.getTheater() != null ? cleanBlank(show.getTheater().getAddress()) : null)
                 .theaterSeatScale(show.getTheater() != null ? show.getTheater().getSeatScale() : null)
-                .posterUrl(show.getPosterUrl())
-                .castInfo(show.getCastInfo())
+                .posterUrl(cleanBlank(show.getPosterUrl()))
+                .castInfo(cleanBlank(show.getCastInfo()))
                 .castList(parseCastInfo(show.getCastInfo()))
-                .priceInfo(show.getPriceInfo())
-                .runtime(show.getRuntime())
+                .priceInfo(cleanBlank(show.getPriceInfo()))
+                .runtime(cleanBlank(show.getRuntime()))
+                .dtguidance(cleanBlank(show.getDtguidance()))
+                .bookingLinks(parseBookingLinks(show.getBookingLinks()))
                 .status(show.getStatus().name())
                 .statusDisplayName(show.getStatus().getDisplayName())
-                .ageLimit(show.getAgeLimit())
+                .ageLimit(cleanBlank(show.getAgeLimit()))
                 .introImages(parseIntroImages(show.getIntroImages()))
                 .diaryCount(null)
                 .build();
     }
 
     public static ShowResponse fromWithStats(Show show, Double averageScore, Long reviewCount) {
-        ShowResponse response = from(show);
-        return ShowResponse.builder()
-                .sourceUpdatedAt(response.sourceUpdatedAt)
-                .id(response.id)
-                .kopisId(response.kopisId)
-                .title(response.title)
-                .genre(response.genre)
-                .genreDisplayName(response.genreDisplayName)
-                .startDate(response.startDate)
-                .endDate(response.endDate)
-                .theaterId(response.theaterId)
-                .theaterName(response.theaterName)
-                .theaterRegion(response.theaterRegion)
-                .theaterAddress(response.theaterAddress)
-                .theaterSeatScale(response.theaterSeatScale)
-                .posterUrl(response.posterUrl)
-                .castInfo(response.castInfo)
-                .castList(response.castList)
-                .priceInfo(response.priceInfo)
-                .runtime(response.runtime)
-                .status(response.status)
-                .statusDisplayName(response.statusDisplayName)
-                .ageLimit(response.ageLimit)
-                .introImages(response.introImages)
+        return from(show).toBuilder()
                 .averageScore(averageScore)
                 .reviewCount(reviewCount)
-                .diaryCount(response.diaryCount)
                 .build();
     }
 
     public static ShowResponse fromWithDiaryCount(Show show, Long diaryCount) {
-        ShowResponse response = from(show);
-        return ShowResponse.builder()
-                .sourceUpdatedAt(response.sourceUpdatedAt)
-                .id(response.id)
-                .kopisId(response.kopisId)
-                .title(response.title)
-                .genre(response.genre)
-                .genreDisplayName(response.genreDisplayName)
-                .startDate(response.startDate)
-                .endDate(response.endDate)
-                .theaterId(response.theaterId)
-                .theaterName(response.theaterName)
-                .theaterRegion(response.theaterRegion)
-                .theaterAddress(response.theaterAddress)
-                .theaterSeatScale(response.theaterSeatScale)
-                .posterUrl(response.posterUrl)
-                .castInfo(response.castInfo)
-                .castList(response.castList)
-                .priceInfo(response.priceInfo)
-                .runtime(response.runtime)
-                .status(response.status)
-                .statusDisplayName(response.statusDisplayName)
-                .ageLimit(response.ageLimit)
-                .introImages(response.introImages)
-                .averageScore(response.averageScore)
-                .reviewCount(response.reviewCount)
+        return from(show).toBuilder()
                 .diaryCount(diaryCount)
                 .build();
+    }
+
+    private static String cleanBlank(String value) {
+        return (value == null || value.isBlank()) ? null : value.trim();
     }
 
     private static List<String> parseCastInfo(String castInfo) {
@@ -148,5 +125,16 @@ public class ShowResponse {
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
                 .toList();
+    }
+
+    private static List<BookingLinkItem> parseBookingLinks(String rawJson) {
+        if (rawJson == null || rawJson.isBlank()) {
+            return Collections.emptyList();
+        }
+        try {
+            return OBJECT_MAPPER.readValue(rawJson, new TypeReference<List<BookingLinkItem>>() {});
+        } catch (Exception e) {
+            return Collections.emptyList();
+        }
     }
 }

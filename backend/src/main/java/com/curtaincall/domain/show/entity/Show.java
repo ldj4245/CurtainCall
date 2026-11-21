@@ -65,13 +65,17 @@ public class Show extends BaseTimeEntity {
     @Column(name = "dtguidance", columnDefinition = "TEXT")
     private String dtguidance;
 
+    @Column(name = "booking_links", columnDefinition = "TEXT")
+    private String bookingLinks;
+
     @Column(name = "popularity_rank")
     @Builder.Default
     private Integer popularityRank = 999;
 
     public void update(String title, Genre genre, LocalDate startDate, LocalDate endDate,
             Theater theater, String posterUrl, String castInfo, String priceInfo,
-            String runtime, Status status, String ageLimit, String introImages, String dtguidance) {
+            String runtime, Status status, String ageLimit, String introImages, String dtguidance,
+            String bookingLinks) {
         this.title = title;
         this.genre = genre;
         this.startDate = startDate;
@@ -85,12 +89,23 @@ public class Show extends BaseTimeEntity {
         this.ageLimit = ageLimit;
         this.introImages = introImages;
         this.dtguidance = dtguidance;
+        this.bookingLinks = bookingLinks;
+    }
+
+    public void update(String title, Genre genre, LocalDate startDate, LocalDate endDate,
+            Theater theater, String posterUrl, String castInfo, String priceInfo,
+            String runtime, Status status, String ageLimit, String introImages, String dtguidance) {
+        update(title, genre, startDate, endDate, theater, posterUrl, castInfo, priceInfo, runtime, status, ageLimit, introImages, dtguidance, this.bookingLinks);
     }
 
     public void update(String title, Genre genre, LocalDate startDate, LocalDate endDate,
             Theater theater, String posterUrl, String castInfo, String priceInfo,
             String runtime, Status status, String ageLimit, String introImages) {
-        update(title, genre, startDate, endDate, theater, posterUrl, castInfo, priceInfo, runtime, status, ageLimit, introImages, this.dtguidance);
+        update(title, genre, startDate, endDate, theater, posterUrl, castInfo, priceInfo, runtime, status, ageLimit, introImages, this.dtguidance, this.bookingLinks);
+    }
+
+    public void updateBookingLinks(String bookingLinks) {
+        this.bookingLinks = bookingLinks;
     }
 
     public void updatePopularityRank(int rank) {

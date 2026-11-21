@@ -18,9 +18,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.cache.annotation.Cacheable;
 
 import com.curtaincall.domain.show.dto.ShowScheduleResponse;
+import com.curtaincall.domain.theater.RegionNormalizer;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -181,7 +183,7 @@ public class ShowService {
 
     @Transactional
     public ShowScheduleResponse getTodaySchedule(LocalDate targetDate, String genreStr) {
-        LocalDate date = (targetDate != null) ? targetDate : LocalDate.now();
+        LocalDate date = (targetDate != null) ? targetDate : LocalDate.now(ZoneId.of("Asia/Seoul"));
         Show.Genre genre = parseEnum(Show.Genre.class, genreStr);
 
         List<Show> shows = (genre != null)
@@ -196,6 +198,9 @@ public class ShowService {
             if (!times.isEmpty()) {
                 countedShowIds.add(show.getId());
             }
+            String normalizedRegion = show.getTheater() != null
+                    ? RegionNormalizer.normalize(show.getTheater().getRegion(), show.getTheater().getAddress())
+                    : null;
             for (String time : times) {
                 ShowScheduleResponse.ScheduleShowItem item = ShowScheduleResponse.ScheduleShowItem.builder()
                         .id(show.getId())
@@ -204,12 +209,12 @@ public class ShowService {
                         .genre(show.getGenre() != null ? show.getGenre().name() : null)
                         .genreDisplayName(show.getGenre() != null ? show.getGenre().getDisplayName() : null)
                         .theaterName(show.getTheater() != null ? show.getTheater().getName() : null)
-                        .theaterRegion(show.getTheater() != null ? show.getTheater().getRegion() : null)
+                        .theaterRegion(normalizedRegion)
                         .sourceUpdatedAt(show.getUpdatedAt())
                         .posterUrl(show.getPosterUrl())
-                        .runtime(show.getRuntime())
-                        .priceInfo(show.getPriceInfo())
-                        .castInfo(show.getCastInfo())
+                        .runtime(show.getRuntime() != null && !show.getRuntime().isBlank() ? show.getRuntime().trim() : null)
+                        .priceInfo(show.getPriceInfo() != null && !show.getPriceInfo().isBlank() ? show.getPriceInfo().trim() : null)
+                        .castInfo(show.getCastInfo() != null && !show.getCastInfo().isBlank() ? show.getCastInfo().trim() : null)
                         .time(time)
                         .build();
 
@@ -269,7 +274,7 @@ public class ShowService {
         }
     }
 
-    private static List<String> extractTimesForDate(String dtguidance, LocalDate date) {
+    static List<String> extractTimesForDate(String dtguidance, LocalDate date) {
         if (dtguidance == null || dtguidance.isBlank()) {
             return Collections.emptyList();
         }
@@ -279,21 +284,27 @@ public class ShowService {
         String dayName = getKoreanDay(dow);
 
         List<String> times = new ArrayList<>();
+        boolean matchedParenthesized = false;
 
-        Pattern pattern = Pattern.compile("([^,/(]+?)(?:\\(([^)]+)\\)|([0-9]{1,2}:[0-9]{2}))");
-        Matcher matcher = pattern.matcher(dtguidance);
-
-        while (matcher.find()) {
-            String daySpec = matcher.group(1).trim();
-            String timeGroup = matcher.group(2) != null ? matcher.group(2) : matcher.group(3);
-
+        Pattern parenPattern = Pattern.compile("([^()]+?)\\(([^)]+)\\)");
+        Matcher parenMatcher = parenPattern.matcher(dtguidance);
+        while (parenMatcher.find()) {
+            matchedParenthesized = true;
+            String daySpec = parenMatcher.group(1).replaceAll("^[,/\\s]+", "").trim();
+            String timeGroup = parenMatcher.group(2);
             if (timeGroup != null && matchesDay(daySpec, dow, dayName, isWeekend)) {
-                Matcher timeMatcher = Pattern.compile("(\\d{1,2}:\\d{2})").matcher(timeGroup);
-                while (timeMatcher.find()) {
-                    String time = normalizeTime(timeMatcher.group(1));
-                    if (isValidShowTime(time) && !times.contains(time)) {
-                        times.add(time);
-                    }
+                collectNormalizedTimes(timeGroup, times);
+            }
+        }
+
+        if (!matchedParenthesized) {
+            Pattern barePattern = Pattern.compile("([^,/(]+?)([0-9]{1,2}:[0-9]{2})");
+            Matcher bareMatcher = barePattern.matcher(dtguidance);
+            while (bareMatcher.find()) {
+                String daySpec = bareMatcher.group(1).trim();
+                String timeGroup = bareMatcher.group(2);
+                if (timeGroup != null && matchesDay(daySpec, dow, dayName, isWeekend)) {
+                    collectNormalizedTimes(timeGroup, times);
                 }
             }
         }
@@ -302,13 +313,54 @@ public class ShowService {
         return times;
     }
 
-    private static boolean matchesDay(String daySpec, DayOfWeek dow, String dayName, boolean isWeekend) {
-        if (daySpec.contains(dayName)) return true;
-        if (isWeekend && daySpec.contains("주말")) return true;
-        if (!isWeekend && daySpec.contains("평일")) return true;
+    private static void collectNormalizedTimes(String timeGroup, List<String> times) {
+        Matcher timeMatcher = Pattern.compile("(\\d{1,2}:\\d{2})").matcher(timeGroup);
+        while (timeMatcher.find()) {
+            String time = normalizeTime(timeMatcher.group(1));
+            if (isValidShowTime(time) && !times.contains(time)) {
+                times.add(time);
+            }
+        }
+    }
 
-        if (daySpec.contains("~") || daySpec.contains("-")) {
-            String[] parts = daySpec.split("[~-]");
+    private static boolean matchesDay(String daySpec, DayOfWeek dow, String dayName, boolean isWeekend) {
+        if (daySpec == null || daySpec.isBlank()) {
+            return false;
+        }
+        for (String rawClause : daySpec.split("[,/]+")) {
+            if (matchesDayClause(rawClause, dow, dayName, isWeekend)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean matchesDayClause(String rawClause, DayOfWeek dow, String dayName, boolean isWeekend) {
+        if (rawClause == null) {
+            return false;
+        }
+        String cleaned = rawClause
+                .replace("공휴일", "")
+                .replace("휴일", "")
+                .replace("HOL", "")
+                .replace("요일", "")
+                .trim();
+        if (cleaned.isEmpty()) {
+            return false;
+        }
+        if (cleaned.contains("주말")) {
+            if (isWeekend) return true;
+            cleaned = cleaned.replace("주말", "").trim();
+        }
+        if (cleaned.contains("평일")) {
+            if (!isWeekend) return true;
+            cleaned = cleaned.replace("평일", "").trim();
+        }
+        if (cleaned.isEmpty()) {
+            return false;
+        }
+        if (cleaned.contains("~") || cleaned.contains("-")) {
+            String[] parts = cleaned.split("[~-]");
             if (parts.length == 2) {
                 int start = parseDayValue(parts[0]);
                 int end = parseDayValue(parts[1]);
@@ -318,8 +370,9 @@ public class ShowService {
                     if (start > end && (current >= start || current <= end)) return true;
                 }
             }
+            return false;
         }
-        return false;
+        return cleaned.contains(dayName);
     }
 
     private static int parseDayValue(String str) {

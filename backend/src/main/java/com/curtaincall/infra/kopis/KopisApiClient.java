@@ -1,5 +1,6 @@
 package com.curtaincall.infra.kopis;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,7 +17,11 @@ import java.net.URL;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 @Slf4j
 @Component
@@ -31,6 +36,7 @@ public class KopisApiClient {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
     private static final int PAGE_SIZE = 100;
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final Object KOPIS_RATE_LOCK = new Object();
     private static final long MIN_REQUEST_INTERVAL_MS = 250L;
     private static long lastRequestAtMs = 0L;
@@ -92,6 +98,8 @@ public class KopisApiClient {
                     .status(getText(el, "prfstate"))
                     .introImages(extractIntroImages(el))
                     .dtguidance(getText(el, "dtguidance"))
+                    .area(getText(el, "area"))
+                    .bookingLinks(extractBookingLinksJson(el))
                     .build();
         } catch (Exception e) {
             log.error("KOPIS API 공연 상세 조회 실패 - kopisId: {}, error: {}", kopisId, maskKey(e.getMessage()));
@@ -263,7 +271,8 @@ public class KopisApiClient {
         NodeList nodes = el.getElementsByTagName(tagName);
         if (nodes.getLength() == 0 || nodes.item(0) == null)
             return null;
-        return nodes.item(0).getTextContent();
+        String text = nodes.item(0).getTextContent();
+        return (text == null || text.isBlank()) ? null : text.trim();
     }
 
     private Integer parseInteger(String value) {
@@ -287,5 +296,75 @@ public class KopisApiClient {
             urls.add(styurl.item(i).getTextContent());
         }
         return String.join(",", urls);
+    }
+
+    private String extractBookingLinksJson(Element el) {
+        NodeList relates = el.getElementsByTagName("relate");
+        Map<String, Map<String, String>> uniqueByUrl = new LinkedHashMap<>();
+        for (int i = 0; i < relates.getLength(); i++) {
+            Element relateEl = (Element) relates.item(i);
+            String rawUrl = getText(relateEl, "relateurl");
+            if (rawUrl == null) {
+                continue;
+            }
+            String url = rawUrl.trim();
+            String lowerUrl = url.toLowerCase(Locale.ROOT);
+            if (!(lowerUrl.startsWith("http://") || lowerUrl.startsWith("https://"))) {
+                continue;
+            }
+            String name = normalizeBookingVendorName(getText(relateEl, "relatenm"));
+            uniqueByUrl.putIfAbsent(url, Map.of("name", name, "url", url));
+        }
+        List<Map<String, String>> items = new ArrayList<>(uniqueByUrl.values());
+        items.sort(Comparator.comparingInt(item -> bookingVendorPriority(item.get("name"))));
+        try {
+            return OBJECT_MAPPER.writeValueAsString(items);
+        } catch (Exception e) {
+            return "[]";
+        }
+    }
+
+    private String normalizeBookingVendorName(String rawName) {
+        if (rawName == null || rawName.isBlank()) {
+            return "공식 예매처";
+        }
+        String name = rawName.trim();
+        String lower = name.toLowerCase(Locale.ROOT);
+        if (name.contains("놀유니버스") || name.contains("인터파크") || lower.contains("interpark")) {
+            return "NOL 티켓(인터파크)";
+        }
+        if (name.contains("티켓링크") || lower.contains("ticketlink")) {
+            return "티켓링크";
+        }
+        if (name.contains("예스24") || lower.contains("yes24")) {
+            return "YES24 티켓";
+        }
+        if (name.contains("멜론") || lower.contains("melon")) {
+            return "멜론티켓";
+        }
+        if (name.contains("네이버")) {
+            return "네이버 예약";
+        }
+        if (name.contains("카카오")) {
+            return "카카오톡 예약";
+        }
+        if (name.contains("클립서비스") || lower.contains("clipservice")) {
+            return "클립서비스";
+        }
+        String cleaned = name.replaceAll("(\\s*주식회사|\\s*\\(주\\))$", "").trim();
+        return cleaned.isEmpty() ? "공식 예매처" : cleaned;
+    }
+
+    private int bookingVendorPriority(String name) {
+        if (name == null) return 10;
+        return switch (name) {
+            case "NOL 티켓(인터파크)" -> 0;
+            case "YES24 티켓" -> 1;
+            case "멜론티켓" -> 2;
+            case "티켓링크" -> 3;
+            case "네이버 예약" -> 4;
+            case "카카오톡 예약" -> 5;
+            default -> 10;
+        };
     }
 }

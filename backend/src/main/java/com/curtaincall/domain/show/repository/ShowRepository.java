@@ -57,11 +57,14 @@ public interface ShowRepository extends JpaRepository<Show, Long>, ShowRepositor
     @Query("SELECT s FROM Show s LEFT JOIN FETCH s.theater ORDER BY s.id DESC")
     List<Show> findAllWithTheaterList(Pageable pageable);
 
-    @Query("SELECT s FROM Show s LEFT JOIN FETCH s.theater WHERE s.status = 'ONGOING' AND s.startDate <= :date AND s.endDate >= :date ORDER BY s.popularityRank ASC")
+    @Query("SELECT s FROM Show s LEFT JOIN FETCH s.theater WHERE s.status <> 'ENDED' AND s.startDate <= :date AND s.endDate >= :date ORDER BY s.popularityRank ASC")
     List<Show> findOngoingShowsOnDate(@Param("date") LocalDate date);
 
-    @Query("SELECT s FROM Show s LEFT JOIN FETCH s.theater WHERE s.status = 'ONGOING' AND s.genre = :genre AND s.startDate <= :date AND s.endDate >= :date ORDER BY s.popularityRank ASC")
+    @Query("SELECT s FROM Show s LEFT JOIN FETCH s.theater WHERE s.status <> 'ENDED' AND s.genre = :genre AND s.startDate <= :date AND s.endDate >= :date ORDER BY s.popularityRank ASC")
     List<Show> findOngoingShowsOnDateAndGenre(@Param("date") LocalDate date, @Param("genre") Show.Genre genre);
+
+    @Query("SELECT s FROM Show s LEFT JOIN FETCH s.theater WHERE s.bookingLinks IS NULL AND s.status IN :statuses ORDER BY s.popularityRank ASC")
+    List<Show> findByBookingLinksIsNullAndStatusIn(@Param("statuses") List<Show.Status> statuses);
 
     @Modifying
     @Query("UPDATE Show s SET s.status = 'ENDED' WHERE s.status = 'ONGOING' AND s.endDate < :today")

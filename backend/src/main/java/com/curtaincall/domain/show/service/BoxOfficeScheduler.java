@@ -60,6 +60,16 @@ public class BoxOfficeScheduler {
                     log.warn("서버 시작 시 전체 공연 동기화 실패 (무시): {}", e.getMessage());
                 }
             }
+            try {
+                kopisSyncService.normalizeExistingTheaterRegions();
+            } catch (Exception e) {
+                log.warn("서버 시작 시 극장 지역 정규화 실패 (무시): {}", e.getMessage());
+            }
+            try {
+                kopisSyncService.backfillMissingBookingLinks();
+            } catch (Exception e) {
+                log.warn("서버 시작 시 공식 예매처 링크 보강 실패 (무시): {}", e.getMessage());
+            }
         });
     }
 
