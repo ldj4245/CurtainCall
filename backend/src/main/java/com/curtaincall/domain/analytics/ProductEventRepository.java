@@ -15,8 +15,23 @@ public interface ProductEventRepository extends JpaRepository<ProductEvent, Long
     @Query("SELECT e.name AS name, COUNT(e.id) AS count FROM ProductEvent e WHERE e.createdAt > :after GROUP BY e.name")
     List<EventCount> countByNameAfter(@Param("after") LocalDateTime after);
 
+    @Query("SELECT COUNT(DISTINCT e.sessionId) FROM ProductEvent e WHERE e.createdAt >= :since")
+    long countDistinctSessionsSince(@Param("since") LocalDateTime since);
+
+    @Query("SELECT COUNT(e.id) FROM ProductEvent e WHERE e.name = :name AND e.createdAt >= :since")
+    long countByNameSince(@Param("name") String name, @Param("since") LocalDateTime since);
+
+    @Query("SELECT e.createdAt AS createdAt, e.sessionId AS sessionId, e.name AS name FROM ProductEvent e WHERE e.createdAt >= :since")
+    List<RecentEvent> findRecentEventsSince(@Param("since") LocalDateTime since);
+
     interface EventCount {
         String getName();
         long getCount();
+    }
+
+    interface RecentEvent {
+        LocalDateTime getCreatedAt();
+        String getSessionId();
+        String getName();
     }
 }

@@ -3,6 +3,7 @@ import { useEffect, lazy, Suspense } from 'react'
 import { useAuthStore } from './store/authStore'
 import { authApi } from './api/auth'
 import Navbar from './components/common/Navbar'
+import { trackPageView } from './utils/analytics'
 
 const PlansPage = lazy(() => import('./pages/Plans/PlansPage'))
 const NotificationsPage = lazy(() => import('./pages/Notifications/NotificationsPage'))
@@ -26,6 +27,7 @@ function ScrollToTop() {
   const { pathname } = useLocation()
   useEffect(() => {
     window.scrollTo(0, 0)
+    trackPageView(pathname)
   }, [pathname])
   return null
 }

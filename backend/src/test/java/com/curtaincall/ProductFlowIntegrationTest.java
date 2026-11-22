@@ -187,6 +187,7 @@ class ProductFlowIntegrationTest {
         assertThat(exported.get(0).get("showTitle").asText()).contains("통합 점검 공연");
 
         request(post("/api/events"), token, Map.of("name", "show_view", "sessionId", UUID.randomUUID().toString(), "showId", show.getId()), 204);
+        request(post("/api/events"), null, Map.of("name", "page_view", "sessionId", UUID.randomUUID().toString()), 204);
 
         var admin = users.save(User.builder().nickname("관리자").email(UUID.randomUUID() + "@example.test").password("unused").role(User.Role.ADMIN).build());
         String adminToken = jwt.createAccessToken(admin.getId(), admin.getEmail(), "ADMIN");
@@ -194,6 +195,12 @@ class ProductFlowIntegrationTest {
         assertThat(metrics.get("plans").asLong()).isGreaterThanOrEqualTo(1L);
         assertThat(metrics.get("completedPlans").asLong()).isGreaterThanOrEqualTo(1L);
         assertThat(metrics.get("events90d").get("show_view").asLong()).isGreaterThanOrEqualTo(1L);
+        assertThat(metrics.get("events90d").get("page_view").asLong()).isGreaterThanOrEqualTo(1L);
+        assertThat(metrics.get("visitorsToday").asLong()).isGreaterThanOrEqualTo(2L);
+        assertThat(metrics.get("visitors7d").asLong()).isGreaterThanOrEqualTo(2L);
+        assertThat(metrics.get("visitors30d").asLong()).isGreaterThanOrEqualTo(2L);
+        assertThat(metrics.get("pageViewsToday").asLong()).isGreaterThanOrEqualTo(1L);
+        assertThat(metrics.get("dailyVisitors").size()).isEqualTo(7);
     }
 
     @Test void communityCrudLikesRepliesNotificationsAndAccountDeletion() throws Exception {
